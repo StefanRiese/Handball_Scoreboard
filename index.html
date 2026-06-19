@@ -202,8 +202,15 @@ function renderColors(t) {
   });
   const more = document.createElement('button');
   more.className = 'color-dot';
-  more.style.background = 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)';
-  more.style.border = !PRESETS.includes(c) ? '2.5px solid #fff' : '2px solid transparent';
+  more.style.background = 'var(--btn)';
+  more.style.color = 'var(--muted)';
+  more.style.display = 'flex';
+  more.style.alignItems = 'center';
+  more.style.justifyContent = 'center';
+  more.style.fontSize = '20px';
+  more.style.lineHeight = '1';
+  more.textContent = '+';
+  more.style.border = !PRESETS.includes(c) ? '2.5px solid #fff' : '2px solid var(--btn-border)';
   more.style.outline = !PRESETS.includes(c) ? '2px solid rgba(128,128,128,0.4)' : 'none';
   more.onclick = () => { openColorModal(t); };
   el.appendChild(more);
