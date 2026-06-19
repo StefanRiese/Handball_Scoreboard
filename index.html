@@ -47,7 +47,8 @@
 
     .teams { display: flex; gap: 12px; align-items: stretch; }
     .team-card { flex: 1; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-    .team-name-btn { background: none; border: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; }
+    .team-name-btn { background: none; border: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; cursor: pointer; max-width: 100%; overflow: hidden; }
+    .team-name-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .team-name-input { font-size: 16px; font-weight: 500; text-align: center; border: none; border-bottom: 2px solid; background: transparent; outline: none; width: 90%; color: var(--text); padding: 4px 0; }
     .team-score { font-size: 80px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
     .goal-btn { width: 80px; height: 80px; border-radius: 50%; color: #fff; font-size: 40px; display: flex; align-items: center; justify-content: center; }
@@ -265,7 +266,7 @@ function saveName(t) {
   if (v) state[t].name = v;
   document.getElementById('name-input-'+t).style.display = 'none';
   document.getElementById('name-display-'+t).style.display = 'block';
-  render();
+  document.getElementById('name-text-'+t).textContent = state[t].name;
 }
 
 function saveGame() {
