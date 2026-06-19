@@ -12,36 +12,19 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0f0f0f; --card: #1a1a1a; --border: rgba(255,255,255,0.08);
-      --text: #f0f0f0; --muted: #888; --btn: #252525; --btn-border: rgba(255,255,255,0.12);
-    }
-    .light {
-      --bg: #f2f2f7; --card: #ffffff; --border: rgba(0,0,0,0.08);
-      --text: #111; --muted: #888; --btn: #e5e5ea; --btn-border: rgba(0,0,0,0.12);
-    }
-
+    :root { --bg: #0f0f0f; --card: #1a1a1a; --border: rgba(255,255,255,0.08); --text: #f0f0f0; --muted: #888; --btn: #252525; --btn-border: rgba(255,255,255,0.12); }
+    .light { --bg: #f2f2f7; --card: #ffffff; --border: rgba(0,0,0,0.08); --text: #111; --muted: #888; --btn: #e5e5ea; --btn-border: rgba(0,0,0,0.12); }
     html { height: 100%; overflow: hidden; position: fixed; width: 100%; }
-    body {
-      height: 100%; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      color: var(--text); -webkit-tap-highlight-color: transparent; user-select: none;
-      -webkit-user-select: none; overflow-y: auto; -webkit-overflow-scrolling: touch;
-      padding: env(safe-area-inset-top, 16px) 12px env(safe-area-inset-bottom, 32px);
-      display: flex; flex-direction: column; gap: 14px; transition: background 0.3s;
-    }
-
+    body { height: 100%; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: env(safe-area-inset-top, 16px) 12px env(safe-area-inset-bottom, 32px); display: flex; flex-direction: column; gap: 14px; transition: background 0.3s; }
     button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; transition: transform 0.1s; }
     button:active { transform: scale(0.93); }
     button:disabled { cursor: not-allowed; transform: none; }
-
     .tabbar { display: flex; gap: 4px; background: var(--card); border-radius: 14px; padding: 4px; margin-top: 8px; }
     .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
-
     .teams { display: flex; gap: 12px; align-items: stretch; }
     .team-card { flex: 1; min-width: 0; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-    .team-name-btn { background: none; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; cursor: pointer; width: 100%; }
+    .team-name-btn { background: none; border: none; display: flex; align-items: center; justify-content: center; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; cursor: pointer; width: 100%; }
     .team-name-btn span { white-space: normal; word-break: break-word; text-align: center; }
     .team-name-input { font-size: 16px; font-weight: 500; text-align: center; border: none; border-bottom: 2px solid; background: transparent; outline: none; width: 90%; color: var(--text); padding: 4px 0; }
     .team-score { font-size: 80px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
@@ -49,25 +32,20 @@
     .corr-row { display: flex; gap: 10px; width: 100%; }
     .corr-btn { flex: 1; padding: 14px 0; border-radius: 12px; border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 16px; font-weight: 500; min-height: 48px; color: var(--text); }
     .corr-btn:disabled { color: #444; }
-
     .colors { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
-    .color-custom { background: conic-gradient(red,yellow,lime,cyan,blue,magenta,red); }
     .color-hex { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); font-family: monospace; }
     .color-hex-dot { width: 12px; height: 12px; border-radius: 50%; }
-
     .action-row { display: flex; gap: 10px; margin-top: 8px; }
     .icon-btn { flex: 0 0 auto; padding: 16px 18px; border-radius: 14px; font-size: 22px; min-height: 54px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; }
     .save-btn { flex: 1; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.1s; }
     .save-btn:active { transform: scale(0.97); }
-
     .reset-area { text-align: center; }
     .reset-link { font-size: 14px; color: var(--muted); background: none; border: none; text-decoration: underline; padding: 12px 20px; min-height: 48px; }
     .reset-confirm { display: flex; gap: 10px; justify-content: center; align-items: center; }
     .reset-confirm span { font-size: 13px; color: var(--muted); }
     .btn-danger { padding: 12px 20px; border-radius: 10px; background: #e24b4a; color: #fff; font-size: 14px; min-height: 48px; }
     .btn-secondary { padding: 12px 20px; border-radius: 10px; border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 14px; color: var(--text); min-height: 48px; }
-
     .history { display: flex; flex-direction: column; gap: 10px; }
     .history-empty { text-align: center; color: var(--muted); font-size: 14px; margin-top: 40px; }
     .history-empty .icon { font-size: 40px; margin-bottom: 10px; }
@@ -80,24 +58,15 @@
     .history-dot { width: 12px; height: 12px; border-radius: 50%; }
     .history-score { font-size: 24px; font-weight: 500; letter-spacing: 4px; }
     .history-winner { font-size: 13px; color: var(--muted); text-align: center; }
-
-    #color-input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
   </style>
 </head>
 <body>
 
-<div id="hex-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center;">
-  <div style="background:var(--card); border-radius:20px; padding:24px; width:280px; display:flex; flex-direction:column; gap:16px;">
-    <div style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Eigene Farbe</div>
-    <div style="display:flex; align-items:center; gap:10px;">
-      <div id="hex-preview" style="width:40px; height:40px; border-radius:10px; flex-shrink:0;"></div>
-      <input id="hex-field" type="text" maxlength="7" placeholder="#e24b4a"
-        style="flex:1; font-size:18px; font-family:monospace; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:10px; padding:10px 12px; color:var(--text); outline:none; width:100%;"/>
-    </div>
-    <div style="display:flex; gap:10px;">
-      <button onclick="cancelHex()" style="flex:1; padding:14px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
-      <button onclick="applyHex()" style="flex:1; padding:14px; border-radius:12px; background:#378add; border:none; font-size:15px; color:#fff; font-weight:500;">OK</button>
-    </div>
+<div id="color-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)cancelColor()">
+  <div style="background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px;">
+    <div style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
+    <div id="color-grid" style="display:grid; grid-template-columns:repeat(6,1fr); gap:10px;"></div>
+    <button onclick="cancelColor()" style="padding:14px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
   </div>
 </div>
 
@@ -107,16 +76,12 @@
 </div>
 
 <div id="view-game" style="display:contents">
-
   <div class="teams">
     <div class="team-card" id="card-a">
       <div id="name-display-a">
-        <button class="team-name-btn" onclick="editName('a')">
-          <span id="name-text-a">TuS Griesheim</span>
-        </button>
+        <button class="team-name-btn" onclick="editName('a')"><span id="name-text-a">TuS Griesheim</span></button>
       </div>
-      <input class="team-name-input" id="name-input-a" style="display:none"
-        onblur="saveName('a')" onkeydown="if(event.key==='Enter')saveName('a')"/>
+      <input class="team-name-input" id="name-input-a" style="display:none" onblur="saveName('a')" onkeydown="if(event.key==='Enter')saveName('a')"/>
       <div class="team-score" id="disp-a">0</div>
       <button class="goal-btn" onclick="addGoal('a')">+</button>
       <div class="corr-row">
@@ -124,20 +89,13 @@
         <button class="corr-btn" onclick="correct('a',1)">+ 1</button>
       </div>
       <div class="colors" id="colors-a"></div>
-      <div class="color-hex" id="hex-a" style="display:none">
-        <div class="color-hex-dot" id="hex-dot-a"></div>
-        <span id="hex-text-a"></span>
-      </div>
+      <div class="color-hex" id="hex-a" style="display:none"><div class="color-hex-dot" id="hex-dot-a"></div><span id="hex-text-a"></span></div>
     </div>
-
     <div class="team-card" id="card-b">
       <div id="name-display-b">
-        <button class="team-name-btn" onclick="editName('b')">
-          <span id="name-text-b">Gast</span>
-        </button>
+        <button class="team-name-btn" onclick="editName('b')"><span id="name-text-b">Gast</span></button>
       </div>
-      <input class="team-name-input" id="name-input-b" style="display:none"
-        onblur="saveName('b')" onkeydown="if(event.key==='Enter')saveName('b')"/>
+      <input class="team-name-input" id="name-input-b" style="display:none" onblur="saveName('b')" onkeydown="if(event.key==='Enter')saveName('b')"/>
       <div class="team-score" id="disp-b">0</div>
       <button class="goal-btn" onclick="addGoal('b')">+</button>
       <div class="corr-row">
@@ -145,15 +103,12 @@
         <button class="corr-btn" onclick="correct('b',1)">+ 1</button>
       </div>
       <div class="colors" id="colors-b"></div>
-      <div class="color-hex" id="hex-b" style="display:none">
-        <div class="color-hex-dot" id="hex-dot-b"></div>
-        <span id="hex-text-b"></span>
-      </div>
+      <div class="color-hex" id="hex-b" style="display:none"><div class="color-hex-dot" id="hex-dot-b"></div><span id="hex-text-b"></span></div>
     </div>
   </div>
 
   <div class="action-row">
-    <button class="icon-btn" onclick="swapTeams()" title="Seiten wechseln">⇄</button>
+    <button class="icon-btn" onclick="swapTeams()">⇄</button>
     <button class="save-btn" id="save-btn" onclick="saveGame()">💾 In Historie speichern</button>
     <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
   </div>
@@ -175,7 +130,16 @@
 </div>
 
 <script>
-const PRESETS = ['#e24b4a','#378add','#639922','#ef9f27','#7f77dd','#e8e8e8'];
+const PRESETS = ['#e24b4a','#4caf50','#378add','#f0f0f0','#f5c842','#ef9f27'];
+
+const ALL_COLORS = [
+  '#e24b4a','#c0392b','#e8735a','#ef9f27','#f5c842','#f0e060',
+  '#4caf50','#2e7d32','#80cbc4','#26c6da','#378add','#1565c0',
+  '#7f77dd','#6a1b9a','#ce93d8','#e91e8c','#f48fb1','#ff80ab',
+  '#f0f0f0','#bdbdbd','#9e9e9e','#757575','#424242','#212121',
+  '#a0522d','#795548','#ffcc80','#ff8f00','#558b2f','#33691e',
+];
+
 const STORAGE_KEY = 'handball_v2';
 
 let state = {
@@ -232,12 +196,13 @@ function renderColors(t) {
     btn.onclick = () => { state[t].color = p; render(); };
     el.appendChild(btn);
   });
-  const custom = document.createElement('button');
-  custom.className = 'color-dot color-custom';
-  custom.style.border = !PRESETS.includes(c) ? '2.5px solid #fff' : '2px solid transparent';
-  custom.style.outline = !PRESETS.includes(c) ? '2px solid rgba(128,128,128,0.4)' : 'none';
-  custom.onclick = () => { openHex(t); };
-  el.appendChild(custom);
+  const more = document.createElement('button');
+  more.className = 'color-dot';
+  more.style.background = 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)';
+  more.style.border = !PRESETS.includes(c) ? '2.5px solid #fff' : '2px solid transparent';
+  more.style.outline = !PRESETS.includes(c) ? '2px solid rgba(128,128,128,0.4)' : 'none';
+  more.onclick = () => { openColorModal(t); };
+  el.appendChild(more);
   const hexEl = document.getElementById('hex-'+t);
   if (!PRESETS.includes(c)) {
     hexEl.style.display = 'flex';
@@ -246,52 +211,33 @@ function renderColors(t) {
   } else { hexEl.style.display = 'none'; }
 }
 
-function isValidHex(h) { return /^#[0-9a-fA-F]{6}$/.test(h); }
-
-function openHex(t) {
+function openColorModal(t) {
   colorTarget = t;
-  const val = state[t].color;
-  document.getElementById('hex-field').value = val;
-  document.getElementById('hex-preview').style.background = val;
-  document.getElementById('hex-modal').style.display = 'flex';
+  const grid = document.getElementById('color-grid');
+  grid.innerHTML = '';
+  ALL_COLORS.forEach(p => {
+    const btn = document.createElement('button');
+    const selected = state[t].color === p;
+    btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid #fff':'2px solid rgba(128,128,128,0.2)'};outline:${selected?'2px solid rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
+    btn.onclick = () => { state[colorTarget].color = p; render(); cancelColor(); };
+    grid.appendChild(btn);
+  });
+  document.getElementById('color-modal').style.display = 'flex';
 }
 
-function applyHex() {
-  let val = document.getElementById('hex-field').value.trim();
-  if (!val.startsWith('#')) val = '#' + val;
-  if (isValidHex(val)) {
-    state[colorTarget].color = val;
-    render();
-  }
-  document.getElementById('hex-modal').style.display = 'none';
-}
-
-function cancelHex() { document.getElementById('hex-modal').style.display = 'none'; }
-
-document.getElementById('hex-field').addEventListener('input', e => {
-  let val = e.target.value.trim();
-  if (!val.startsWith('#')) val = '#' + val;
-  if (isValidHex(val)) document.getElementById('hex-preview').style.background = val;
-});
-
-document.getElementById('color-input').addEventListener('input', e => {
-  if (colorTarget) { state[colorTarget].color = e.target.value; render(); }
-});
+function cancelColor() { document.getElementById('color-modal').style.display = 'none'; }
 
 function addGoal(t) { state[t].score++; render(); }
 function correct(t, d) { state[t].score = Math.max(0, state[t].score + d); render(); }
 
 function swapTeams() {
-  const tmp = { ...state.a };
-  state.a = { ...state.b };
-  state.b = { ...tmp };
-  render();
+  const tmp = { ...state.a }; state.a = { ...state.b }; state.b = { ...tmp }; render();
 }
 
 function editName(t) {
   document.getElementById('name-display-'+t).style.display = 'none';
   const inp = document.getElementById('name-input-'+t);
-  inp.style.display = 'block'; inp.value = state[t].name; inp.focus();
+  inp.style.display = 'block'; inp.style.borderBottomColor = state[t].color; inp.value = state[t].name; inp.focus();
 }
 
 function saveName(t) {
@@ -304,7 +250,7 @@ function saveName(t) {
 
 function saveGame() {
   const now = new Date();
-  const entry = {
+  state.history.unshift({
     id: Date.now(),
     date: now.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}),
     time: now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
@@ -312,15 +258,12 @@ function saveGame() {
       { name: state.a.name, score: state.a.score, color: state.a.color },
       { name: state.b.name, score: state.b.score, color: state.b.color },
     ]
-  };
-  state.history.unshift(entry); save();
+  });
+  save();
   const btn = document.getElementById('save-btn');
   btn.textContent = '✓ Gespeichert!';
   btn.style.background = '#1a3a1a'; btn.style.color = '#5cb85c'; btn.style.borderColor = 'transparent';
-  setTimeout(() => {
-    btn.textContent = '💾 In Historie speichern';
-    btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = '';
-  }, 2000);
+  setTimeout(() => { btn.textContent = '💾 In Historie speichern'; btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
   renderHistory();
 }
 
@@ -331,8 +274,8 @@ function resetGame() {
   render();
 }
 
-function winner(game) {
-  const [a,b] = game.teams;
+function winner(g) {
+  const [a,b] = g.teams;
   if (a.score > b.score) return '🏆 ' + a.name;
   if (b.score > a.score) return '🏆 ' + b.name;
   return '🤝 Unentschieden';
@@ -340,39 +283,20 @@ function winner(game) {
 
 function renderHistory() {
   const el = document.getElementById('history-list');
-  if (!state.history.length) {
-    el.innerHTML = '<div class="history-empty"><div class="icon">📋</div>Noch keine Spiele gespeichert.</div>';
-    return;
-  }
+  if (!state.history.length) { el.innerHTML = '<div class="history-empty"><div class="icon">📋</div>Noch keine Spiele gespeichert.</div>'; return; }
   el.innerHTML = state.history.map(g => `
     <div class="history-card">
-      <div class="history-meta">
-        <span>${g.date} · ${g.time}</span>
-        <button class="del-btn" onclick="deleteGame(${g.id})">✕</button>
-      </div>
+      <div class="history-meta"><span>${g.date} · ${g.time}</span><button class="del-btn" onclick="deleteGame(${g.id})">✕</button></div>
       <div class="history-score-row">
-        <div class="history-team">
-          <div class="history-dot" style="background:${g.teams[0].color}"></div>
-          <span>${g.teams[0].name}</span>
-        </div>
-        <div class="history-score">
-          <span style="color:${g.teams[0].color}">${g.teams[0].score}</span>
-          <span style="color:var(--muted)"> : </span>
-          <span style="color:${g.teams[1].color}">${g.teams[1].score}</span>
-        </div>
-        <div class="history-team">
-          <span>${g.teams[1].name}</span>
-          <div class="history-dot" style="background:${g.teams[1].color}"></div>
-        </div>
+        <div class="history-team"><div class="history-dot" style="background:${g.teams[0].color}"></div><span>${g.teams[0].name}</span></div>
+        <div class="history-score"><span style="color:${g.teams[0].color}">${g.teams[0].score}</span><span style="color:var(--muted)"> : </span><span style="color:${g.teams[1].color}">${g.teams[1].score}</span></div>
+        <div class="history-team"><span>${g.teams[1].name}</span><div class="history-dot" style="background:${g.teams[1].color}"></div></div>
       </div>
       <div class="history-winner">${winner(g)}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function deleteGame(id) {
-  state.history = state.history.filter(g => g.id !== id); save(); renderHistory();
-}
+function deleteGame(id) { state.history = state.history.filter(g => g.id !== id); save(); renderHistory(); }
 
 function showView(v) {
   document.getElementById('view-game').style.display = v === 'game' ? 'contents' : 'none';
