@@ -102,14 +102,14 @@
   <div class="teams" id="teams-container">
     <div class="team-card" id="card-a">
       <div id="name-display-a">
-        <button class="team-name-btn" onclick="editName('a')" style="color:#378add">
-          <span id="name-text-a">Heim</span>
+        <button class="team-name-btn" onclick="editName('a')" style="color:#e24b4a">
+          <span id="name-text-a">TuS Griesheim</span>
         </button>
       </div>
-      <input class="team-name-input" id="name-input-a" style="display:none; border-bottom-color:#378add"
+      <input class="team-name-input" id="name-input-a" style="display:none; border-bottom-color:#e24b4a"
         onblur="saveName('a')" onkeydown="if(event.key==='Enter')saveName('a')"/>
-      <div class="team-score" id="disp-a" style="color:#378add">0</div>
-      <button class="goal-btn" style="background:#378add" onclick="addGoal('a')">+</button>
+      <div class="team-score" id="disp-a" style="color:#e24b4a">0</div>
+      <button class="goal-btn" style="background:#e24b4a" onclick="addGoal('a')">+</button>
       <div class="corr-row">
         <button class="corr-btn" id="corr-minus-a" onclick="correct('a',-1)">− 1</button>
         <button class="corr-btn" onclick="correct('a',1)">+ 1</button>
@@ -172,8 +172,8 @@ const HALF_LABELS = ['1. Halbzeit','2. Halbzeit','Verlängerung'];
 const STORAGE_KEY = 'handball_v2';
 
 let state = {
-  a: { name: 'Heim', score: 0, color: '#378add' },
-  b: { name: 'Gast', score: 0, color: '#e24b4a' },
+  a: { name: 'TuS Griesheim', score: 0, color: '#e24b4a' },
+  b: { name: 'Gast', score: 0, color: '#378add' },
   half: 0, history: [], darkMode: true,
 };
 let colorTarget = null;
