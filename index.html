@@ -44,9 +44,6 @@
     .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
 
-    .half-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
-    .half-btn { background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: 12px; padding: 12px 22px; font-size: 24px; color: var(--text); min-width: 56px; min-height: 52px; }
-    .half-label { font-size: 14px; font-weight: 500; min-width: 110px; text-align: center; color: var(--text); }
 
     .scoreboard { text-align: center; font-size: 32px; font-weight: 500; letter-spacing: 6px; }
 
@@ -108,12 +105,6 @@
 </div>
 
 <div id="view-game" style="display:contents">
-  <div class="half-row">
-    <button class="half-btn" onclick="changeHalf(-1)">‹</button>
-    <span class="half-label" id="half-label">1. Halbzeit</span>
-    <button class="half-btn" onclick="changeHalf(1)">›</button>
-  </div>
-
   <div class="scoreboard">
     <span id="score-a" style="color:#378add">0</span>
     <span style="color:var(--muted)"> : </span>
@@ -294,7 +285,7 @@ function saveGame() {
     id: Date.now(),
     date: now.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}),
     time: now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
-    half: HALF_LABELS[state.half],
+    half: '',
     teams: [
       { name: state.a.name, score: state.a.score, color: state.a.color },
       { name: state.b.name, score: state.b.score, color: state.b.color },
