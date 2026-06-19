@@ -40,9 +40,9 @@
     .tabbar button.active { background: var(--btn); color: var(--text); }
 
     .teams { display: flex; gap: 12px; align-items: stretch; }
-    .team-card { flex: 1; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-    .team-name-btn { background: none; border: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; cursor: pointer; max-width: 100%; overflow: hidden; }
-    .team-name-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .team-card { flex: 1; min-width: 0; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .team-name-btn { background: none; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; cursor: pointer; width: 100%; }
+    .team-name-btn span { white-space: normal; word-break: break-word; text-align: center; }
     .team-name-input { font-size: 16px; font-weight: 500; text-align: center; border: none; border-bottom: 2px solid; background: transparent; outline: none; width: 90%; color: var(--text); padding: 4px 0; }
     .team-score { font-size: 80px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
     .goal-btn { width: 80px; height: 80px; border-radius: 50%; color: #fff; font-size: 40px; display: flex; align-items: center; justify-content: center; }
@@ -86,7 +86,20 @@
 </head>
 <body>
 
-<input type="color" id="color-input"/>
+<div id="hex-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center;">
+  <div style="background:var(--card); border-radius:20px; padding:24px; width:280px; display:flex; flex-direction:column; gap:16px;">
+    <div style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Eigene Farbe</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div id="hex-preview" style="width:40px; height:40px; border-radius:10px; flex-shrink:0;"></div>
+      <input id="hex-field" type="text" maxlength="7" placeholder="#e24b4a"
+        style="flex:1; font-size:18px; font-family:monospace; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:10px; padding:10px 12px; color:var(--text); outline:none; width:100%;"/>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="cancelHex()" style="flex:1; padding:14px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
+      <button onclick="applyHex()" style="flex:1; padding:14px; border-radius:12px; background:#378add; border:none; font-size:15px; color:#fff; font-weight:500;">OK</button>
+    </div>
+  </div>
+</div>
 
 <div class="tabbar">
   <button class="active" onclick="showView('game')" id="tab-game">🤾 Spiel</button>
@@ -223,7 +236,7 @@ function renderColors(t) {
   custom.className = 'color-dot color-custom';
   custom.style.border = !PRESETS.includes(c) ? '2.5px solid #fff' : '2px solid transparent';
   custom.style.outline = !PRESETS.includes(c) ? '2px solid rgba(128,128,128,0.4)' : 'none';
-  custom.onclick = () => { colorTarget = t; const inp = document.getElementById('color-input'); inp.value = state[t].color; inp.click(); };
+  custom.onclick = () => { openHex(t); };
   el.appendChild(custom);
   const hexEl = document.getElementById('hex-'+t);
   if (!PRESETS.includes(c)) {
@@ -232,6 +245,34 @@ function renderColors(t) {
     document.getElementById('hex-text-'+t).textContent = c;
   } else { hexEl.style.display = 'none'; }
 }
+
+function isValidHex(h) { return /^#[0-9a-fA-F]{6}$/.test(h); }
+
+function openHex(t) {
+  colorTarget = t;
+  const val = state[t].color;
+  document.getElementById('hex-field').value = val;
+  document.getElementById('hex-preview').style.background = val;
+  document.getElementById('hex-modal').style.display = 'flex';
+}
+
+function applyHex() {
+  let val = document.getElementById('hex-field').value.trim();
+  if (!val.startsWith('#')) val = '#' + val;
+  if (isValidHex(val)) {
+    state[colorTarget].color = val;
+    render();
+  }
+  document.getElementById('hex-modal').style.display = 'none';
+}
+
+function cancelHex() { document.getElementById('hex-modal').style.display = 'none'; }
+
+document.getElementById('hex-field').addEventListener('input', e => {
+  let val = e.target.value.trim();
+  if (!val.startsWith('#')) val = '#' + val;
+  if (isValidHex(val)) document.getElementById('hex-preview').style.background = val;
+});
 
 document.getElementById('color-input').addEventListener('input', e => {
   if (colorTarget) { state[colorTarget].color = e.target.value; render(); }
