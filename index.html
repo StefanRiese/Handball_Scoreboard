@@ -266,9 +266,24 @@ function saveName(t) {
   if (v) state[t].name = v;
   document.getElementById('name-input-'+t).style.display = 'none';
   document.getElementById('name-display-'+t).style.display = 'block';
-  document.getElementById('name-text-'+t).textContent = state[t].name;
+  render();
 }
 
+function render() {
+  ['a','b'].forEach(t => {
+    const s = state[t];
+    document.getElementById('disp-'+t).textContent = s.score;
+    document.getElementById('disp-'+t).style.color = s.color;
+    document.getElementById('name-text-'+t).textContent = s.name;
+    document.querySelector('#name-display-'+t+' button').style.color = s.color;
+    document.getElementById('name-input-'+t).style.borderBottomColor = s.color;
+    document.querySelector('#card-'+t+' .goal-btn').style.background = s.color;
+    document.querySelector('#card-'+t+' .goal-btn').style.boxShadow = `0 0 0 6px ${s.color}22`;
+    document.getElementById('corr-minus-'+t).disabled = s.score === 0;
+    document.getElementById('corr-minus-'+t).style.color = s.score === 0 ? '#444' : '';
+    renderColors(t);
+  });
+}
 function saveGame() {
   const now = new Date();
   const entry = {
