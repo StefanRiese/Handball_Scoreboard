@@ -13,8 +13,8 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #f0f0f0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
-    body { padding: env(safe-area-inset-top, 16px) 12px env(safe-area-inset-bottom, 32px); display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+    html, body { height: 100%; background: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #f0f0f0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; overflow: hidden; position: fixed; width: 100%; }
+    body { padding: env(safe-area-inset-top, 16px) 12px env(safe-area-inset-bottom, 32px); display: flex; flex-direction: column; gap: 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; height: 100%; }
 
     button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; transition: transform 0.1s; }
     button:active { transform: scale(0.93); }
@@ -348,6 +348,7 @@ document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('gesturechange', e => e.preventDefault());
 document.addEventListener('gestureend', e => e.preventDefault());
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.body.addEventListener('touchmove', e => { e.stopPropagation(); }, { passive: true });
 document.addEventListener('dblclick', e => e.preventDefault());
 
 if ('wakeLock' in navigator) {
