@@ -37,9 +37,11 @@
     button:active { transform: scale(0.93); }
     button:disabled { cursor: not-allowed; transform: none; }
 
+
     .tabbar { display: flex; gap: 4px; background: var(--card); border-radius: 14px; padding: 4px; }
     .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
+
 
     .scoreboard { text-align: center; font-size: 32px; font-weight: 500; letter-spacing: 6px; }
 
@@ -150,7 +152,7 @@
   <div class="action-row">
     <button class="swap-btn" onclick="swapTeams()" title="Seiten wechseln">⇄</button>
     <button class="save-btn" id="save-btn" onclick="saveGame()"
-      style="background:#1a2a3a; color:#378add;">💾 In Historie speichern</button>
+      style="background:var(--btn); color:var(--text); border: 0.5px solid var(--btn-border);">💾 In Historie speichern</button>
     <button class="swap-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
   </div>
 
@@ -288,7 +290,7 @@ function saveGame() {
   const btn = document.getElementById('save-btn');
   btn.textContent = '✓ Gespeichert!';
   btn.style.background = '#1a3a1a'; btn.style.color = '#5cb85c';
-  setTimeout(() => { btn.textContent = '💾 In Historie speichern'; btn.style.background = state.darkMode ? '#1a2a3a' : '#ddeeff'; btn.style.color = '#378add'; }, 2000);
+  setTimeout(() => {   btn.textContent = '💾 In Historie speichern'; btn.style.background = 'var(--btn)'; btn.style.color = 'var(--text)'; btn.style.border = '0.5px solid var(--btn-border)'; }, 2000);
   renderHistory();
 }
 
