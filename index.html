@@ -2,6 +2,374 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+  <meta name="apple-mobile-web-app-title" content="Handball"/>
+  <meta name="theme-color" content="#0f0f0f"/>
+  <title>Handball Scoreboard</title>
+
+  <link rel="apple-touch-icon" href="handball_icon.png"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #f0f0f0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+    body { padding: env(safe-area-inset-top, 16px) 12px env(safe-area-inset-bottom, 32px); display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; transition: transform 0.1s; }
+    button:active { transform: scale(0.93); }
+    button:disabled { cursor: not-allowed; transform: none; }
+
+    .tabbar { display: flex; gap: 4px; background: #1a1a1a; border-radius: 14px; padding: 4px; }
+    .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 500; color: #888; min-height: 48px; }
+    .tabbar button.active { background: #2e2e2e; color: #f0f0f0; }
+
+    .half-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .half-btn { background: #252525; border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 12px 22px; font-size: 24px; color: #f0f0f0; min-width: 56px; min-height: 52px; }
+    .half-label { font-size: 14px; font-weight: 500; min-width: 110px; text-align: center; }
+
+    .scoreboard { text-align: center; font-size: 32px; font-weight: 500; letter-spacing: 6px; }
+
+    .teams { display: flex; gap: 12px; align-items: flex-start; }
+    .team-card { flex: 1; background: #1a1a1a; border: 0.5px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .team-name-btn { background: none; border: none; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; }
+    .team-name-input { font-size: 16px; font-weight: 500; text-align: center; border: none; border-bottom: 2px solid; background: transparent; outline: none; width: 90%; color: #f0f0f0; padding: 4px 0; }
+    .team-score { font-size: 80px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
+    .goal-btn { width: 80px; height: 80px; border-radius: 50%; color: #fff; font-size: 40px; display: flex; align-items: center; justify-content: center; }
+    .corr-row { display: flex; gap: 10px; width: 100%; }
+    .corr-btn { flex: 1; padding: 14px 0; border-radius: 12px; border: 0.5px solid rgba(255,255,255,0.12); background: #252525; font-size: 16px; font-weight: 500; min-height: 48px; color: #f0f0f0; }
+    .corr-btn:disabled { color: #444; }
+
+    .colors { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
+    .color-dot.selected { outline-offset: 2px; }
+    .color-custom { background: conic-gradient(red,yellow,lime,cyan,blue,magenta,red); }
+    .color-hex { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888; font-family: monospace; }
+    .color-hex-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+    .save-btn { padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 500; min-height: 54px; width: 100%; transition: background 0.3s, color 0.3s, transform 0.1s; margin-top: 4px; display: block; }
+    .save-btn:active { transform: scale(0.97); }
+
+    .reset-area { text-align: center; }
+    .reset-link { font-size: 14px; color: #888; background: none; border: none; text-decoration: underline; padding: 12px 20px; min-height: 48px; }
+    .reset-confirm { display: flex; gap: 10px; justify-content: center; align-items: center; }
+    .reset-confirm span { font-size: 13px; color: #888; }
+    .btn-danger { padding: 12px 20px; border-radius: 10px; background: #e24b4a; color: #fff; font-size: 14px; min-height: 48px; }
+    .btn-secondary { padding: 12px 20px; border-radius: 10px; border: 0.5px solid rgba(255,255,255,0.12); background: #252525; font-size: 14px; color: #f0f0f0; min-height: 48px; }
+
+    .history { display: flex; flex-direction: column; gap: 10px; }
+    .history-empty { text-align: center; color: #888; font-size: 14px; margin-top: 40px; }
+    .history-empty .icon { font-size: 40px; margin-bottom: 10px; }
+    .history-card { background: #1a1a1a; border: 0.5px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; }
+    .history-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .history-meta span { font-size: 12px; color: #888; }
+    .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: 4px 8px; min-height: 44px; min-width: 44px; border-radius: 8px; }
+    .history-score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .history-team { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+    .history-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .history-score { font-size: 24px; font-weight: 500; letter-spacing: 4px; }
+    .history-winner { font-size: 13px; color: #888; text-align: center; }
+
+    #color-input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<input type="color" id="color-input"/>
+
+<div class="tabbar">
+  <button class="active" onclick="showView('game')" id="tab-game">🤾 Spiel</button>
+  <button onclick="showView('history')" id="tab-history">📋 Historie</button>
+</div>
+
+<div id="view-game">
+  <div class="half-row">
+    <button class="half-btn" onclick="changeHalf(-1)">‹</button>
+    <span class="half-label" id="half-label">1. Halbzeit</span>
+    <button class="half-btn" onclick="changeHalf(1)">›</button>
+  </div>
+
+  <div class="scoreboard">
+    <span id="score-a" style="color:#378add">0</span>
+    <span style="color:#555"> : </span>
+    <span id="score-b" style="color:#e24b4a">0</span>
+  </div>
+
+  <div class="teams">
+    <div class="team-card" id="card-a">
+      <div id="name-display-a">
+        <button class="team-name-btn" onclick="editName('a')" style="color:#378add">
+          <span id="name-text-a">Heim</span> <span style="color:#888">✏️</span>
+        </button>
+      </div>
+      <input class="team-name-input" id="name-input-a" style="display:none; border-bottom-color:#378add"
+        onblur="saveName('a')" onkeydown="if(event.key==='Enter')saveName('a')"/>
+      <div class="team-score" id="disp-a" style="color:#378add">0</div>
+      <button class="goal-btn" style="background:#378add" onclick="addGoal('a')">+</button>
+      <div class="corr-row">
+        <button class="corr-btn" id="corr-minus-a" onclick="correct('a',-1)">− 1</button>
+        <button class="corr-btn" onclick="correct('a',1)">+ 1</button>
+      </div>
+      <div class="colors" id="colors-a"></div>
+      <div class="color-hex" id="hex-a" style="display:none">
+        <div class="color-hex-dot" id="hex-dot-a"></div>
+        <span id="hex-text-a"></span>
+      </div>
+    </div>
+
+    <div class="team-card" id="card-b">
+      <div id="name-display-b">
+        <button class="team-name-btn" onclick="editName('b')" style="color:#e24b4a">
+          <span id="name-text-b">Gast</span> <span style="color:#888">✏️</span>
+        </button>
+      </div>
+      <input class="team-name-input" id="name-input-b" style="display:none; border-bottom-color:#e24b4a"
+        onblur="saveName('b')" onkeydown="if(event.key==='Enter')saveName('b')"/>
+      <div class="team-score" id="disp-b" style="color:#e24b4a">0</div>
+      <button class="goal-btn" style="background:#e24b4a" onclick="addGoal('b')">+</button>
+      <div class="corr-row">
+        <button class="corr-btn" id="corr-minus-b" onclick="correct('b',-1)">− 1</button>
+        <button class="corr-btn" onclick="correct('b',1)">+ 1</button>
+      </div>
+      <div class="colors" id="colors-b"></div>
+      <div class="color-hex" id="hex-b" style="display:none">
+        <div class="color-hex-dot" id="hex-dot-b"></div>
+        <span id="hex-text-b"></span>
+      </div>
+    </div>
+  </div>
+
+  <button class="save-btn" id="save-btn" onclick="saveGame()"
+    style="background:#1a2a3a; color:#378add;">💾 Spiel in Historie speichern</button>
+
+  <div class="reset-area">
+    <div id="reset-link-area">
+      <button class="reset-link" onclick="document.getElementById('reset-link-area').style.display='none';document.getElementById('reset-confirm-area').style.display='flex'">Spiel zurücksetzen</button>
+    </div>
+    <div id="reset-confirm-area" class="reset-confirm" style="display:none">
+      <span>Wirklich?</span>
+      <button class="btn-danger" onclick="resetGame()">Ja</button>
+      <button class="btn-secondary" onclick="document.getElementById('reset-confirm-area').style.display='none';document.getElementById('reset-link-area').style.display='block'">Nein</button>
+    </div>
+  </div>
+</div>
+
+<div id="view-history" style="display:none">
+  <div class="history" id="history-list"></div>
+</div>
+
+<script>
+const PRESETS = ['#e24b4a','#378add','#639922','#ef9f27','#7f77dd','#e8e8e8'];
+const STORAGE_KEY = 'handball_v1';
+const HALF_LABELS = ['1. Halbzeit','2. Halbzeit','Verlängerung'];
+
+let state = {
+  a: { name: 'Heim', score: 0, color: '#378add' },
+  b: { name: 'Gast', score: 0, color: '#e24b4a' },
+  half: 0,
+  history: [],
+};
+let colorTarget = null;
+
+function load() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) { const p = JSON.parse(d); state.history = p.history || []; }
+  } catch {}
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ history: state.history })); } catch {}
+}
+
+function render() {
+  ['a','b'].forEach(t => {
+    const s = state[t];
+    document.getElementById('disp-'+t).textContent = s.score;
+    document.getElementById('score-'+t).textContent = s.score;
+    document.getElementById('score-'+t).style.color = s.color;
+    document.getElementById('disp-'+t).style.color = s.color;
+    document.getElementById('name-text-'+t).textContent = s.name;
+    document.querySelector('#name-display-'+t+' button').style.color = s.color;
+    document.getElementById('name-input-'+t).style.borderBottomColor = s.color;
+    document.querySelector('#card-'+t+' .goal-btn').style.background = s.color;
+    document.querySelector('#card-'+t+' .goal-btn').style.boxShadow = `0 0 0 6px ${s.color}22`;
+    document.getElementById('corr-minus-'+t).disabled = s.score === 0;
+    document.getElementById('corr-minus-'+t).style.color = s.score === 0 ? '#444' : '#f0f0f0';
+    renderColors(t);
+  });
+  document.getElementById('half-label').textContent = HALF_LABELS[state.half];
+}
+
+function renderColors(t) {
+  const c = state[t].color;
+  const el = document.getElementById('colors-'+t);
+  el.innerHTML = '';
+  PRESETS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'color-dot' + (c === p ? ' selected' : '');
+    btn.style.background = p;
+    btn.style.border = c === p ? '2.5px solid #fff' : '2px solid transparent';
+    btn.style.outline = c === p ? `2px solid rgba(255,255,255,0.3)` : 'none';
+    btn.onclick = () => { state[t].color = p; render(); };
+    el.appendChild(btn);
+  });
+  const custom = document.createElement('button');
+  custom.className = 'color-dot color-custom' + (!PRESETS.includes(c) ? ' selected' : '');
+  custom.style.border = !PRESETS.includes(c) ? '2.5px solid #fff' : '2px solid transparent';
+  custom.style.outline = !PRESETS.includes(c) ? '2px solid rgba(255,255,255,0.3)' : 'none';
+  custom.onclick = () => {
+    colorTarget = t;
+    const inp = document.getElementById('color-input');
+    inp.value = state[t].color;
+    inp.click();
+  };
+  el.appendChild(custom);
+
+  const hexEl = document.getElementById('hex-'+t);
+  if (!PRESETS.includes(c)) {
+    hexEl.style.display = 'flex';
+    document.getElementById('hex-dot-'+t).style.background = c;
+    document.getElementById('hex-text-'+t).textContent = c;
+  } else {
+    hexEl.style.display = 'none';
+  }
+}
+
+document.getElementById('color-input').addEventListener('input', e => {
+  if (colorTarget) { state[colorTarget].color = e.target.value; render(); }
+});
+
+function addGoal(t) { state[t].score++; render(); }
+function correct(t, d) { state[t].score = Math.max(0, state[t].score + d); render(); }
+function changeHalf(d) { state.half = Math.min(2, Math.max(0, state.half + d)); render(); }
+
+function editName(t) {
+  document.getElementById('name-display-'+t).style.display = 'none';
+  const inp = document.getElementById('name-input-'+t);
+  inp.style.display = 'block';
+  inp.value = state[t].name;
+  inp.focus();
+}
+function saveName(t) {
+  const v = document.getElementById('name-input-'+t).value.trim();
+  if (v) state[t].name = v;
+  document.getElementById('name-input-'+t).style.display = 'none';
+  document.getElementById('name-display-'+t).style.display = 'block';
+  render();
+}
+
+function saveGame() {
+  const now = new Date();
+  const entry = {
+    id: Date.now(),
+    date: now.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}),
+    time: now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
+    half: HALF_LABELS[state.half],
+    teams: [
+      { name: state.a.name, score: state.a.score, color: state.a.color },
+      { name: state.b.name, score: state.b.score, color: state.b.color },
+    ]
+  };
+  state.history.unshift(entry);
+  save();
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✓ Gespeichert!';
+  btn.style.background = '#1a3a1a';
+  btn.style.color = '#5cb85c';
+  setTimeout(() => {
+    btn.textContent = '💾 Spiel in Historie speichern';
+    btn.style.background = '#1a2a3a';
+    btn.style.color = '#378add';
+  }, 2000);
+  renderHistory();
+}
+
+function resetGame() {
+  state.a.score = 0; state.b.score = 0; state.half = 0;
+  document.getElementById('reset-confirm-area').style.display = 'none';
+  document.getElementById('reset-link-area').style.display = 'block';
+  render();
+}
+
+function winner(game) {
+  const [a,b] = game.teams;
+  if (a.score > b.score) return '🏆 ' + a.name;
+  if (b.score > a.score) return '🏆 ' + b.name;
+  return '🤝 Unentschieden';
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!state.history.length) {
+    el.innerHTML = '<div class="history-empty"><div class="icon">📋</div>Noch keine Spiele gespeichert.</div>';
+    return;
+  }
+  el.innerHTML = state.history.map(g => `
+    <div class="history-card">
+      <div class="history-meta">
+        <span>${g.date} · ${g.time} · ${g.half}</span>
+        <button class="del-btn" onclick="deleteGame(${g.id})">✕</button>
+      </div>
+      <div class="history-score-row">
+        <div class="history-team">
+          <div class="history-dot" style="background:${g.teams[0].color}"></div>
+          <span>${g.teams[0].name}</span>
+        </div>
+        <div class="history-score">
+          <span style="color:${g.teams[0].color}">${g.teams[0].score}</span>
+          <span style="color:#555"> : </span>
+          <span style="color:${g.teams[1].color}">${g.teams[1].score}</span>
+        </div>
+        <div class="history-team">
+          <span>${g.teams[1].name}</span>
+          <div class="history-dot" style="background:${g.teams[1].color}"></div>
+        </div>
+      </div>
+      <div class="history-winner">${winner(g)}</div>
+    </div>
+  `).join('');
+}
+
+function deleteGame(id) {
+  state.history = state.history.filter(g => g.id !== id);
+  save();
+  renderHistory();
+}
+
+function showView(v) {
+  document.getElementById('view-game').style.display = v === 'game' ? 'contents' : 'none';
+  document.getElementById('view-history').style.display = v === 'history' ? 'block' : 'none';
+  document.getElementById('tab-game').className = v === 'game' ? 'active' : '';
+  document.getElementById('tab-history').className = v === 'history' ? 'active' : '';
+  if (v === 'history') renderHistory();
+}
+
+if ('wakeLock' in navigator) {
+  let wl = null;
+  const req = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch {} };
+  req();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') req(); });
+}
+
+if ('serviceWorker' in navigator) {
+  const sw = `
+const CACHE = 'handball-v1';
+const FILES = ['/'];
+self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))));
+self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+`;
+  const blob = new Blob([sw], { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(blob));
+}
+
+load();
+render();
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
