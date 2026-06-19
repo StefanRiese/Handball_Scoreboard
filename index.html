@@ -37,9 +37,6 @@
     button:active { transform: scale(0.93); }
     button:disabled { cursor: not-allowed; transform: none; }
 
-    .topbar { display: flex; justify-content: flex-end; }
-    .theme-btn { font-size: 22px; padding: 6px 10px; border-radius: 10px; background: var(--btn); min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
-
     .tabbar { display: flex; gap: 4px; background: var(--card); border-radius: 14px; padding: 4px; }
     .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
@@ -93,10 +90,6 @@
 <body>
 
 <input type="color" id="color-input"/>
-
-<div class="topbar">
-  <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
-</div>
 
 <div class="tabbar">
   <button class="active" onclick="showView('game')" id="tab-game">🤾 Spiel</button>
@@ -158,6 +151,7 @@
     <button class="swap-btn" onclick="swapTeams()" title="Seiten wechseln">⇄</button>
     <button class="save-btn" id="save-btn" onclick="saveGame()"
       style="background:#1a2a3a; color:#378add;">💾 In Historie speichern</button>
+    <button class="swap-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
   </div>
 
   <div class="reset-area">
