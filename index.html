@@ -152,8 +152,12 @@ let colorTarget = null;
 function load() {
   try {
     const d = localStorage.getItem(STORAGE_KEY);
-    if (d) { const p = JSON.parse(d); state.history = p.history || []; state.darkMode = p.darkMode !== false; }
-  } catch {}
+    if (d) {
+      const p = JSON.parse(d);
+      if (Array.isArray(p.history)) state.history = p.history;
+      if (typeof p.darkMode === 'boolean') state.darkMode = p.darkMode;
+    }
+  } catch (e) { console.warn('load failed', e); }
 }
 
 function save() {
@@ -327,7 +331,17 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(URL.createObjectURL(blob));
 }
 
-load(); applyTheme(); render();
+function init() {
+  load();
+  applyTheme();
+  render();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
