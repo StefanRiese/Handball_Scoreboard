@@ -243,9 +243,11 @@ let colorTarget = null;
 function total(t) { return state.halves[t][0] + state.halves[t][1]; }
 
 function load() {
+  let hadData = false;
   try {
     const d = localStorage.getItem(STORAGE_KEY);
     if (d) {
+      hadData = true;
       const p = JSON.parse(d);
       if (p.a && p.a.name) state.a.name = p.a.name;
       if (p.a && p.a.color) state.a.color = p.a.color;
@@ -260,6 +262,7 @@ function load() {
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
     }
   } catch (e) { console.warn('load failed', e); }
+  return hadData;
 }
 
 function save() {
@@ -283,33 +286,34 @@ function toggleTheme() { state.darkMode = !state.darkMode; applyTheme(); save();
 function toggleLang() { state.lang = state.lang === 'de' ? 'en' : 'de'; applyLang(); render(); renderSettings(); save(); }
 
 function applyLang() {
-  document.documentElement.lang = state.lang;
-  document.getElementById('tab-game').textContent = t('tabGame');
-  document.getElementById('tab-settings').textContent = t('tabSettings');
-  document.getElementById('tab-history').textContent = t('tabHistory');
-  document.getElementById('reset-link').textContent = t('resetGame');
-  document.getElementById('reset-confirm-text').textContent = t('reallyReset');
-  document.getElementById('reset-yes').textContent = t('yes');
-  document.getElementById('reset-no').textContent = t('no');
-  document.getElementById('save-btn').textContent = t('save');
-  document.getElementById('set-title-a').textContent = t('team1');
-  document.getElementById('set-title-b').textContent = t('team2');
-  document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
-  document.querySelectorAll('.lbl-color').forEach(e => e.textContent = t('colorLabel'));
-  document.getElementById('swap-btn').textContent = t('swapSides');
-  document.getElementById('appearance-title').textContent = t('appearance');
-  document.getElementById('design-label').textContent = t('design');
-  document.getElementById('language-label').textContent = t('language');
-  document.getElementById('lang-btn').textContent = state.lang === 'de' ? '🇩🇪 Deutsch' : '🇺🇸 English';
-  document.getElementById('color-modal-title').textContent = t('chooseColor');
-  document.getElementById('color-cancel').textContent = t('cancel');
-  // half button + HZ badges follow the language immediately
-  const hb = document.getElementById('half-btn');
-  if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
-  ['a','b'].forEach(t2 => {
-    const hz = document.getElementById('hz-'+t2);
-    if (hz) hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
-  });
+  try {
+    document.documentElement.lang = state.lang;
+    document.getElementById('tab-game').textContent = t('tabGame');
+    document.getElementById('tab-settings').textContent = t('tabSettings');
+    document.getElementById('tab-history').textContent = t('tabHistory');
+    document.getElementById('reset-link').textContent = t('resetGame');
+    document.getElementById('reset-confirm-text').textContent = t('reallyReset');
+    document.getElementById('reset-yes').textContent = t('yes');
+    document.getElementById('reset-no').textContent = t('no');
+    document.getElementById('save-btn').textContent = t('save');
+    document.getElementById('set-title-a').textContent = t('team1');
+    document.getElementById('set-title-b').textContent = t('team2');
+    document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
+    document.querySelectorAll('.lbl-color').forEach(e => e.textContent = t('colorLabel'));
+    document.getElementById('swap-btn').textContent = t('swapSides');
+    document.getElementById('appearance-title').textContent = t('appearance');
+    document.getElementById('design-label').textContent = t('design');
+    document.getElementById('language-label').textContent = t('language');
+    document.getElementById('lang-btn').textContent = state.lang === 'de' ? '🇩🇪 Deutsch' : '🇺🇸 English';
+    document.getElementById('color-modal-title').textContent = t('chooseColor');
+    document.getElementById('color-cancel').textContent = t('cancel');
+    const hb = document.getElementById('half-btn');
+    if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
+    ['a','b'].forEach(t2 => {
+      const hz = document.getElementById('hz-'+t2);
+      if (hz) hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
+    });
+  } catch (e) { console.warn('applyLang failed', e); }
   applyTheme();
 }
 
@@ -494,10 +498,10 @@ if ('serviceWorker' in navigator) {
 }
 
 function init() {
-  load();
-  applyLang();
-  render();
-  save(); // persist defaults on first launch
+  const hadData = load();
+  render();          // render first so the score/colors always show
+  applyLang();       // then localize static labels
+  if (!hadData) save(); // only persist defaults on a genuine first launch
 }
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 </script>
