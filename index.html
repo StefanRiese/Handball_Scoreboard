@@ -33,7 +33,7 @@
     .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
     .minus-btn:disabled { color: #444; }
     .action-row { display: flex; gap: 10px; margin-top: 4px; }
-    .icon-btn { flex: 0 0 auto; padding: 16px 14px; border-radius: 14px; font-size: 15px; font-weight: 600; min-height: 54px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+    .icon-btn { flex: 0 0 30%; padding: 16px 14px; border-radius: 14px; font-size: 15px; font-weight: 600; min-height: 54px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
     .save-btn { flex: 1; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.1s; }
     .save-btn:active { transform: scale(0.97); }
     .reset-area { text-align: center; }
@@ -303,6 +303,13 @@ function applyLang() {
   document.getElementById('lang-btn').textContent = state.lang === 'de' ? '🇩🇪 Deutsch' : '🇺🇸 English';
   document.getElementById('color-modal-title').textContent = t('chooseColor');
   document.getElementById('color-cancel').textContent = t('cancel');
+  // half button + HZ badges follow the language immediately
+  const hb = document.getElementById('half-btn');
+  if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
+  ['a','b'].forEach(t2 => {
+    const hz = document.getElementById('hz-'+t2);
+    if (hz) hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
+  });
   applyTheme();
 }
 
