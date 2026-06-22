@@ -32,8 +32,15 @@
     .team-score { font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
     .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
     .minus-btn:disabled { color: #444; }
+    .clock-row { display: flex; align-items: stretch; gap: 8px; margin-top: 4px; }
+    .clock-btn { padding: 14px 8px; border-radius: 14px; font-weight: 600; min-height: 80px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+    .clock-start { flex: 0 0 18%; font-size: 38px; line-height: 0; overflow: hidden; }
+    .clock-stop { flex: 0 0 18%; font-size: 30px; line-height: 0; overflow: hidden; }
+    .clock-display { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 38px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 1px; padding: 18px 0; border-radius: 14px; background: var(--card); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; }
+    .clock-display.running { color: #5cb85c; }
+    .clock-display.done { color: #e24b4a; }
+    .clock-half { flex: 0 0 22%; font-size: 12px; line-height: 1.2; white-space: normal; text-align: center; }
     .action-row { display: flex; gap: 10px; margin-top: 4px; }
-    .icon-btn { flex: 0 0 30%; padding: 16px 14px; border-radius: 14px; font-size: 15px; font-weight: 600; min-height: 54px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
     .save-btn { flex: 1; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.1s; }
     .save-btn:active { transform: scale(0.97); }
     .reset-area { text-align: center; }
@@ -48,7 +55,7 @@
     .settings-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .field { display: flex; flex-direction: column; gap: 8px; }
     .field-label { font-size: 14px; color: var(--muted); }
-    .name-input { font-size: 16px; font-weight: 500; border: 0.5px solid var(--btn-border); border-radius: 10px; background: var(--btn); outline: none; color: var(--text); padding: 12px 14px; width: 100%; }
+    .name-input, .number-input { font-size: 16px; font-weight: 500; border: 0.5px solid var(--btn-border); border-radius: 10px; background: var(--btn); outline: none; color: var(--text); padding: 12px 14px; width: 100%; }
     .colors { display: flex; gap: 8px; flex-wrap: wrap; }
     .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
     .swap-row-btn { padding: 14px; border-radius: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; font-weight: 500; color: var(--text); min-height: 50px; }
@@ -76,9 +83,9 @@
 
 <div id="color-modal" onclick="if(event.target===this)cancelColor()">
   <div class="box">
-    <div style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
+    <div id="color-modal-title" style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
     <div id="color-grid"></div>
-    <button onclick="cancelColor()" style="padding:14px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
+    <button id="color-cancel" onclick="cancelColor()" style="padding:14px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
   </div>
 </div>
 
@@ -105,9 +112,15 @@
     </div>
   </div>
 
+  <div class="clock-row">
+    <button class="clock-btn clock-start" id="clock-btn" onclick="toggleClock()">▶</button>
+    <button class="clock-btn clock-stop" id="stop-btn" onclick="stopAndReset()">⏹</button>
+    <div class="clock-display" id="clock-display">30:00</div>
+    <button class="clock-btn clock-half" id="half-btn" onclick="setHalf(state.half === 0 ? 1 : 0)">1. Halbzeit</button>
+  </div>
+
   <div class="action-row">
     <button class="save-btn" id="save-btn" onclick="saveGame()">💾 In Historie speichern</button>
-    <button class="icon-btn" id="half-btn" onclick="setHalf(state.half === 0 ? 1 : 0)" title="Halbzeit wechseln">1. HZ</button>
   </div>
 
   <div class="reset-area">
@@ -140,6 +153,11 @@
   <button class="swap-row-btn" id="swap-btn" onclick="swapTeams()">⇄ Seiten tauschen</button>
 
   <div class="settings-section">
+    <div class="settings-title" id="time-title">Spielzeit</div>
+    <div class="field"><span class="field-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value)" /></div>
+  </div>
+
+  <div class="settings-section">
     <div class="settings-title" id="appearance-title">Darstellung</div>
     <div class="settings-row"><span class="settings-row-label" id="design-label">Design</span><button class="toggle-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dunkel</button></div>
     <div class="settings-row"><span class="settings-row-label" id="language-label">Sprache</span><button class="toggle-btn" onclick="toggleLang()" id="lang-btn">🇩🇪 Deutsch</button></div>
@@ -162,85 +180,28 @@ const ALL_COLORS = [
   '#a0522d','#795548','#ffcc80','#ff8f00','#558b2f','#33691e',
 ];
 
-const STORAGE_KEY = 'handball_v3';
-
 const I18N = {
-  de: {
-    tabGame: '🤾 Spiel',
-    tabSettings: '⚙️ Einstellungen',
-    tabHistory: '📋 Historie',
-    save: '💾 In Historie speichern',
-    saved: '✓ Gespeichert!',
-    half1: '1. HZ',
-    half2: '2. HZ',
-    hz: 'HZ',
-    resetGame: 'Spiel zurücksetzen',
-    reallyReset: 'Wirklich?',
-    yes: 'Ja',
-    no: 'Nein',
-    team1: 'Team 1',
-    team2: 'Team 2',
-    nameLabel: 'Name',
-    colorLabel: 'Farbe',
-    swapSides: '⇄ Seiten tauschen',
-    appearance: 'Darstellung',
-    design: 'Design',
-    dark: '🌙 Dunkel',
-    lightMode: '☀️ Hell',
-    language: 'Sprache',
-    chooseColor: 'Farbe wählen',
-    cancel: 'Abbrechen',
-    noGames: 'Noch keine Spiele gespeichert.',
-    halftime: 'Halbzeit',
-    draw: '🤝 Unentschieden',
-    defaultTeam2: 'Gast',
-    locale: 'de-DE',
-  },
-  en: {
-    tabGame: '🤾 Game',
-    tabSettings: '⚙️ Settings',
-    tabHistory: '📋 History',
-    save: '💾 Save to history',
-    saved: '✓ Saved!',
-    half1: '1st HT',
-    half2: '2nd HT',
-    hz: 'HT',
-    resetGame: 'Reset game',
-    reallyReset: 'Sure?',
-    yes: 'Yes',
-    no: 'No',
-    team1: 'Team 1',
-    team2: 'Team 2',
-    nameLabel: 'Name',
-    colorLabel: 'Color',
-    swapSides: '⇄ Swap sides',
-    appearance: 'Appearance',
-    design: 'Theme',
-    dark: '🌙 Dark',
-    lightMode: '☀️ Light',
-    language: 'Language',
-    chooseColor: 'Choose color',
-    cancel: 'Cancel',
-    noGames: 'No games saved yet.',
-    halftime: 'Halftime',
-    draw: '🤝 Draw',
-    defaultTeam2: 'Guest',
-    locale: 'en-US',
-  },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'💾 In Historie speichern', saved:'✓ Gespeichert!', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', locale:'de-DE' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'💾 Save to history', saved:'✓ Saved!', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', locale:'en-US' },
 };
-
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
+
+const STORAGE_KEY = 'handball_v3';
 
 let state = {
   a: { name: 'TuS Griesheim', color: '#e24b4a' },
   b: { name: 'Gast', color: '#378add' },
-  half: 0,                          // active half: 0 or 1
-  halves: { a: [0, 0], b: [0, 0] }, // goals per half per team
+  half: 0, halves: { a: [0, 0], b: [0, 0] },
   history: [], darkMode: true, lang: 'de',
+  halfLength: 30,
+  clockRemaining: 30*60,  // seconds left (authoritative when paused)
+  clockRunning: false,
+  clockEndsAt: null,      // timestamp (ms) when clock hits 0 (authoritative when running)
 };
 let colorTarget = null;
+let clockTimer = null;
 
-function total(t) { return state.halves[t][0] + state.halves[t][1]; }
+function total(tm) { return state.halves[tm][0] + state.halves[tm][1]; }
 
 function load() {
   let hadData = false;
@@ -260,8 +221,29 @@ function load() {
       if (Array.isArray(p.history)) state.history = p.history;
       if (typeof p.darkMode === 'boolean') state.darkMode = p.darkMode;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
+      if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
+      // restore clock
+      if (p.clockRunning && typeof p.clockEndsAt === 'number') {
+        const left = Math.round((p.clockEndsAt - Date.now()) / 1000);
+        if (left > 0) {
+          state.clockRunning = true;
+          state.clockEndsAt = p.clockEndsAt;
+          state.clockRemaining = left;
+        } else {
+          state.clockRunning = false;
+          state.clockEndsAt = null;
+          state.clockRemaining = 0;
+        }
+      } else {
+        state.clockRunning = false;
+        state.clockEndsAt = null;
+        state.clockRemaining = (typeof p.clockRemaining === 'number') ? p.clockRemaining : state.halfLength * 60;
+      }
+    } else {
+      state.clockRemaining = state.halfLength * 60;
+      state.clockRunning = false;
     }
-  } catch (e) { console.warn('load failed', e); }
+  } catch (e) { console.warn('load failed', e); state.clockRemaining = state.halfLength * 60; state.clockRunning = false; state.clockEndsAt = null; }
   return hadData;
 }
 
@@ -271,7 +253,11 @@ function save() {
       a: { name: state.a.name, color: state.a.color },
       b: { name: state.b.name, color: state.b.color },
       halves: state.halves, half: state.half,
-      history: state.history, darkMode: state.darkMode, lang: state.lang
+      history: state.history, darkMode: state.darkMode, lang: state.lang,
+      halfLength: state.halfLength,
+      clockRunning: state.clockRunning,
+      clockRemaining: state.clockRemaining,
+      clockEndsAt: state.clockEndsAt
     }));
   } catch (e) { console.warn('save failed', e); }
 }
@@ -307,6 +293,8 @@ function applyLang() {
     document.getElementById('lang-btn').textContent = state.lang === 'de' ? '🇩🇪 Deutsch' : '🇺🇸 English';
     document.getElementById('color-modal-title').textContent = t('chooseColor');
     document.getElementById('color-cancel').textContent = t('cancel');
+    document.getElementById('time-title').textContent = t('timeTitle');
+    document.getElementById('halflen-label').textContent = t('halfLenLabel');
     const hb = document.getElementById('half-btn');
     if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
     ['a','b'].forEach(t2 => {
@@ -314,11 +302,90 @@ function applyLang() {
       if (hz) hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
     });
   } catch (e) { console.warn('applyLang failed', e); }
+  renderClock();
   applyTheme();
 }
 
-function setHalf(h) { state.half = h; render(); save(); }
+// ---- Clock ----
+function fmtClock(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
 
+function renderClock() {
+  const disp = document.getElementById('clock-display');
+  if (!disp) return;
+  disp.textContent = fmtClock(state.clockRemaining);
+  disp.classList.toggle('running', state.clockRunning);
+  disp.classList.toggle('done', state.clockRemaining === 0);
+  const btn = document.getElementById('clock-btn');
+  if (btn) btn.textContent = state.clockRunning ? '⏸' : '▶';
+}
+
+function tickClock() {
+  if (!state.clockRunning) return;
+  const left = Math.round((state.clockEndsAt - Date.now()) / 1000);
+  state.clockRemaining = Math.max(0, left);
+  renderClock();
+  if (state.clockRemaining === 0) onClockEnd();
+}
+
+function onClockEnd() {
+  state.clockRunning = false;
+  state.clockEndsAt = null;
+  clearInterval(clockTimer);
+  if (state.half === 0) {
+    state.half = 1;
+    state.clockRemaining = state.halfLength * 60;
+    render();
+  }
+  renderClock();
+  save();
+}
+
+function startClock() {
+  if (state.clockRemaining === 0) state.clockRemaining = state.halfLength * 60;
+  state.clockRunning = true;
+  state.clockEndsAt = Date.now() + state.clockRemaining * 1000;
+  clearInterval(clockTimer);
+  clockTimer = setInterval(tickClock, 250);
+  renderClock();
+  save();
+}
+
+function stopClock() {
+  // freeze remaining from the authoritative end time
+  if (state.clockRunning && state.clockEndsAt) {
+    state.clockRemaining = Math.max(0, Math.round((state.clockEndsAt - Date.now()) / 1000));
+  }
+  state.clockRunning = false;
+  state.clockEndsAt = null;
+  clearInterval(clockTimer);
+  renderClock();
+  save();
+}
+
+function toggleClock() { state.clockRunning ? stopClock() : startClock(); }
+
+function stopAndReset() {
+  state.clockRunning = false;
+  state.clockEndsAt = null;
+  clearInterval(clockTimer);
+  state.clockRemaining = state.halfLength * 60;
+  renderClock();
+  save();
+}
+
+function setHalfLength(v) {
+  let n = parseInt(v, 10);
+  if (isNaN(n) || n < 1) n = 1;
+  if (n > 99) n = 99;
+  state.halfLength = n;
+  if (!state.clockRunning) { state.clockRemaining = n * 60; renderClock(); }
+  save();
+}
+
+// ---- Game ----
 function render() {
   ['a','b'].forEach(t2 => {
     const s = state[t2];
@@ -339,6 +406,7 @@ function render() {
 }
 
 function renderSettings() {
+  document.getElementById('set-halflen').value = state.halfLength;
   ['a','b'].forEach(t2 => {
     document.getElementById('set-name-'+t2).value = state[t2].name;
     const sec = document.getElementById('set-section-'+t2);
@@ -371,7 +439,6 @@ function renderSettings() {
 
 function setName(t2, v) {
   state[t2].name = v;
-  // show fallback on the scoreboard if empty, but keep the input as typed
   const display = v.trim() || (t2 === 'a' ? t('team1') : t('team2'));
   document.getElementById('name-'+t2).textContent = display;
   document.getElementById('name-'+t2).style.color = state[t2].color;
@@ -394,8 +461,10 @@ function openColorModal(t2) {
 
 function cancelColor() { document.getElementById('color-modal').style.display = 'none'; }
 
-function addGoal(t) { state.halves[t][state.half]++; render(); save(); }
-function correct(t, d) { state.halves[t][state.half] = Math.max(0, state.halves[t][state.half] + d); render(); save(); }
+function addGoal(t2) { state.halves[t2][state.half]++; render(); save(); }
+function correct(t2, d) { state.halves[t2][state.half] = Math.max(0, state.halves[t2][state.half] + d); render(); save(); }
+
+function setHalf(h) { state.half = h; render(); save(); }
 
 function swapTeams() {
   const tmpN = state.a.name, tmpC = state.a.color;
@@ -428,6 +497,9 @@ function saveGame() {
 function resetGame() {
   state.halves = { a: [0,0], b: [0,0] };
   state.half = 0;
+  stopClock();
+  state.clockRemaining = state.halfLength * 60;
+  renderClock();
   save();
   document.getElementById('reset-confirm-area').style.display = 'none';
   document.getElementById('reset-link-area').style.display = 'block';
@@ -499,9 +571,15 @@ if ('serviceWorker' in navigator) {
 
 function init() {
   const hadData = load();
-  render();          // render first so the score/colors always show
-  applyLang();       // then localize static labels
-  if (!hadData) save(); // only persist defaults on a genuine first launch
+  render();
+  renderClock();
+  applyLang();
+  // resume ticking if the clock was still running
+  if (state.clockRunning && state.clockRemaining > 0) {
+    clearInterval(clockTimer);
+    clockTimer = setInterval(tickClock, 250);
+  }
+  if (!hadData) save();
 }
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 </script>
