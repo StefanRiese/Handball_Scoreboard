@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
   <meta name="apple-mobile-web-app-title" content="Handball"/>
   <meta name="theme-color" content="#0f0f0f"/>
-  <title>Scoreboard</title>
+  <title>Handball Scoreboard</title>
   <link rel="apple-touch-icon" href="handball_icon.png"/>
 
   <style>
@@ -20,24 +20,20 @@
     button:active { transform: scale(0.93); }
     button:disabled { cursor: not-allowed; transform: none; }
     .tabbar { display: flex; gap: 4px; background: var(--card); border-radius: 14px; padding: 4px; margin-top: 8px; }
-    .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); min-height: 48px; }
+    .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
     .teams { display: flex; gap: 12px; align-items: stretch; }
-    .team-card { flex: 1; min-width: 0; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-    .team-name-btn { background: none; border: none; display: flex; align-items: center; justify-content: center; padding: 8px 12px; border-radius: 10px; min-height: 44px; font-size: 16px; font-weight: 500; cursor: pointer; width: 100%; }
-    .team-name-btn span { white-space: normal; word-break: break-word; text-align: center; }
-    .team-name-input { font-size: 16px; font-weight: 500; text-align: center; border: none; border-bottom: 2px solid; background: transparent; outline: none; width: 90%; color: var(--text); padding: 4px 0; }
-    .team-score { font-size: 80px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
-    .goal-btn { width: 80px; height: 80px; border-radius: 50%; color: #fff; font-size: 40px; display: flex; align-items: center; justify-content: center; }
-    .corr-row { display: flex; gap: 10px; width: 100%; }
-    .corr-btn { flex: 1; padding: 14px 0; border-radius: 12px; border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 16px; font-weight: 500; min-height: 48px; color: var(--text); }
-    .corr-btn:disabled { color: #444; }
-    .colors { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-    .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
-    .color-hex { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); font-family: monospace; }
-    .color-hex-dot { width: 12px; height: 12px; border-radius: 50%; }
-    .action-row { display: flex; gap: 10px; margin-top: 8px; }
-    .icon-btn { flex: 0 0 auto; padding: 16px 18px; border-radius: 14px; font-size: 22px; min-height: 54px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; }
+    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 24px 10px; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; min-height: 300px; justify-content: center; }
+    .team-card:active { transform: scale(0.98); }
+    .hz-badge { position: absolute; top: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: 10px; padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
+    #card-a .hz-badge { right: 12px; }
+    #card-b .hz-badge { left: 12px; }
+    .team-name { font-size: 16px; font-weight: 500; text-align: center; word-break: break-word; padding: 4px 8px; min-height: 24px; }
+    .team-score { font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
+    .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .minus-btn:disabled { color: #444; }
+    .action-row { display: flex; gap: 10px; margin-top: 4px; }
+    .icon-btn { flex: 0 0 auto; padding: 16px 14px; border-radius: 14px; font-size: 15px; font-weight: 600; min-height: 54px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
     .save-btn { flex: 1; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.1s; }
     .save-btn:active { transform: scale(0.97); }
     .reset-area { text-align: center; }
@@ -46,6 +42,19 @@
     .reset-confirm span { font-size: 13px; color: var(--muted); }
     .btn-danger { padding: 12px 20px; border-radius: 10px; background: #e24b4a; color: #fff; font-size: 14px; min-height: 48px; }
     .btn-secondary { padding: 12px 20px; border-radius: 10px; border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 14px; color: var(--text); min-height: 48px; }
+    .settings-teams { display: flex; gap: 12px; align-items: stretch; }
+    .settings-teams .settings-section { flex: 1; min-width: 0; }
+    .settings-section { background: var(--card); border: 0.5px solid var(--border); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+    .settings-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { font-size: 14px; color: var(--muted); }
+    .name-input { font-size: 16px; font-weight: 500; border: 0.5px solid var(--btn-border); border-radius: 10px; background: var(--btn); outline: none; color: var(--text); padding: 12px 14px; width: 100%; }
+    .colors { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
+    .swap-row-btn { padding: 14px; border-radius: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; font-weight: 500; color: var(--text); min-height: 50px; }
+    .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .settings-row-label { font-size: 15px; color: var(--text); }
+    .toggle-btn { padding: 10px 16px; border-radius: 10px; background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; color: var(--text); min-height: 44px; display: flex; align-items: center; gap: 8px; }
     .history { display: flex; flex-direction: column; gap: 10px; }
     .history-empty { text-align: center; color: var(--muted); font-size: 14px; margin-top: 40px; }
     .history-empty .icon { font-size: 40px; margin-bottom: 10px; }
@@ -58,73 +67,86 @@
     .history-dot { width: 12px; height: 12px; border-radius: 50%; }
     .history-score { font-size: 24px; font-weight: 500; letter-spacing: 4px; }
     .history-winner { font-size: 13px; color: var(--muted); text-align: center; }
+    #color-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
+    #color-modal .box { background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
+    #color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
   </style>
 </head>
 <body>
 
-<div id="color-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)cancelColor()">
-  <div style="background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px;">
+<div id="color-modal" onclick="if(event.target===this)cancelColor()">
+  <div class="box">
     <div style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
-    <div id="color-grid" style="display:grid; grid-template-columns:repeat(6,1fr); gap:10px;"></div>
+    <div id="color-grid"></div>
     <button onclick="cancelColor()" style="padding:14px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
   </div>
 </div>
 
 <div class="tabbar">
   <button class="active" onclick="showView('game')" id="tab-game">🤾 Spiel</button>
+  <button onclick="showView('settings')" id="tab-settings">⚙️ Einstellungen</button>
   <button onclick="showView('history')" id="tab-history">📋 Historie</button>
 </div>
 
+<!-- GAME -->
 <div id="view-game" style="display:contents">
   <div class="teams">
-    <div class="team-card" id="card-a">
-      <div id="name-display-a">
-        <button class="team-name-btn" onclick="editName('a')"><span id="name-text-a">TuS Griesheim</span></button>
-      </div>
-      <input class="team-name-input" id="name-input-a" style="display:none" onblur="saveName('a')" onkeydown="if(event.key==='Enter')saveName('a')"/>
+    <div class="team-card" id="card-a" onclick="addGoal('a')">
+      <div class="hz-badge" id="hz-a">HZ 0</div>
+      <div class="team-name" id="name-a">TuS Griesheim</div>
       <div class="team-score" id="disp-a">0</div>
-      <button class="goal-btn" onclick="addGoal('a')">+</button>
-      <div class="corr-row">
-        <button class="corr-btn" id="corr-minus-a" onclick="correct('a',-1)">− 1</button>
-        <button class="corr-btn" onclick="correct('a',1)">+ 1</button>
-      </div>
-      <div class="colors" id="colors-a"></div>
-      <div class="color-hex" id="hex-a" style="display:none"><div class="color-hex-dot" id="hex-dot-a"></div><span id="hex-text-a"></span></div>
+      <button class="minus-btn" id="corr-minus-a" onclick="event.stopPropagation(); correct('a',-1)">−</button>
     </div>
-    <div class="team-card" id="card-b">
-      <div id="name-display-b">
-        <button class="team-name-btn" onclick="editName('b')"><span id="name-text-b">Gast</span></button>
-      </div>
-      <input class="team-name-input" id="name-input-b" style="display:none" onblur="saveName('b')" onkeydown="if(event.key==='Enter')saveName('b')"/>
+    <div class="team-card" id="card-b" onclick="addGoal('b')">
+      <div class="hz-badge" id="hz-b">HZ 0</div>
+      <div class="team-name" id="name-b">Gast</div>
       <div class="team-score" id="disp-b">0</div>
-      <button class="goal-btn" onclick="addGoal('b')">+</button>
-      <div class="corr-row">
-        <button class="corr-btn" id="corr-minus-b" onclick="correct('b',-1)">− 1</button>
-        <button class="corr-btn" onclick="correct('b',1)">+ 1</button>
-      </div>
-      <div class="colors" id="colors-b"></div>
-      <div class="color-hex" id="hex-b" style="display:none"><div class="color-hex-dot" id="hex-dot-b"></div><span id="hex-text-b"></span></div>
+      <button class="minus-btn" id="corr-minus-b" onclick="event.stopPropagation(); correct('b',-1)">−</button>
     </div>
   </div>
 
   <div class="action-row">
-    <button class="icon-btn" onclick="swapTeams()">⇄</button>
     <button class="save-btn" id="save-btn" onclick="saveGame()">💾 In Historie speichern</button>
-    <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+    <button class="icon-btn" id="half-btn" onclick="setHalf(state.half === 0 ? 1 : 0)" title="Halbzeit wechseln">1. HZ</button>
   </div>
 
   <div class="reset-area">
     <div id="reset-link-area">
-      <button class="reset-link" onclick="document.getElementById('reset-link-area').style.display='none';document.getElementById('reset-confirm-area').style.display='flex'">Spiel zurücksetzen</button>
+      <button class="reset-link" id="reset-link" onclick="document.getElementById('reset-link-area').style.display='none';document.getElementById('reset-confirm-area').style.display='flex'">Spiel zurücksetzen</button>
     </div>
     <div id="reset-confirm-area" class="reset-confirm" style="display:none">
-      <span>Wirklich?</span>
-      <button class="btn-danger" onclick="resetGame()">Ja</button>
-      <button class="btn-secondary" onclick="document.getElementById('reset-confirm-area').style.display='none';document.getElementById('reset-link-area').style.display='block'">Nein</button>
+      <span id="reset-confirm-text">Wirklich?</span>
+      <button class="btn-danger" id="reset-yes" onclick="resetGame()">Ja</button>
+      <button class="btn-secondary" id="reset-no" onclick="document.getElementById('reset-confirm-area').style.display='none';document.getElementById('reset-link-area').style.display='block'">Nein</button>
     </div>
   </div>
 </div>
 
+<!-- SETTINGS -->
+<div id="view-settings" style="display:none; flex-direction:column; gap:14px;">
+  <div class="settings-teams">
+    <div class="settings-section" id="set-section-a">
+      <div class="settings-title" id="set-title-a">Team 1</div>
+      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-a" oninput="setName('a', this.value)" /></div>
+      <div class="field"><span class="field-label lbl-color">Farbe</span><div class="colors" id="set-colors-a"></div></div>
+    </div>
+    <div class="settings-section" id="set-section-b">
+      <div class="settings-title" id="set-title-b">Team 2</div>
+      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-b" oninput="setName('b', this.value)" /></div>
+      <div class="field"><span class="field-label lbl-color">Farbe</span><div class="colors" id="set-colors-b"></div></div>
+    </div>
+  </div>
+
+  <button class="swap-row-btn" id="swap-btn" onclick="swapTeams()">⇄ Seiten tauschen</button>
+
+  <div class="settings-section">
+    <div class="settings-title" id="appearance-title">Darstellung</div>
+    <div class="settings-row"><span class="settings-row-label" id="design-label">Design</span><button class="toggle-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dunkel</button></div>
+    <div class="settings-row"><span class="settings-row-label" id="language-label">Sprache</span><button class="toggle-btn" onclick="toggleLang()" id="lang-btn">🇩🇪 Deutsch</button></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
 <div id="view-history" style="display:none">
   <div class="history" id="history-list"></div>
 </div>
@@ -140,97 +162,220 @@ const ALL_COLORS = [
   '#a0522d','#795548','#ffcc80','#ff8f00','#558b2f','#33691e',
 ];
 
-const STORAGE_KEY = 'handball_v2';
+const STORAGE_KEY = 'handball_v3';
+
+const I18N = {
+  de: {
+    tabGame: '🤾 Spiel',
+    tabSettings: '⚙️ Einstellungen',
+    tabHistory: '📋 Historie',
+    save: '💾 In Historie speichern',
+    saved: '✓ Gespeichert!',
+    half1: '1. HZ',
+    half2: '2. HZ',
+    hz: 'HZ',
+    resetGame: 'Spiel zurücksetzen',
+    reallyReset: 'Wirklich?',
+    yes: 'Ja',
+    no: 'Nein',
+    team1: 'Team 1',
+    team2: 'Team 2',
+    nameLabel: 'Name',
+    colorLabel: 'Farbe',
+    swapSides: '⇄ Seiten tauschen',
+    appearance: 'Darstellung',
+    design: 'Design',
+    dark: '🌙 Dunkel',
+    lightMode: '☀️ Hell',
+    language: 'Sprache',
+    chooseColor: 'Farbe wählen',
+    cancel: 'Abbrechen',
+    noGames: 'Noch keine Spiele gespeichert.',
+    halftime: 'Halbzeit',
+    draw: '🤝 Unentschieden',
+    defaultTeam2: 'Gast',
+    locale: 'de-DE',
+  },
+  en: {
+    tabGame: '🤾 Game',
+    tabSettings: '⚙️ Settings',
+    tabHistory: '📋 History',
+    save: '💾 Save to history',
+    saved: '✓ Saved!',
+    half1: '1st HT',
+    half2: '2nd HT',
+    hz: 'HT',
+    resetGame: 'Reset game',
+    reallyReset: 'Sure?',
+    yes: 'Yes',
+    no: 'No',
+    team1: 'Team 1',
+    team2: 'Team 2',
+    nameLabel: 'Name',
+    colorLabel: 'Color',
+    swapSides: '⇄ Swap sides',
+    appearance: 'Appearance',
+    design: 'Theme',
+    dark: '🌙 Dark',
+    lightMode: '☀️ Light',
+    language: 'Language',
+    chooseColor: 'Choose color',
+    cancel: 'Cancel',
+    noGames: 'No games saved yet.',
+    halftime: 'Halftime',
+    draw: '🤝 Draw',
+    defaultTeam2: 'Guest',
+    locale: 'en-US',
+  },
+};
+
+function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
 let state = {
-  a: { name: 'TuS Griesheim', score: 0, color: '#e24b4a' },
-  b: { name: 'Gast', score: 0, color: '#378add' },
-  history: [], darkMode: true,
+  a: { name: 'TuS Griesheim', color: '#e24b4a' },
+  b: { name: 'Gast', color: '#378add' },
+  half: 0,                          // active half: 0 or 1
+  halves: { a: [0, 0], b: [0, 0] }, // goals per half per team
+  history: [], darkMode: true, lang: 'de',
 };
 let colorTarget = null;
+
+function total(t) { return state.halves[t][0] + state.halves[t][1]; }
 
 function load() {
   try {
     const d = localStorage.getItem(STORAGE_KEY);
     if (d) {
       const p = JSON.parse(d);
+      if (p.a && p.a.name) state.a.name = p.a.name;
+      if (p.a && p.a.color) state.a.color = p.a.color;
+      if (p.b && p.b.name) state.b.name = p.b.name;
+      if (p.b && p.b.color) state.b.color = p.b.color;
+      if (p.halves && Array.isArray(p.halves.a) && Array.isArray(p.halves.b)) {
+        state.halves = { a: [p.halves.a[0]||0, p.halves.a[1]||0], b: [p.halves.b[0]||0, p.halves.b[1]||0] };
+      }
+      if (p.half === 0 || p.half === 1) state.half = p.half;
       if (Array.isArray(p.history)) state.history = p.history;
       if (typeof p.darkMode === 'boolean') state.darkMode = p.darkMode;
+      if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
     }
   } catch (e) { console.warn('load failed', e); }
 }
 
 function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ history: state.history, darkMode: state.darkMode })); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      a: { name: state.a.name, color: state.a.color },
+      b: { name: state.b.name, color: state.b.color },
+      halves: state.halves, half: state.half,
+      history: state.history, darkMode: state.darkMode, lang: state.lang
+    }));
+  } catch (e) { console.warn('save failed', e); }
 }
 
 function applyTheme() {
   document.body.classList.toggle('light', !state.darkMode);
-  document.getElementById('theme-btn').textContent = state.darkMode ? '🌙' : '☀️';
+  document.getElementById('theme-btn').textContent = state.darkMode ? t('dark') : t('lightMode');
 }
 
 function toggleTheme() { state.darkMode = !state.darkMode; applyTheme(); save(); }
 
+function toggleLang() { state.lang = state.lang === 'de' ? 'en' : 'de'; applyLang(); render(); renderSettings(); save(); }
+
+function applyLang() {
+  document.documentElement.lang = state.lang;
+  document.getElementById('tab-game').textContent = t('tabGame');
+  document.getElementById('tab-settings').textContent = t('tabSettings');
+  document.getElementById('tab-history').textContent = t('tabHistory');
+  document.getElementById('reset-link').textContent = t('resetGame');
+  document.getElementById('reset-confirm-text').textContent = t('reallyReset');
+  document.getElementById('reset-yes').textContent = t('yes');
+  document.getElementById('reset-no').textContent = t('no');
+  document.getElementById('save-btn').textContent = t('save');
+  document.getElementById('set-title-a').textContent = t('team1');
+  document.getElementById('set-title-b').textContent = t('team2');
+  document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
+  document.querySelectorAll('.lbl-color').forEach(e => e.textContent = t('colorLabel'));
+  document.getElementById('swap-btn').textContent = t('swapSides');
+  document.getElementById('appearance-title').textContent = t('appearance');
+  document.getElementById('design-label').textContent = t('design');
+  document.getElementById('language-label').textContent = t('language');
+  document.getElementById('lang-btn').textContent = state.lang === 'de' ? '🇩🇪 Deutsch' : '🇺🇸 English';
+  document.getElementById('color-modal-title').textContent = t('chooseColor');
+  document.getElementById('color-cancel').textContent = t('cancel');
+  applyTheme();
+}
+
+function setHalf(h) { state.half = h; render(); save(); }
+
 function render() {
-  ['a','b'].forEach(t => {
-    const s = state[t];
-    document.getElementById('disp-'+t).textContent = s.score;
-    document.getElementById('disp-'+t).style.color = s.color;
-    document.getElementById('name-text-'+t).textContent = s.name;
-    document.querySelector('#name-display-'+t+' button').style.color = s.color;
-    document.getElementById('name-input-'+t).style.borderBottomColor = s.color;
-    document.querySelector('#card-'+t+' .goal-btn').style.background = s.color;
-    document.querySelector('#card-'+t+' .goal-btn').style.boxShadow = `0 0 0 6px ${s.color}22`;
-    document.getElementById('corr-minus-'+t).disabled = s.score === 0;
-    document.getElementById('corr-minus-'+t).style.color = s.score === 0 ? '#444' : '';
-    renderColors(t);
+  ['a','b'].forEach(t2 => {
+    const s = state[t2];
+    document.getElementById('disp-'+t2).textContent = total(t2);
+    document.getElementById('disp-'+t2).style.color = s.color;
+    document.getElementById('name-'+t2).textContent = s.name;
+    document.getElementById('name-'+t2).style.color = s.color;
+    document.getElementById('card-'+t2).style.boxShadow = `inset 0 0 0 2px ${s.color}55`;
+    const hz = document.getElementById('hz-'+t2);
+    hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
+    hz.style.color = s.color;
+    const mb = document.getElementById('corr-minus-'+t2);
+    mb.disabled = state.halves[t2][state.half] === 0;
+    mb.style.color = mb.disabled ? '#444' : '';
+  });
+  const hb = document.getElementById('half-btn');
+  if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
+}
+
+function renderSettings() {
+  ['a','b'].forEach(t2 => {
+    document.getElementById('set-name-'+t2).value = state[t2].name;
+    const sec = document.getElementById('set-section-'+t2);
+    if (sec) { sec.style.borderColor = state[t2].color; sec.style.boxShadow = `inset 0 0 0 1px ${state[t2].color}`; }
+    const title = document.getElementById('set-title-'+t2);
+    if (title) title.style.color = state[t2].color;
+    const el = document.getElementById('set-colors-'+t2);
+    el.innerHTML = '';
+    PRESETS.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'color-dot';
+      btn.style.background = p;
+      btn.style.border = state[t2].color === p ? '2.5px solid var(--text)' : '2px solid transparent';
+      btn.style.outline = state[t2].color === p ? '2px solid rgba(128,128,128,0.4)' : 'none';
+      btn.onclick = () => { state[t2].color = p; render(); renderSettings(); save(); };
+      el.appendChild(btn);
+    });
+    const more = document.createElement('button');
+    more.className = 'color-dot';
+    more.style.background = 'var(--btn)';
+    more.style.color = 'var(--muted)';
+    more.style.fontSize = '18px';
+    more.textContent = '+';
+    more.style.border = !PRESETS.includes(state[t2].color) ? '2.5px solid var(--text)' : '2px solid var(--btn-border)';
+    more.style.outline = !PRESETS.includes(state[t2].color) ? '2px solid rgba(128,128,128,0.4)' : 'none';
+    more.onclick = () => { openColorModal(t2); };
+    el.appendChild(more);
   });
 }
 
-function renderColors(t) {
-  const c = state[t].color;
-  const el = document.getElementById('colors-'+t);
-  el.innerHTML = '';
-  PRESETS.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'color-dot';
-    btn.style.background = p;
-    btn.style.border = c === p ? '2.5px solid #fff' : '2px solid transparent';
-    btn.style.outline = c === p ? '2px solid rgba(128,128,128,0.4)' : 'none';
-    btn.onclick = () => { state[t].color = p; render(); };
-    el.appendChild(btn);
-  });
-  const more = document.createElement('button');
-  more.className = 'color-dot';
-  more.style.background = 'var(--btn)';
-  more.style.color = 'var(--muted)';
-  more.style.display = 'flex';
-  more.style.alignItems = 'center';
-  more.style.justifyContent = 'center';
-  more.style.fontSize = '20px';
-  more.style.lineHeight = '1';
-  more.textContent = '+';
-  more.style.border = !PRESETS.includes(c) ? '2.5px solid #fff' : '2px solid var(--btn-border)';
-  more.style.outline = !PRESETS.includes(c) ? '2px solid rgba(128,128,128,0.4)' : 'none';
-  more.onclick = () => { openColorModal(t); };
-  el.appendChild(more);
-  const hexEl = document.getElementById('hex-'+t);
-  if (!PRESETS.includes(c)) {
-    hexEl.style.display = 'flex';
-    document.getElementById('hex-dot-'+t).style.background = c;
-    document.getElementById('hex-text-'+t).textContent = c;
-  } else { hexEl.style.display = 'none'; }
+function setName(t2, v) {
+  state[t2].name = v;
+  // show fallback on the scoreboard if empty, but keep the input as typed
+  const display = v.trim() || (t2 === 'a' ? t('team1') : t('team2'));
+  document.getElementById('name-'+t2).textContent = display;
+  document.getElementById('name-'+t2).style.color = state[t2].color;
+  save();
 }
 
-function openColorModal(t) {
-  colorTarget = t;
+function openColorModal(t2) {
+  colorTarget = t2;
   const grid = document.getElementById('color-grid');
   grid.innerHTML = '';
   ALL_COLORS.forEach(p => {
     const btn = document.createElement('button');
-    const selected = state[t].color === p;
-    btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid #fff':'2px solid rgba(128,128,128,0.2)'};outline:${selected?'2px solid rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
-    btn.onclick = () => { state[colorTarget].color = p; render(); cancelColor(); };
+    const selected = state[t2].color === p;
+    btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};outline:${selected?'2px solid rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
+    btn.onclick = () => { state[colorTarget].color = p; render(); renderSettings(); save(); cancelColor(); };
     grid.appendChild(btn);
   });
   document.getElementById('color-modal').style.display = 'flex';
@@ -238,48 +383,41 @@ function openColorModal(t) {
 
 function cancelColor() { document.getElementById('color-modal').style.display = 'none'; }
 
-function addGoal(t) { state[t].score++; render(); }
-function correct(t, d) { state[t].score = Math.max(0, state[t].score + d); render(); }
+function addGoal(t) { state.halves[t][state.half]++; render(); save(); }
+function correct(t, d) { state.halves[t][state.half] = Math.max(0, state.halves[t][state.half] + d); render(); save(); }
 
 function swapTeams() {
-  const tmp = { ...state.a }; state.a = { ...state.b }; state.b = { ...tmp }; render();
-}
-
-function editName(t) {
-  document.getElementById('name-display-'+t).style.display = 'none';
-  const inp = document.getElementById('name-input-'+t);
-  inp.style.display = 'block'; inp.style.borderBottomColor = state[t].color; inp.value = state[t].name; inp.focus();
-}
-
-function saveName(t) {
-  const v = document.getElementById('name-input-'+t).value.trim();
-  if (v) state[t].name = v;
-  document.getElementById('name-input-'+t).style.display = 'none';
-  document.getElementById('name-display-'+t).style.display = 'block';
-  render();
+  const tmpN = state.a.name, tmpC = state.a.color;
+  state.a.name = state.b.name; state.a.color = state.b.color;
+  state.b.name = tmpN; state.b.color = tmpC;
+  const tmpH = state.halves.a; state.halves.a = state.halves.b; state.halves.b = tmpH;
+  render(); renderSettings(); save();
 }
 
 function saveGame() {
   const now = new Date();
   state.history.unshift({
     id: Date.now(),
-    date: now.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}),
-    time: now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
+    date: now.toLocaleDateString(t('locale'),{day:'2-digit',month:'2-digit',year:'numeric'}),
+    time: now.toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'}),
+    ht: { a: state.halves.a[0], b: state.halves.b[0] },
     teams: [
-      { name: state.a.name, score: state.a.score, color: state.a.color },
-      { name: state.b.name, score: state.b.score, color: state.b.color },
+      { name: state.a.name, score: total('a'), color: state.a.color },
+      { name: state.b.name, score: total('b'), color: state.b.color },
     ]
   });
   save();
   const btn = document.getElementById('save-btn');
-  btn.textContent = '✓ Gespeichert!';
+  btn.textContent = t('saved');
   btn.style.background = '#1a3a1a'; btn.style.color = '#5cb85c'; btn.style.borderColor = 'transparent';
-  setTimeout(() => { btn.textContent = '💾 In Historie speichern'; btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  setTimeout(() => { btn.textContent = t('save'); btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
   renderHistory();
 }
 
 function resetGame() {
-  state.a.score = 0; state.b.score = 0;
+  state.halves = { a: [0,0], b: [0,0] };
+  state.half = 0;
+  save();
   document.getElementById('reset-confirm-area').style.display = 'none';
   document.getElementById('reset-link-area').style.display = 'block';
   render();
@@ -289,13 +427,18 @@ function winner(g) {
   const [a,b] = g.teams;
   if (a.score > b.score) return '🏆 ' + a.name;
   if (b.score > a.score) return '🏆 ' + b.name;
-  return '🤝 Unentschieden';
+  return t('draw');
 }
 
 function renderHistory() {
   const el = document.getElementById('history-list');
-  if (!state.history.length) { el.innerHTML = '<div class="history-empty"><div class="icon">📋</div>Noch keine Spiele gespeichert.</div>'; return; }
-  el.innerHTML = state.history.map(g => `
+  if (!state.history.length) { el.innerHTML = `<div class="history-empty"><div class="icon">📋</div>${t('noGames')}</div>`; return; }
+  el.innerHTML = state.history.map(g => {
+    let halftimeLine = '';
+    if (g.ht) {
+      halftimeLine = `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;">${t('halftime')} ${g.ht.a} : ${g.ht.b}</div>`;
+    }
+    return `
     <div class="history-card">
       <div class="history-meta"><span>${g.date} · ${g.time}</span><button class="del-btn" onclick="deleteGame(${g.id})">✕</button></div>
       <div class="history-score-row">
@@ -304,16 +447,21 @@ function renderHistory() {
         <div class="history-team"><span>${g.teams[1].name}</span><div class="history-dot" style="background:${g.teams[1].color}"></div></div>
       </div>
       <div class="history-winner">${winner(g)}</div>
-    </div>`).join('');
+      ${halftimeLine}
+    </div>`;
+  }).join('');
 }
 
 function deleteGame(id) { state.history = state.history.filter(g => g.id !== id); save(); renderHistory(); }
 
 function showView(v) {
   document.getElementById('view-game').style.display = v === 'game' ? 'contents' : 'none';
+  document.getElementById('view-settings').style.display = v === 'settings' ? 'flex' : 'none';
   document.getElementById('view-history').style.display = v === 'history' ? 'block' : 'none';
   document.getElementById('tab-game').className = v === 'game' ? 'active' : '';
+  document.getElementById('tab-settings').className = v === 'settings' ? 'active' : '';
   document.getElementById('tab-history').className = v === 'history' ? 'active' : '';
+  if (v === 'settings') renderSettings();
   if (v === 'history') renderHistory();
 }
 
@@ -333,22 +481,13 @@ if ('wakeLock' in navigator) {
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
 if ('serviceWorker' in navigator) {
-  const sw = `const CACHE='handball-v2';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['${swScope}']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  const sw = `const CACHE='handball-v3';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['${swScope}']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
   navigator.serviceWorker.register(URL.createObjectURL(blob));
 }
 
-function init() {
-  load();
-  applyTheme();
-  render();
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+function init() { load(); applyLang(); render(); }
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 </script>
 </body>
 </html>
