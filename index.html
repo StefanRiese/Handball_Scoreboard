@@ -34,7 +34,7 @@
     .minus-btn:disabled { color: #444; }
     .clock-row { display: flex; align-items: stretch; gap: 8px; margin-top: 4px; }
     .clock-btn { padding: 14px 8px; border-radius: 14px; font-weight: 600; min-height: 80px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
-    .clock-start { flex: 0 0 18%; font-size: 30px; line-height: 0; overflow: hidden; }
+    .clock-start { flex: 0 0 18%; font-size: 28px; line-height: 0; overflow: hidden; }
     .clock-stop { flex: 0 0 18%; font-size: 30px; line-height: 0; overflow: hidden; }
     .clock-display { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 38px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 1px; padding: 18px 0; border-radius: 14px; background: var(--card); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; }
     .clock-display.running { color: #5cb85c; }
@@ -121,7 +121,13 @@
   </div>
 
   <div class="action-row">
-    <button class="save-btn" id="save-btn" onclick="saveGame()">💾 In Historie speichern</button>
+    <button class="save-btn" id="save-btn" onclick="askFinish()">🏁 Beenden &amp; speichern</button>
+  </div>
+
+  <div id="finish-confirm-area" class="reset-confirm" style="display:none; margin-top:4px;">
+    <span id="finish-confirm-text">Spiel beenden und speichern?</span>
+    <button class="btn-danger" id="finish-yes" onclick="saveGame()">Ja</button>
+    <button class="btn-secondary" id="finish-no" onclick="cancelFinish()">Nein</button>
   </div>
 
   <div class="reset-area">
@@ -182,8 +188,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'💾 In Historie speichern', saved:'✓ Gespeichert!', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', locale:'de-DE' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'💾 Save to history', saved:'✓ Saved!', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', locale:'en-US' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', locale:'de-DE' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', locale:'en-US' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -283,6 +289,7 @@ function applyLang() {
     document.getElementById('reset-yes').textContent = t('yes');
     document.getElementById('reset-no').textContent = t('no');
     document.getElementById('save-btn').textContent = t('save');
+    document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
     document.getElementById('set-title-a').textContent = t('team1');
     document.getElementById('set-title-b').textContent = t('team2');
     document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
@@ -475,6 +482,16 @@ function swapTeams() {
   render(); renderSettings(); save();
 }
 
+function askFinish() {
+  document.getElementById('save-btn').style.display = 'none';
+  document.getElementById('finish-confirm-area').style.display = 'flex';
+}
+
+function cancelFinish() {
+  document.getElementById('finish-confirm-area').style.display = 'none';
+  document.getElementById('save-btn').style.display = 'block';
+}
+
 function saveGame() {
   const now = new Date();
   state.history.unshift({
@@ -487,12 +504,24 @@ function saveGame() {
       { name: state.b.name, score: total('b'), color: state.b.color },
     ]
   });
+  // reset game after finishing: scores, half, clock
+  state.halves = { a: [0,0], b: [0,0] };
+  state.half = 0;
+  state.clockRunning = false;
+  state.clockEndsAt = null;
+  clearInterval(clockTimer);
+  state.clockRemaining = state.halfLength * 60;
   save();
+  render();
+  renderClock();
+  renderHistory();
+  // restore button, show confirmation flash
+  document.getElementById('finish-confirm-area').style.display = 'none';
   const btn = document.getElementById('save-btn');
+  btn.style.display = 'block';
   btn.textContent = t('saved');
   btn.style.background = '#1a3a1a'; btn.style.color = '#5cb85c'; btn.style.borderColor = 'transparent';
   setTimeout(() => { btn.textContent = t('save'); btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
-  renderHistory();
 }
 
 function resetGame() {
