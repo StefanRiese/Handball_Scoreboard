@@ -121,7 +121,7 @@
   </div>
 
   <div id="half-fallback" style="display:none; margin-top:4px;">
-    <button class="swap-row-btn" id="half-btn-fallback" onclick="setHalf(state.half === 0 ? 1 : 0)" style="width:100%;">1. Halbzeit</button>
+    <button class="swap-row-btn" id="half-btn-fallback" onclick="setHalf(state.half === 0 ? 1 : 0)" style="width:100%; min-height:54px;">1. Halbzeit</button>
   </div>
 
   <div class="action-row">
@@ -151,12 +151,12 @@
   <div class="settings-teams">
     <div class="settings-section" id="set-section-a">
       <div class="settings-title" id="set-title-a">Team 1</div>
-      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-a" oninput="setName('a', this.value)" /></div>
+      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-a" enterkeyhint="done" oninput="setName('a', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" /></div>
       <div class="field"><span class="field-label lbl-color">Farbe</span><div class="colors" id="set-colors-a"></div></div>
     </div>
     <div class="settings-section" id="set-section-b">
       <div class="settings-title" id="set-title-b">Team 2</div>
-      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-b" oninput="setName('b', this.value)" /></div>
+      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-b" enterkeyhint="done" oninput="setName('b', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" /></div>
       <div class="field"><span class="field-label lbl-color">Farbe</span><div class="colors" id="set-colors-b"></div></div>
     </div>
   </div>
