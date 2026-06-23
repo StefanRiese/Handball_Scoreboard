@@ -114,8 +114,8 @@
   </div>
 
   <div class="clock-row">
-    <button class="clock-btn clock-start" id="clock-btn" onclick="toggleClock()">▶</button>
-    <button class="clock-btn clock-stop" id="stop-btn" onclick="stopAndReset()">⟳</button>
+    <button class="clock-btn clock-start" id="clock-btn" onclick="toggleClock()">&#x25B6;&#xFE0E;</button>
+    <button class="clock-btn clock-stop" id="stop-btn" onclick="stopAndReset()">&#x21BB;</button>
     <div class="clock-display" id="clock-display">30:00</div>
     <button class="clock-btn clock-half" id="half-btn" onclick="setHalf(state.half === 0 ? 1 : 0)">1. Halbzeit</button>
   </div>
@@ -320,7 +320,7 @@ function renderClock() {
   disp.classList.toggle('running', state.clockRunning);
   disp.classList.toggle('done', state.clockRemaining === 0);
   const btn = document.getElementById('clock-btn');
-  if (btn) btn.textContent = state.clockRunning ? '⏸' : '▶';
+  if (btn) btn.textContent = state.clockRunning ? '\u23F8\uFE0E' : '\u25B6\uFE0E';
 }
 
 function tickClock() {
@@ -551,7 +551,6 @@ function showView(v) {
 
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('gesturechange', e => e.preventDefault());
-document.addEventListener('gestureend', e => e.preventDefault());
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 document.addEventListener('dblclick', e => e.preventDefault());
 document.body.addEventListener('touchmove', e => { e.stopPropagation(); }, { passive: true });
