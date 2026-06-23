@@ -30,7 +30,7 @@
     #card-b .hz-badge { left: 12px; }
     .team-name { font-size: 16px; font-weight: 500; text-align: center; word-break: break-word; padding: 4px 8px; min-height: 24px; }
     .team-score { font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
-    .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 46px; height: 46px; border-radius: 10px; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
     .minus-btn:disabled { color: #444; }
     .clock-row { display: flex; align-items: stretch; gap: 8px; margin-top: 4px; }
     .clock-btn { padding: 14px 8px; border-radius: 14px; font-weight: 600; min-height: 80px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
@@ -120,6 +120,10 @@
     <button class="clock-btn clock-half" id="half-btn" onclick="setHalf(state.half === 0 ? 1 : 0)">1. Halbzeit</button>
   </div>
 
+  <div id="half-fallback" style="display:none; margin-top:4px;">
+    <button class="swap-row-btn" id="half-btn-fallback" onclick="setHalf(state.half === 0 ? 1 : 0)" style="width:100%;">1. Halbzeit</button>
+  </div>
+
   <div class="action-row">
     <button class="save-btn" id="save-btn" onclick="askFinish()">🏁 Beenden &amp; speichern</button>
   </div>
@@ -161,6 +165,7 @@
 
   <div class="settings-section">
     <div class="settings-title" id="time-title">Spielzeit</div>
+    <div class="settings-row"><span class="settings-row-label" id="showclock-label">Uhr anzeigen</span><button class="toggle-btn" onclick="toggleClockVisible()" id="showclock-btn">An</button></div>
     <div class="field"><span class="field-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value)" /></div>
   </div>
 
@@ -188,8 +193,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', locale:'de-DE' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', locale:'en-US' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -199,7 +204,7 @@ let state = {
   a: { name: 'TuS Griesheim', color: '#e24b4a' },
   b: { name: 'Gast', color: '#378add' },
   half: 0, halves: { a: [0, 0], b: [0, 0] },
-  history: [], darkMode: true, lang: 'de',
+  history: [], darkMode: true, lang: 'de', showClock: true,
   halfLength: 30,
   clockRemaining: 30*60,  // seconds left (authoritative when paused)
   clockRunning: false,
@@ -227,6 +232,7 @@ function load() {
       if (p.half === 0 || p.half === 1) state.half = p.half;
       if (Array.isArray(p.history)) state.history = p.history;
       if (typeof p.darkMode === 'boolean') state.darkMode = p.darkMode;
+      if (typeof p.showClock === 'boolean') state.showClock = p.showClock;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
       // restore clock
@@ -261,6 +267,7 @@ function save() {
       b: { name: state.b.name, color: state.b.color },
       halves: state.halves, half: state.half,
       history: state.history, darkMode: state.darkMode, lang: state.lang,
+      showClock: state.showClock,
       halfLength: state.halfLength,
       clockRunning: state.clockRunning,
       clockRemaining: state.clockRemaining,
@@ -275,6 +282,23 @@ function applyTheme() {
 }
 
 function toggleTheme() { state.darkMode = !state.darkMode; applyTheme(); save(); }
+
+function applyClockVisible() {
+  const row = document.querySelector('.clock-row');
+  if (row) row.style.display = state.showClock ? 'flex' : 'none';
+  const btn = document.getElementById('showclock-btn');
+  if (btn) btn.textContent = state.showClock ? t('on') : t('off');
+  // when clock is hidden, the half toggle lives in the clock row, so expose a fallback
+  const fallback = document.getElementById('half-fallback');
+  if (fallback) fallback.style.display = state.showClock ? 'none' : 'flex';
+}
+
+function toggleClockVisible() {
+  state.showClock = !state.showClock;
+  if (!state.showClock) { stopAndReset(); }
+  applyClockVisible();
+  save();
+}
 
 function toggleLang() { state.lang = state.lang === 'de' ? 'en' : 'de'; applyLang(); render(); renderSettings(); save(); }
 
@@ -303,8 +327,12 @@ function applyLang() {
     document.getElementById('color-cancel').textContent = t('cancel');
     document.getElementById('time-title').textContent = t('timeTitle');
     document.getElementById('halflen-label').textContent = t('halfLenLabel');
+    document.getElementById('showclock-label').textContent = t('showClock');
+    document.getElementById('showclock-btn').textContent = state.showClock ? t('on') : t('off');
     const hb = document.getElementById('half-btn');
     if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
+    const hbf = document.getElementById('half-btn-fallback');
+    if (hbf) hbf.textContent = state.half === 0 ? t('half1') : t('half2');
     ['a','b'].forEach(t2 => {
       const hz = document.getElementById('hz-'+t2);
       if (hz) hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
@@ -411,6 +439,8 @@ function render() {
   });
   const hb = document.getElementById('half-btn');
   if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
+  const hbf = document.getElementById('half-btn-fallback');
+  if (hbf) hbf.textContent = state.half === 0 ? t('half1') : t('half2');
 }
 
 function renderSettings() {
@@ -603,8 +633,9 @@ function init() {
   render();
   renderClock();
   applyLang();
+  applyClockVisible();
   // resume ticking if the clock was still running
-  if (state.clockRunning && state.clockRemaining > 0) {
+  if (state.showClock && state.clockRunning && state.clockRemaining > 0) {
     clearInterval(clockTimer);
     clockTimer = setInterval(tickClock, 250);
   }
