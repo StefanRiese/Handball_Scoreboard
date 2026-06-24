@@ -75,6 +75,10 @@
     .history-dot { width: 12px; height: 12px; border-radius: 50%; }
     .history-score { font-size: 24px; font-weight: 500; letter-spacing: 4px; }
     .history-winner { font-size: 13px; color: var(--muted); text-align: center; }
+    .history-del-confirm { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
+    .history-del-confirm span { font-size: 13px; color: var(--muted); flex: 1; }
+    .history-del-confirm .btn-danger { padding: 8px 16px; font-size: 13px; min-height: 38px; }
+    .history-del-confirm .btn-secondary { padding: 8px 16px; font-size: 13px; min-height: 38px; }
     #color-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
     #color-modal .box { background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
     #color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
@@ -193,8 +197,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -206,12 +210,13 @@ let state = {
   half: 0, halves: { a: [0, 0], b: [0, 0] },
   history: [], darkMode: true, lang: 'de', showClock: true,
   halfLength: 30,
-  clockRemaining: 30*60,  // seconds left (authoritative when paused)
+  clockRemaining: 30*60,
   clockRunning: false,
-  clockEndsAt: null,      // timestamp (ms) when clock hits 0 (authoritative when running)
+  clockEndsAt: null,
 };
 let colorTarget = null;
 let clockTimer = null;
+let pendingDeleteId = null;
 
 function total(tm) { return state.halves[tm][0] + state.halves[tm][1]; }
 
@@ -235,7 +240,6 @@ function load() {
       if (typeof p.showClock === 'boolean') state.showClock = p.showClock;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
-      // restore clock
       if (p.clockRunning && typeof p.clockEndsAt === 'number') {
         const left = Math.round((p.clockEndsAt - Date.now()) / 1000);
         if (left > 0) {
@@ -288,7 +292,6 @@ function applyClockVisible() {
   if (row) row.style.display = state.showClock ? 'flex' : 'none';
   const btn = document.getElementById('showclock-btn');
   if (btn) btn.textContent = state.showClock ? t('on') : t('off');
-  // when clock is hidden, the half toggle lives in the clock row, so expose a fallback
   const fallback = document.getElementById('half-fallback');
   if (fallback) fallback.style.display = state.showClock ? 'none' : 'flex';
 }
@@ -342,7 +345,6 @@ function applyLang() {
   applyTheme();
 }
 
-// ---- Clock ----
 function fmtClock(sec) {
   const m = Math.floor(sec / 60), s = sec % 60;
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -390,7 +392,6 @@ function startClock() {
 }
 
 function stopClock() {
-  // freeze remaining from the authoritative end time
   if (state.clockRunning && state.clockEndsAt) {
     state.clockRemaining = Math.max(0, Math.round((state.clockEndsAt - Date.now()) / 1000));
   }
@@ -421,7 +422,6 @@ function setHalfLength(v) {
   save();
 }
 
-// ---- Game ----
 function render() {
   ['a','b'].forEach(t2 => {
     const s = state[t2];
@@ -534,7 +534,6 @@ function saveGame() {
       { name: state.b.name, score: total('b'), color: state.b.color },
     ]
   });
-  // reset game after finishing: scores, half, clock
   state.halves = { a: [0,0], b: [0,0] };
   state.half = 0;
   state.clockRunning = false;
@@ -545,7 +544,6 @@ function saveGame() {
   render();
   renderClock();
   renderHistory();
-  // restore button, show confirmation flash
   document.getElementById('finish-confirm-area').style.display = 'none';
   const btn = document.getElementById('save-btn');
   btn.style.display = 'block';
@@ -573,17 +571,47 @@ function winner(g) {
   return t('draw');
 }
 
+function askDeleteGame(id) {
+  pendingDeleteId = id;
+  renderHistory();
+}
+
+function cancelDeleteGame() {
+  pendingDeleteId = null;
+  renderHistory();
+}
+
+function confirmDeleteGame() {
+  if (pendingDeleteId !== null) {
+    state.history = state.history.filter(g => g.id !== pendingDeleteId);
+    pendingDeleteId = null;
+    save();
+    renderHistory();
+  }
+}
+
 function renderHistory() {
   const el = document.getElementById('history-list');
   if (!state.history.length) { el.innerHTML = `<div class="history-empty"><div class="icon">📋</div>${t('noGames')}</div>`; return; }
   el.innerHTML = state.history.map(g => {
+    const isPending = pendingDeleteId === g.id;
     let halftimeLine = '';
     if (g.ht) {
       halftimeLine = `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;">${t('halftime')} ${g.ht.a} : ${g.ht.b}</div>`;
     }
+    const delSection = isPending
+      ? `<div class="history-del-confirm">
+           <span>${t('deleteConfirm')}</span>
+           <button class="btn-secondary" onclick="cancelDeleteGame()">${t('no')}</button>
+           <button class="btn-danger" onclick="confirmDeleteGame()">${t('delete')}</button>
+         </div>`
+      : '';
+    const delBtn = !isPending
+      ? `<button class="del-btn" onclick="askDeleteGame(${g.id})">✕</button>`
+      : `<span></span>`;
     return `
-    <div class="history-card">
-      <div class="history-meta"><span>${g.date} · ${g.time}</span><button class="del-btn" onclick="deleteGame(${g.id})">✕</button></div>
+    <div class="history-card" style="${isPending ? 'border-color: #e24b4a55;' : ''}">
+      <div class="history-meta"><span>${g.date} · ${g.time}</span>${delBtn}</div>
       <div class="history-score-row">
         <div class="history-team"><div class="history-dot" style="background:${g.teams[0].color}"></div><span>${g.teams[0].name}</span></div>
         <div class="history-score"><span style="color:${g.teams[0].color}">${g.teams[0].score}</span><span style="color:var(--muted)"> : </span><span style="color:${g.teams[1].color}">${g.teams[1].score}</span></div>
@@ -591,11 +619,10 @@ function renderHistory() {
       </div>
       <div class="history-winner">${winner(g)}</div>
       ${halftimeLine}
+      ${delSection}
     </div>`;
   }).join('');
 }
-
-function deleteGame(id) { state.history = state.history.filter(g => g.id !== id); save(); renderHistory(); }
 
 function showView(v) {
   document.getElementById('view-game').style.display = v === 'game' ? 'contents' : 'none';
@@ -605,7 +632,7 @@ function showView(v) {
   document.getElementById('tab-settings').className = v === 'settings' ? 'active' : '';
   document.getElementById('tab-history').className = v === 'history' ? 'active' : '';
   if (v === 'settings') renderSettings();
-  if (v === 'history') renderHistory();
+  if (v === 'history') { pendingDeleteId = null; renderHistory(); }
 }
 
 document.addEventListener('gesturestart', e => e.preventDefault());
@@ -634,7 +661,6 @@ function init() {
   renderClock();
   applyLang();
   applyClockVisible();
-  // resume ticking if the clock was still running
   if (state.showClock && state.clockRunning && state.clockRemaining > 0) {
     clearInterval(clockTimer);
     clockTimer = setInterval(tickClock, 250);
