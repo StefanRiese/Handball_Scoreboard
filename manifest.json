@@ -1,0 +1,13 @@
+{
+  "name": "Handball Scoreboard",
+  "short_name": "Handball",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "icons": [
+    { "src": "handball_icon.png", "sizes": "1024x1024", "type": "image/png" }
+  ]
+}
