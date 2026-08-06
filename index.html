@@ -84,6 +84,7 @@
     #color-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
     #color-modal .box { background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
     #color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+    .color-dot:focus-visible, #color-grid button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
     @media (orientation: landscape) and (max-height: 500px) {
       .team-card { min-height: 200px; padding: 14px 10px; gap: 6px; }
@@ -474,7 +475,7 @@ function renderSettings() {
       btn.className = 'color-dot';
       btn.style.background = p;
       btn.style.border = state[t2].color === p ? '2.5px solid var(--text)' : '2px solid transparent';
-      btn.style.outline = state[t2].color === p ? '2px solid rgba(128,128,128,0.4)' : 'none';
+      btn.style.boxShadow = state[t2].color === p ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
       btn.setAttribute('aria-label', p);
       btn.onclick = () => { state[t2].color = p; render(); renderSettings(); save(); };
       el.appendChild(btn);
@@ -487,7 +488,7 @@ function renderSettings() {
     more.textContent = '+';
     more.setAttribute('aria-label', t('ariaMoreColors'));
     more.style.border = !PRESETS.includes(state[t2].color) ? '2.5px solid var(--text)' : '2px solid var(--btn-border)';
-    more.style.outline = !PRESETS.includes(state[t2].color) ? '2px solid rgba(128,128,128,0.4)' : 'none';
+    more.style.boxShadow = !PRESETS.includes(state[t2].color) ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
     more.onclick = () => { openColorModal(t2); };
     el.appendChild(more);
   });
@@ -508,7 +509,7 @@ function openColorModal(t2) {
   ALL_COLORS.forEach(p => {
     const btn = document.createElement('button');
     const selected = state[t2].color === p;
-    btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};outline:${selected?'2px solid rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
+    btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};box-shadow:${selected?'0 0 0 2px rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
     btn.setAttribute('aria-label', p);
     btn.onclick = () => { state[colorTarget].color = p; render(); renderSettings(); save(); cancelColor(); };
     grid.appendChild(btn);
