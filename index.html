@@ -194,6 +194,16 @@
 <!-- HISTORY -->
 <div id="view-history" style="display:none">
   <div class="history" id="history-list"></div>
+  <div id="history-clear-area" class="reset-area" style="display:none; margin-top:16px;">
+    <div id="clear-link-area">
+      <button class="reset-link" id="clear-history-link" onclick="askClearHistory()">Historie löschen</button>
+    </div>
+    <div id="clear-confirm-area" class="reset-confirm" style="display:none">
+      <span id="clear-confirm-text">Wirklich alle Spiele löschen?</span>
+      <button class="btn-danger" id="clear-yes" onclick="confirmClearHistory()">Ja</button>
+      <button class="btn-secondary" id="clear-no" onclick="cancelClearHistory()">Nein</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -208,8 +218,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -228,6 +238,7 @@ let state = {
 let colorTarget = null;
 let clockTimer = null;
 let pendingDeleteId = null;
+let pendingClearAll = false;
 
 function total(tm) { return state.halves[tm][0] + state.halves[tm][1]; }
 
@@ -326,6 +337,10 @@ function applyLang() {
     document.getElementById('reset-confirm-text').textContent = t('reallyReset');
     document.getElementById('reset-yes').textContent = t('yes');
     document.getElementById('reset-no').textContent = t('no');
+    document.getElementById('clear-history-link').textContent = t('clearHistory');
+    document.getElementById('clear-confirm-text').textContent = t('reallyClearHistory');
+    document.getElementById('clear-yes').textContent = t('yes');
+    document.getElementById('clear-no').textContent = t('no');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
     document.getElementById('set-title-a').textContent = t('team1');
@@ -629,6 +644,7 @@ function winner(g) {
 
 function askDeleteGame(id) {
   pendingDeleteId = id;
+  pendingClearAll = false;
   renderHistory();
 }
 
@@ -646,9 +662,35 @@ function confirmDeleteGame() {
   }
 }
 
+function askClearHistory() {
+  pendingClearAll = true;
+  pendingDeleteId = null;
+  renderHistory();
+}
+
+function cancelClearHistory() {
+  pendingClearAll = false;
+  renderHistory();
+}
+
+function confirmClearHistory() {
+  state.history = [];
+  pendingClearAll = false;
+  save();
+  renderHistory();
+}
+
 function renderHistory() {
   const el = document.getElementById('history-list');
-  if (!state.history.length) { el.innerHTML = `<div class="history-empty"><div class="icon">📋</div>${t('noGames')}</div>`; return; }
+  const clearArea = document.getElementById('history-clear-area');
+  if (!state.history.length) {
+    clearArea.style.display = 'none';
+    el.innerHTML = `<div class="history-empty"><div class="icon">📋</div>${t('noGames')}</div>`;
+    return;
+  }
+  clearArea.style.display = 'block';
+  document.getElementById('clear-link-area').style.display = pendingClearAll ? 'none' : 'block';
+  document.getElementById('clear-confirm-area').style.display = pendingClearAll ? 'flex' : 'none';
   el.innerHTML = state.history.map(g => {
     const isPending = pendingDeleteId === g.id;
     let halftimeLine = '';
@@ -688,7 +730,7 @@ function showView(v) {
   document.getElementById('tab-settings').className = v === 'settings' ? 'active' : '';
   document.getElementById('tab-history').className = v === 'history' ? 'active' : '';
   if (v === 'settings') renderSettings();
-  if (v === 'history') { pendingDeleteId = null; renderHistory(); }
+  if (v === 'history') { pendingDeleteId = null; pendingClearAll = false; renderHistory(); }
 }
 
 document.addEventListener('gesturestart', e => e.preventDefault());
