@@ -9,6 +9,8 @@
   <meta name="theme-color" content="#0f0f0f"/>
   <title>Handball Scoreboard</title>
   <link rel="apple-touch-icon" href="handball_icon.png"/>
+  <link rel="icon" href="handball_icon.png"/>
+  <link rel="manifest" href="manifest.json"/>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -82,6 +84,14 @@
     #color-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
     #color-modal .box { background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
     #color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      .team-card { min-height: 200px; padding: 14px 10px; gap: 6px; }
+      .team-score { font-size: 60px; }
+      .hz-badge { padding: 4px 10px; font-size: 14px; }
+      .clock-btn { min-height: 54px; }
+      .clock-display { font-size: 26px; padding: 10px 0; }
+    }
   </style>
 </head>
 <body>
@@ -107,19 +117,19 @@
       <div class="hz-badge" id="hz-a">HZ 0</div>
       <div class="team-name" id="name-a">TuS Griesheim</div>
       <div class="team-score" id="disp-a">0</div>
-      <button class="minus-btn" id="corr-minus-a" onclick="event.stopPropagation(); correct('a',-1)">−</button>
+      <button class="minus-btn" id="corr-minus-a" aria-label="Tor abziehen" onclick="event.stopPropagation(); correct('a',-1)">−</button>
     </div>
     <div class="team-card" id="card-b" onclick="addGoal('b')">
       <div class="hz-badge" id="hz-b">HZ 0</div>
       <div class="team-name" id="name-b">Gast</div>
       <div class="team-score" id="disp-b">0</div>
-      <button class="minus-btn" id="corr-minus-b" onclick="event.stopPropagation(); correct('b',-1)">−</button>
+      <button class="minus-btn" id="corr-minus-b" aria-label="Tor abziehen" onclick="event.stopPropagation(); correct('b',-1)">−</button>
     </div>
   </div>
 
   <div class="clock-row">
-    <button class="clock-btn clock-start" id="clock-btn" onclick="toggleClock()">&#x25B6;&#xFE0E;</button>
-    <button class="clock-btn clock-stop" id="stop-btn" onclick="stopAndReset()">&#x21BB;</button>
+    <button class="clock-btn clock-start" id="clock-btn" aria-label="Uhr starten" onclick="toggleClock()">&#x25B6;&#xFE0E;</button>
+    <button class="clock-btn clock-stop" id="stop-btn" aria-label="Uhr zurücksetzen" onclick="stopAndReset()">&#x21BB;</button>
     <div class="clock-display" id="clock-display">30:00</div>
     <button class="clock-btn clock-half" id="half-btn" onclick="setHalf(state.half === 0 ? 1 : 0)">1. Halbzeit</button>
   </div>
@@ -197,8 +207,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -339,7 +349,10 @@ function applyLang() {
     ['a','b'].forEach(t2 => {
       const hz = document.getElementById('hz-'+t2);
       if (hz) hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
+      const mb = document.getElementById('corr-minus-'+t2);
+      if (mb) mb.setAttribute('aria-label', t('ariaMinus'));
     });
+    document.getElementById('stop-btn').setAttribute('aria-label', t('ariaClockReset'));
   } catch (e) { console.warn('applyLang failed', e); }
   renderClock();
   applyTheme();
@@ -357,7 +370,10 @@ function renderClock() {
   disp.classList.toggle('running', state.clockRunning);
   disp.classList.toggle('done', state.clockRemaining === 0);
   const btn = document.getElementById('clock-btn');
-  if (btn) btn.textContent = state.clockRunning ? '\u23F8\uFE0E' : '\u25B6\uFE0E';
+  if (btn) {
+    btn.textContent = state.clockRunning ? '\u23F8\uFE0E' : '\u25B6\uFE0E';
+    btn.setAttribute('aria-label', state.clockRunning ? t('ariaClockPause') : t('ariaClockStart'));
+  }
 }
 
 function tickClock() {
@@ -459,6 +475,7 @@ function renderSettings() {
       btn.style.background = p;
       btn.style.border = state[t2].color === p ? '2.5px solid var(--text)' : '2px solid transparent';
       btn.style.outline = state[t2].color === p ? '2px solid rgba(128,128,128,0.4)' : 'none';
+      btn.setAttribute('aria-label', p);
       btn.onclick = () => { state[t2].color = p; render(); renderSettings(); save(); };
       el.appendChild(btn);
     });
@@ -468,6 +485,7 @@ function renderSettings() {
     more.style.color = 'var(--muted)';
     more.style.fontSize = '18px';
     more.textContent = '+';
+    more.setAttribute('aria-label', t('ariaMoreColors'));
     more.style.border = !PRESETS.includes(state[t2].color) ? '2.5px solid var(--text)' : '2px solid var(--btn-border)';
     more.style.outline = !PRESETS.includes(state[t2].color) ? '2px solid rgba(128,128,128,0.4)' : 'none';
     more.onclick = () => { openColorModal(t2); };
@@ -491,6 +509,7 @@ function openColorModal(t2) {
     const btn = document.createElement('button');
     const selected = state[t2].color === p;
     btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};outline:${selected?'2px solid rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
+    btn.setAttribute('aria-label', p);
     btn.onclick = () => { state[colorTarget].color = p; render(); renderSettings(); save(); cancelColor(); };
     grid.appendChild(btn);
   });
@@ -499,7 +518,7 @@ function openColorModal(t2) {
 
 function cancelColor() { document.getElementById('color-modal').style.display = 'none'; }
 
-function addGoal(t2) { state.halves[t2][state.half]++; render(); save(); }
+function addGoal(t2) { state.halves[t2][state.half]++; if (navigator.vibrate) navigator.vibrate(10); render(); save(); }
 function correct(t2, d) { state.halves[t2][state.half] = Math.max(0, state.halves[t2][state.half] + d); render(); save(); }
 
 function setHalf(h) { state.half = h; render(); save(); }
@@ -607,7 +626,7 @@ function renderHistory() {
          </div>`
       : '';
     const delBtn = !isPending
-      ? `<button class="del-btn" onclick="askDeleteGame(${g.id})">✕</button>`
+      ? `<button class="del-btn" aria-label="${t('ariaDeleteEntry')}" onclick="askDeleteGame(${g.id})">✕</button>`
       : `<span></span>`;
     return `
     <div class="history-card" style="${isPending ? 'border-color: #e24b4a55;' : ''}">
