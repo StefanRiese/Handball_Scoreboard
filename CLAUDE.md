@@ -78,6 +78,14 @@ rather than `confirm()` dialogs or immediate deletion.
 `navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` since
 the OS releases it when the tab backgrounds.
 
+**Update flow**: the cache is cache-first (works fully offline), so the SW script itself must
+byte-differ for the browser to detect a new version and go through the install/waiting lifecycle
+— bump `APP_VERSION` on every deploy you want offline/installed users to be prompted about,
+otherwise they stay on the old cached version indefinitely. When a new version installs, the
+`updatefound`/`statechange` listeners near `showUpdateBanner()` surface a banner (not a silent
+swap) so the user explicitly chooses to reload via `applyUpdate()` — appropriate given the app is
+used live during a match, where content changing under the user unprompted would be disruptive.
+
 **Touch-only target**: this app is used one-handed on a phone touchscreen during a live match —
 optimize for tap targets, haptic feedback (`navigator.vibrate`), and portrait/landscape layout,
 not keyboard or mouse interaction.

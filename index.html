@@ -111,6 +111,14 @@
   <button onclick="showView('history')" id="tab-history">📋 Historie</button>
 </div>
 
+<div id="update-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:0.5px solid var(--border); border-radius:14px; padding:12px 14px;">
+  <span id="update-banner-text" style="font-size:14px; color:var(--text);">Update verfügbar</span>
+  <div style="display:flex; gap:8px; flex-shrink:0;">
+    <button class="btn-secondary" id="update-later-btn" onclick="dismissUpdate()">Später</button>
+    <button class="btn-secondary" id="update-now-btn" onclick="applyUpdate()" style="background:#378add; color:#fff; border-color:transparent;">Aktualisieren</button>
+  </div>
+</div>
+
 <!-- GAME -->
 <div id="view-game" style="display:contents">
   <div class="teams">
@@ -218,12 +226,15 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
 const STORAGE_KEY = 'handball_v3';
+// Bump this on every deploy that should prompt installed/offline users to update —
+// it's what makes the Service Worker byte-differ from the previous one and trigger the update flow.
+const APP_VERSION = 1;
 
 let state = {
   a: { name: 'TuS Griesheim', color: '#e24b4a' },
@@ -341,6 +352,9 @@ function applyLang() {
     document.getElementById('clear-confirm-text').textContent = t('reallyClearHistory');
     document.getElementById('clear-yes').textContent = t('yes');
     document.getElementById('clear-no').textContent = t('no');
+    document.getElementById('update-banner-text').textContent = t('updateAvailable');
+    document.getElementById('update-now-btn').textContent = t('updateNow');
+    document.getElementById('update-later-btn').textContent = t('updateLater');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
     document.getElementById('set-title-a').textContent = t('team1');
@@ -746,11 +760,42 @@ if ('wakeLock' in navigator) {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') req(); });
 }
 
+let waitingWorker = null;
+
+function showUpdateBanner(worker) {
+  waitingWorker = worker;
+  const el = document.getElementById('update-banner');
+  if (el) el.style.display = 'flex';
+}
+
+function dismissUpdate() {
+  const el = document.getElementById('update-banner');
+  if (el) el.style.display = 'none';
+}
+
+function applyUpdate() {
+  if (waitingWorker) waitingWorker.postMessage('SKIP_WAITING');
+}
+
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
 if ('serviceWorker' in navigator) {
-  const sw = `const CACHE='handball-v3';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['${swScope}']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  const sw = `const CACHE='handball-v${APP_VERSION}';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['${swScope}']))));self.addEventListener('activate',e=>e.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()])));self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();});self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
-  navigator.serviceWorker.register(URL.createObjectURL(blob));
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && reg.waiting) showUpdateBanner(reg.waiting);
+      });
+    });
+  });
+  let refreshed = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshed) return;
+    refreshed = true;
+    location.reload();
+  });
 }
 
 function init() {
