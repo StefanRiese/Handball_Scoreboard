@@ -149,6 +149,7 @@
 
   <div class="action-row">
     <button class="save-btn" id="save-btn" onclick="askFinish()">🏁 Beenden &amp; speichern</button>
+    <button class="save-btn" id="whatsapp-share-btn" style="display:none; background:#25d366; color:#fff; border-color:transparent;" onclick="shareWhatsApp()">📤 Per WhatsApp teilen</button>
   </div>
 
   <div id="finish-confirm-area" class="reset-confirm" style="display:none; margin-top:4px;">
@@ -226,8 +227,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -250,6 +251,37 @@ let colorTarget = null;
 let clockTimer = null;
 let pendingDeleteId = null;
 let pendingClearAll = false;
+let lastSavedGame = null;
+
+function hideWhatsappShare() {
+  lastSavedGame = null;
+  const btn = document.getElementById('whatsapp-share-btn');
+  if (btn) btn.style.display = 'none';
+}
+
+function gameShareText(g) {
+  const lines = [
+    `🤾 ${g.teams[0].name} ${g.teams[0].score}:${g.teams[1].score} ${g.teams[1].name}`,
+    `${t('halftime')}: ${g.ht.a}:${g.ht.b}`,
+    winner(g),
+    `${g.date} · ${g.time}`,
+  ];
+  return lines.join('\n');
+}
+
+function shareToWhatsApp(g) {
+  window.location.href = `https://wa.me/?text=${encodeURIComponent(gameShareText(g))}`;
+}
+
+function shareWhatsApp() {
+  if (!lastSavedGame) return;
+  shareToWhatsApp(lastSavedGame);
+}
+
+function shareHistoryGame(id) {
+  const g = state.history.find(g => g.id === id);
+  if (g) shareToWhatsApp(g);
+}
 
 function total(tm) { return state.halves[tm][0] + state.halves[tm][1]; }
 
@@ -355,6 +387,7 @@ function applyLang() {
     document.getElementById('update-banner-text').textContent = t('updateAvailable');
     document.getElementById('update-now-btn').textContent = t('updateNow');
     document.getElementById('update-later-btn').textContent = t('updateLater');
+    document.getElementById('whatsapp-share-btn').textContent = t('shareWhatsapp');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
     document.getElementById('set-title-a').textContent = t('team1');
@@ -584,7 +617,7 @@ function openColorModal(t2) {
 
 function cancelColor() { document.getElementById('color-modal').style.display = 'none'; }
 
-function addGoal(t2) { state.halves[t2][state.half]++; if (navigator.vibrate) navigator.vibrate(10); render(); save(); }
+function addGoal(t2) { if (lastSavedGame) hideWhatsappShare(); state.halves[t2][state.half]++; if (navigator.vibrate) navigator.vibrate(10); render(); save(); }
 function correct(t2, d) { state.halves[t2][state.half] = Math.max(0, state.halves[t2][state.half] + d); render(); save(); }
 
 function setHalf(h) { state.half = h; render(); save(); }
@@ -619,6 +652,9 @@ function saveGame() {
       { name: state.b.name, score: total('b'), color: state.b.color },
     ]
   });
+  lastSavedGame = state.history[0];
+  const shareBtn = document.getElementById('whatsapp-share-btn');
+  if (shareBtn) shareBtn.style.display = 'block';
   state.halves = { a: [0,0], b: [0,0] };
   state.half = 0;
   state.clockRunning = false;
@@ -638,6 +674,7 @@ function saveGame() {
 }
 
 function resetGame() {
+  hideWhatsappShare();
   state.halves = { a: [0,0], b: [0,0] };
   state.half = 0;
   stopClock();
@@ -718,12 +755,15 @@ function renderHistory() {
            <button class="btn-danger" onclick="confirmDeleteGame()">${t('delete')}</button>
          </div>`
       : '';
-    const delBtn = !isPending
-      ? `<button class="del-btn" aria-label="${t('ariaDeleteEntry')}" onclick="askDeleteGame(${g.id})">✕</button>`
+    const entryActions = !isPending
+      ? `<div style="display:flex;">
+           <button class="del-btn" aria-label="${t('shareWhatsapp')}" onclick="shareHistoryGame(${g.id})">📤</button>
+           <button class="del-btn" aria-label="${t('ariaDeleteEntry')}" onclick="askDeleteGame(${g.id})">✕</button>
+         </div>`
       : `<span></span>`;
     return `
     <div class="history-card" style="${isPending ? 'border-color: #e24b4a55;' : ''}">
-      <div class="history-meta"><span>${g.date} · ${g.time}</span>${delBtn}</div>
+      <div class="history-meta"><span>${g.date} · ${g.time}</span>${entryActions}</div>
       <div class="history-score-row">
         <div class="history-team"><div class="history-dot" style="background:${g.teams[0].color}"></div><span>${g.teams[0].name}</span></div>
         <div class="history-score"><span style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted)"> : </span><span style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span></div>
