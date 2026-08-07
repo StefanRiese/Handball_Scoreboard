@@ -107,8 +107,8 @@
 
 <div class="tabbar">
   <button class="active" onclick="showView('game')" id="tab-game">🤾 Spiel</button>
-  <button onclick="showView('settings')" id="tab-settings">⚙️ Einstellungen</button>
   <button onclick="showView('history')" id="tab-history">📋 Historie</button>
+  <button onclick="showView('settings')" id="tab-settings">⚙️ Einstellungen</button>
 </div>
 
 <div id="update-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:0.5px solid var(--border); border-radius:14px; padding:12px 14px;">
@@ -249,7 +249,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
