@@ -72,10 +72,12 @@
     .history-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .history-meta span { font-size: 12px; color: var(--muted); }
     .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: 4px 8px; min-height: 44px; min-width: 44px; border-radius: 8px; }
-    .history-score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-    .history-team { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text); }
-    .history-dot { width: 12px; height: 12px; border-radius: 50%; }
-    .history-score { font-size: 24px; font-weight: 500; letter-spacing: 4px; }
+    .history-score-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 6px; }
+    .history-team-col { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .history-team { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text); min-width: 0; text-align: center; word-break: break-word; }
+    .history-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .history-score { font-size: 28px; font-weight: 500; }
+    .history-colon { font-size: 20px; color: var(--muted); }
     .history-winner { font-size: 13px; color: var(--muted); text-align: center; }
     .history-del-confirm { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
     .history-del-confirm span { font-size: 13px; color: var(--muted); flex: 1; }
@@ -261,7 +263,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.9.6';
+const APP_VERSION = '1.9.7';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -900,9 +902,15 @@ function renderHistory() {
     <div class="history-card" style="${isPending ? 'border-color: #e24b4a55;' : ''}">
       <div class="history-meta"><span>${g.date} · ${g.time}</span>${entryActions}</div>
       <div class="history-score-row">
-        <div class="history-team"><div class="history-dot" style="background:${g.teams[0].color}"></div><span>${g.teams[0].name}</span></div>
-        <div class="history-score"><span style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted)"> : </span><span style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span></div>
-        <div class="history-team"><span>${g.teams[1].name}</span><div class="history-dot" style="background:${g.teams[1].color}"></div></div>
+        <div class="history-team-col">
+          <div class="history-team"><div class="history-dot" style="background:${g.teams[0].color}"></div><span>${g.teams[0].name}</span></div>
+          <div class="history-score" style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</div>
+        </div>
+        <div class="history-colon">:</div>
+        <div class="history-team-col">
+          <div class="history-team"><span>${g.teams[1].name}</span><div class="history-dot" style="background:${g.teams[1].color}"></div></div>
+          <div class="history-score" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</div>
+        </div>
       </div>
       <div class="history-winner">${winner(g)}</div>
       ${halftimeLine}
