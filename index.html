@@ -264,7 +264,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.14.2';
+const APP_VERSION = '1.15.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -527,7 +527,9 @@ function applyLang() {
     document.getElementById('clear-confirm-text').textContent = t('reallyClearHistory');
     document.getElementById('clear-yes').textContent = t('yes');
     document.getElementById('clear-no').textContent = t('no');
-    document.getElementById('update-banner-text').textContent = t('updateAvailable');
+    document.getElementById('update-banner-text').textContent = pendingRemoteVersion
+      ? `${t('updateAvailable')} (${pendingRemoteVersion})`
+      : t('updateAvailable');
     document.getElementById('update-now-btn').textContent = t('updateNow');
     document.getElementById('update-later-btn').textContent = t('updateLater');
     document.getElementById('sharing-title').textContent = t('sharingTitle');
@@ -1071,14 +1073,19 @@ if ('wakeLock' in navigator) {
 }
 
 let pendingFreshResponse = null;
+let pendingRemoteVersion = null;
 
-function showUpdateBanner() {
+function showUpdateBanner(remoteVersion) {
+  pendingRemoteVersion = remoteVersion;
+  const textEl = document.getElementById('update-banner-text');
+  if (textEl) textEl.textContent = `${t('updateAvailable')} (${remoteVersion})`;
   const el = document.getElementById('update-banner');
   if (el) el.style.display = 'flex';
 }
 
 function dismissUpdate() {
   pendingFreshResponse = null;
+  pendingRemoteVersion = null;
   const el = document.getElementById('update-banner');
   if (el) el.style.display = 'none';
 }
@@ -1114,7 +1121,7 @@ async function checkForUpdates() {
     const remoteVersion = match ? match[1] : null;
     if (remoteVersion && remoteVersion !== APP_VERSION) {
       pendingFreshResponse = res;
-      showUpdateBanner();
+      showUpdateBanner(remoteVersion);
       reset();
     } else {
       btn.textContent = t('upToDate');
