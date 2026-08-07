@@ -78,13 +78,34 @@ rather than `confirm()` dialogs or immediate deletion.
 `navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` since
 the OS releases it when the tab backgrounds.
 
-**Update flow**: the cache is cache-first (works fully offline), so the SW script itself must
-byte-differ for the browser to detect a new version and go through the install/waiting lifecycle
-— bump `APP_VERSION` on every deploy you want offline/installed users to be prompted about,
-otherwise they stay on the old cached version indefinitely. When a new version installs, the
+**Update flow**: non-navigation requests are cache-first (works fully offline); the page
+navigation itself is network-first with `{cache: 'no-store'}`, bypassing both the SW's own cache
+and the browser's HTTP cache — without this, a `Cache-Control` header from the host (e.g. GitHub
+Pages' `max-age=600`) or naive cache-first navigation would make the client permanently unable to
+ever see a newer deploy, since the very file responsible for detecting updates would itself be
+frozen in the cache. Bump `APP_VERSION` (semver: `MAJOR.MINOR.PATCH`) on every deploy you want
+offline/installed users prompted about — it's what makes the embedded SW script byte-differ from
+the previous one and trigger the install/waiting lifecycle. When a new version installs, the
 `updatefound`/`statechange` listeners near `showUpdateBanner()` surface a banner (not a silent
 swap) so the user explicitly chooses to reload via `applyUpdate()` — appropriate given the app is
 used live during a match, where content changing under the user unprompted would be disruptive.
+A manual "🔄 Check for updates" button (`checkForUpdates()`, Settings → Information) explicitly
+fetches the live file (`cache: 'no-store'`), regex-extracts its embedded `APP_VERSION`, and only
+offers a reload (via the same `showUpdateBanner()`/`applyUpdate()` banner, with `waitingWorker`
+left `null` so `applyUpdate()` falls through to a plain `location.reload()`) if that differs from
+the running version — it does NOT blindly call `location.reload()`. That earlier, simpler version
+of this button caused an unrecoverable "page not available" browser error when tapped offline,
+because reloading with no cached fallback match available surfaced the browser's own network
+error page instead of anything this app could catch or handle. Checking first avoids ever
+attempting a reload the button can't already tell will fail.
+
+**iOS home-screen quirk**: a standalone ("Add to Home Screen") PWA on iOS does not reliably run
+the update-check flow on a cold app-switcher relaunch, even though the identical code works
+correctly in a regular Safari tab — this is a platform limitation, not a bug in this app's logic.
+The in-app "🔄 Check for updates" button works reliably from *within* the already-running
+standalone instance (confirmed on-device) since it's a same-process JS reload rather than a fresh
+WKWebView cold start; prefer that button over force-quitting/relaunching when debugging why an
+installed icon seems stuck on an old version.
 
 **Touch-only target**: this app is used one-handed on a phone touchscreen during a live match —
 optimize for tap targets, haptic feedback (`navigator.vibrate`), and portrait/landscape layout,
