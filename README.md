@@ -25,15 +25,23 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - Sehr helle oder sehr dunkle Farben werden für Team-Name und Spielstand automatisch kontrastreich angepasst (je nach Theme)
 
 ### Seitenwechsel
-- ⇄-Button tauscht beide Teams manuell (Name, Farbe, Tore)
-- Nützlich zur Halbzeit – bewusst nicht automatisch
+- ⇄-Button tauscht, welches Team links und welches rechts angezeigt wird
+- Name, Farbe und Tore bleiben dabei fest dem jeweiligen Team zugeordnet
+- Optional automatisch bei jedem Halbzeitwechsel (Einstellung, standardmäßig aus)
+- Kurze Bestätigung nach dem Tausch
 
 ### Historie
 - Spiele speichern mit Datum, Uhrzeit, Endstand und Gewinner
 - Eigener Tab zur Übersicht aller gespeicherten Spiele
+- Einträge nachträglich bearbeitbar (Teamnamen, Spielstand, Datum & Uhrzeit)
 - Einzelne Einträge löschbar
 - Komplette Historie mit einem Klick löschbar (mit Bestätigung)
 - Dauerhaft im Browser gespeichert
+
+### Teilen
+- Ergebnis eines gespeicherten Spiels direkt per WhatsApp teilen
+- App selbst per WhatsApp teilen oder als QR-Code zum Scannen mit einem anderen Handy anzeigen
+- WhatsApp-Teilen lässt sich in den Einstellungen deaktivieren
 
 ### Design
 - Umschaltbares dunkles / helles Theme (Einstellung wird gespeichert)
@@ -42,21 +50,26 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - Große, touch-freundliche Buttons mit Druck-Feedback
 - Zoom (Doppeltipp & Pinch) deaktiviert
 - Seite fixiert gegen versehentliches Verschieben
-- Bildschirm bleibt während des Spiels wach (Wake Lock API, iOS 16.4+)
+- Bildschirm bleibt während des Spiels wach (Wake Lock API), inkl. Reaktivierung bei jeder Berührung für höhere Zuverlässigkeit
 - Angepasstes, kompakteres Layout im Querformat (z. B. für Schiedsrichter mit Smartphone im Landscape-Modus)
-- Als Web-App mit eigenem Icon installierbar – auf dem iPhone über „Zum Home-Bildschirm", auf Android/Chrome direkt über den Installations-Hinweis des Browsers (Web App Manifest)
+- Als Web-App mit eigenem Icon installierbar – direkt über den Button in den Einstellungen (Android: echter Installations-Dialog; iOS: kurze Anleitung, da Apple hier keine automatische Installation erlaubt)
 - Bedienelemente mit Screenreader-Beschriftungen (aria-label) für symbolbasierte Buttons
 
 ## Offline-Nutzung
 Nach dem ersten Laden funktioniert die App dank Service Worker auch komplett ohne Internetverbindung.
 
+## Updates
+Die App prüft nicht automatisch im Hintergrund auf neue Versionen – das würde während eines laufenden Spiels unerwartet Inhalte verändern. Über „🔄 Nach Updates suchen" in den Einstellungen lässt sich jederzeit manuell prüfen, ob eine neuere Version vorliegt.
+
 ## Installation auf dem iPhone
+Am einfachsten über **„📲 Zum Home-Bildschirm hinzufügen"** in den Einstellungen der App – zeigt direkt die passende Anleitung an. Alternativ manuell:
 1. Die App-URL in **Safari** öffnen
 2. **Teilen-Button** antippen
 3. **„Zum Home-Bildschirm"** wählen
 4. Fertig – die App startet im Vollbild und funktioniert offline
 
 ## Installation auf Android
+Am einfachsten über **„📲 Zum Home-Bildschirm hinzufügen"** in den Einstellungen der App – öffnet direkt den Installations-Dialog. Alternativ manuell:
 1. Die App-URL in **Chrome** öffnen
 2. Auf den Installations-Hinweis tippen (oder **Menü → „App installieren"** wählen)
 3. Fertig – die App erscheint als eigenes Icon auf dem Home-Bildschirm und funktioniert offline
