@@ -75,7 +75,10 @@
     .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: 4px 8px; min-height: 44px; min-width: 44px; border-radius: 8px; }
     .history-names-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
     .history-team-name { flex: 1; min-width: 0; font-size: 15px; text-align: center; word-break: break-word; }
-    .history-score { text-align: center; font-size: 28px; font-weight: 500; margin-bottom: 6px; }
+    .history-score { display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 500; margin-bottom: 6px; }
+    .history-score-num { flex: 1; }
+    .history-score-num.left { text-align: right; }
+    .history-score-num.right { text-align: left; }
     .history-winner { font-size: 13px; color: var(--muted); text-align: center; }
     .history-edit-row { display: flex; gap: 8px; margin-bottom: 8px; }
     .history-edit-row .name-input, .history-edit-row .number-input { font-size: 14px; padding: 10px 12px; }
@@ -264,7 +267,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.15.0';
+const APP_VERSION = '1.15.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1027,7 +1030,7 @@ function renderHistory() {
            <span class="history-team-name" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].name}</span>
          </div>
          <div class="history-score">
-           <span style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted)"> : </span><span style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span>
+           <span class="history-score-num left" style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted); padding:0 8px;">:</span><span class="history-score-num right" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span>
          </div>
          <div class="history-winner">${winner(g)}</div>
          ${halftimeLine}`;
