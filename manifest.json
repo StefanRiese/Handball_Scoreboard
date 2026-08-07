@@ -1,6 +1,6 @@
 {
   "name": "Handball Scoreboard",
-  "short_name": "Handball",
+  "short_name": "Scoreboard",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
