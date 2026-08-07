@@ -207,6 +207,7 @@
     <div class="settings-title" id="info-title">Information</div>
     <div class="settings-row"><span class="settings-row-label" id="github-label">Quellcode</span><a class="toggle-btn" id="github-link" href="https://github.com/StefanRiese/Handball_Scoreboard" target="_blank" rel="noopener" style="text-decoration:none;">🔗 GitHub</a></div>
     <button class="swap-row-btn" id="share-app-btn" onclick="shareAppWhatsApp()">📤 App per WhatsApp teilen</button>
+    <button class="swap-row-btn" id="check-update-btn" onclick="checkForUpdates()">🔄 Nach Updates suchen</button>
     <div id="version-info" style="text-align:center; font-size:12px; color:var(--muted);"></div>
   </div>
 </div>
@@ -238,8 +239,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', githubLabel:'Quellcode', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', githubLabel:'Source code', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', githubLabel:'Quellcode', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', githubLabel:'Source code', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -247,7 +248,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.4.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -415,6 +416,7 @@ function applyLang() {
     document.getElementById('info-title').textContent = t('infoTitle');
     document.getElementById('github-label').textContent = t('githubLabel');
     document.getElementById('share-app-btn').textContent = t('shareApp');
+    document.getElementById('check-update-btn').textContent = t('checkUpdate');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
     document.getElementById('set-title-a').textContent = t('team1');
@@ -841,6 +843,10 @@ function dismissUpdate() {
 
 function applyUpdate() {
   if (waitingWorker) waitingWorker.postMessage('SKIP_WAITING');
+}
+
+function checkForUpdates() {
+  location.reload();
 }
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
