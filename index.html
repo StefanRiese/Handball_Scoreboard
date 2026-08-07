@@ -202,6 +202,8 @@
     <div class="settings-title" id="sharing-title">Teilen</div>
     <div class="settings-row"><span class="settings-row-label" id="showwhatsapp-label">WhatsApp-Teilen</span><button class="toggle-btn" onclick="toggleWhatsappEnabled()" id="showwhatsapp-btn">An</button></div>
   </div>
+
+  <div id="version-info" style="text-align:center; font-size:12px; color:var(--muted); margin-top:4px;"></div>
 </div>
 
 <!-- HISTORY -->
@@ -237,9 +239,10 @@ const I18N = {
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
 const STORAGE_KEY = 'handball_v3';
-// Bump this on every deploy that should prompt installed/offline users to update —
-// it's what makes the Service Worker byte-differ from the previous one and trigger the update flow.
-const APP_VERSION = 2;
+// Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
+// users to update — it's what makes the Service Worker byte-differ from the previous one and
+// trigger the update flow.
+const APP_VERSION = '1.1.0';
 
 let state = {
   a: { name: 'TuS Griesheim', color: '#e24b4a' },
@@ -854,6 +857,7 @@ function init() {
   applyLang();
   applyClockVisible();
   applyWhatsappVisible();
+  document.getElementById('version-info').textContent = `Version ${APP_VERSION}`;
   if (state.showClock && state.clockRunning && state.clockRemaining > 0) {
     clearInterval(clockTimer);
     clockTimer = setInterval(tickClock, 250);
