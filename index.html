@@ -248,7 +248,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -800,7 +800,7 @@ function renderHistory() {
       ? `<button class="del-btn" aria-label="${t('shareWhatsapp')}" onclick="shareHistoryGame(${g.id})">📤</button>`
       : '';
     const entryActions = !isPending
-      ? `<div style="display:flex;">
+      ? `<div style="display:flex; gap:6px;">
            ${shareBtn}
            <button class="del-btn" aria-label="${t('ariaDeleteEntry')}" onclick="askDeleteGame(${g.id})">✕</button>
          </div>`
@@ -880,7 +880,11 @@ async function checkForUpdates() {
   btn.textContent = t('checkingUpdate');
   const reset = () => { btn.textContent = original; btn.disabled = false; };
   try {
-    const res = await fetch(location.href, { cache: 'no-store' });
+    // Cache-bust the URL, not just the fetch init — the Service Worker's own fetch handler is
+    // cache-first regardless of {cache:'no-store'} (that option only affects the browser's HTTP
+    // cache, not our Cache Storage lookup), so a plain fetch(location.href) here would just
+    // re-serve whatever's already cached and never actually reach the network.
+    const res = await fetch(`${location.href}?_check=${Date.now()}`, { cache: 'no-store' });
     const text = await res.clone().text();
     const match = text.match(/APP_VERSION\s*=\s*'([^']+)'/);
     const remoteVersion = match ? match[1] : null;
