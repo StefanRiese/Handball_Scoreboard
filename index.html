@@ -248,7 +248,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.6.3';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -824,9 +824,18 @@ document.body.addEventListener('touchmove', e => { e.stopPropagation(); }, { pas
 
 if ('wakeLock' in navigator) {
   let wl = null;
-  const req = async () => { try { wl = await navigator.wakeLock.request('screen'); } catch {} };
+  const req = async () => {
+    try {
+      wl = await navigator.wakeLock.request('screen');
+      wl.addEventListener('release', () => { wl = null; });
+    } catch {}
+  };
   req();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') req(); });
+  // Re-acquire periodically too, not just on visibilitychange — the lock can be silently
+  // released for reasons other than the tab backgrounding (observed: the phone still locks
+  // itself after the OS auto-lock timeout despite the app staying open and in the foreground).
+  setInterval(() => { if ((!wl || wl.released) && document.visibilityState === 'visible') req(); }, 20000);
 }
 
 let pendingFreshResponse = null;

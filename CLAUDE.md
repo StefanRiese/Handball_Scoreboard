@@ -75,8 +75,15 @@ rather than `confirm()` dialogs or immediate deletion.
 **Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
 `sw.js` file) that caches the app shell for offline use; `manifest.json` + the
 `apple-mobile-web-app-*` meta tags cover Android/Chrome and iOS install prompts respectively.
-`navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` since
-the OS releases it when the tab backgrounds.
+`navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` and
+also on a 20s interval while visible (not just visibilitychange — observed on-device that the
+lock can be silently released, or ineffective, for reasons other than the tab backgrounding, so
+the interval catches drops that visibilitychange alone would miss). A muted-video-loop fallback
+was tried and removed (commit reverting "Add keep-awake video fallback") after on-device testing
+showed it did not prevent the OS auto-lock; NoSleep.js's own source only uses that trick for
+pre-Wake-Lock-API browsers and relies on native Wake Lock alone wherever it's available, which is
+why it was abandoned here too rather than iterated on further — don't re-add a video/canvas/audio
+keep-awake hack without new evidence it actually helps on the affected device/iOS version.
 
 **Update flow — manual only, by design**: every request, including page navigation, is
 cache-first (`caches.match(e.request).then(r=>r||fetch(e.request))`) — opening the app never
