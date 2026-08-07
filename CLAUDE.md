@@ -101,10 +101,15 @@ reached the SW's fetch handler at all, or reached it but missed the cache lookup
    that navigation. Fixed by passing `{ scope: swScope }` explicitly.
 2. The install handler only cached one URL variant (the directory, `swScope`) — but a
    home-screen relaunch can request the explicit `index.html` URL instead depending on
-   platform/iOS version, missing the cache-first lookup on an exact-URL mismatch. Fixed by
-   caching both `swScope` and `swScope + 'index.html'`, and by having `applyUpdate()` write the
-   fetched response under both of those (not just `location.href`) so a manual update doesn't
-   leave the URL a cold launch actually looks up stale even though the update "succeeded".
+   platform/iOS version, missing the cache-first lookup on an exact-URL mismatch. Also, neither
+   `manifest.json` nor the icon were cached at all — iOS can refetch those for the installed
+   app's own metadata independent of any page JS, and that same uncached-miss failure while
+   offline is what actually surfaces as the OS's own "no internet, switch to Wi-Fi?" prompt
+   (confirmed on-device), not just the browser's "can't open the page" error. Fixed by caching
+   `swScope`, `swScope + 'index.html'`, `manifest.json`, and the icon, and by having
+   `applyUpdate()` write the fetched HTML response under the shell URL variants too (not just
+   `location.href`) so a manual update doesn't leave the URL a cold launch actually looks up
+   stale even though the update "succeeded".
 This self-heals on the next connected app open (SW re-registration runs unconditionally on every
 load, not gated behind the manual update-check button) — no manual site-data reset needed for
 this particular fix.

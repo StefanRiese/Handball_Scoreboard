@@ -264,7 +264,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.14.0';
+const APP_VERSION = '1.14.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1128,11 +1128,13 @@ async function checkForUpdates() {
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
 if ('serviceWorker' in navigator) {
-  // Cache both the directory URL and the explicit index.html URL — a home-screen relaunch can
-  // request either depending on platform/iOS version, and a cache-first fetch handler needs an
-  // exact URL match or it falls through to network, which fails outright while offline (surfaced
-  // as the browser's own "can't open the page" error, not anything this app can catch).
-  const shellUrls = JSON.stringify([swScope, swScope + 'index.html']);
+  // Cache the directory URL, the explicit index.html URL (a home-screen relaunch can request
+  // either depending on platform/iOS version), and manifest.json/the icon — iOS can refetch
+  // those for the installed app's own metadata independent of any page JS, and any uncached
+  // miss falls through to network, which fails outright while offline. That failure surfaces as
+  // the OS's own "no internet, switch to Wi-Fi?" prompt or the browser's "can't open the page"
+  // error — neither of which this app's code ever gets a chance to catch or handle.
+  const shellUrls = JSON.stringify([swScope, swScope + 'index.html', swScope + 'manifest.json', swScope + 'handball_icon.png']);
   const sw = `const CACHE='handball-v${APP_VERSION}';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(${shellUrls}))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
   // Explicit scope — for a blob: URL script the default scope is ambiguous, and if it doesn't
