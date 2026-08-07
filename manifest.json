@@ -8,6 +8,6 @@
   "background_color": "#0f0f0f",
   "theme_color": "#0f0f0f",
   "icons": [
-    { "src": "handball_icon.png", "sizes": "1024x1024", "type": "image/png" }
+    { "src": "handball_icon.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
