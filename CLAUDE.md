@@ -78,7 +78,11 @@ rather than `confirm()` dialogs or immediate deletion.
 `navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` and
 also on a 20s interval while visible (not just visibilitychange — observed on-device that the
 lock can be silently released, or ineffective, for reasons other than the tab backgrounding, so
-the interval catches drops that visibilitychange alone would miss). A muted-video-loop fallback
+the interval catches drops that visibilitychange alone would miss). Controlled by
+`state.wakeLockEnabled` (Settings → Darstellung → "Bildschirm wach halten", default on), following
+the same persisted-toggle pattern as `showClock`/`whatsappEnabled`; `toggleWakeLockEnabled()`
+releases the lock immediately when turned off rather than waiting for the next interval tick. A
+muted-video-loop fallback
 was tried and removed (commit reverting "Add keep-awake video fallback") after on-device testing
 showed it did not prevent the OS auto-lock; NoSleep.js's own source only uses that trick for
 pre-Wake-Lock-API browsers and relies on native Wake Lock alone wherever it's available, which is
