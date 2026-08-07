@@ -78,26 +78,31 @@ rather than `confirm()` dialogs or immediate deletion.
 `navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` since
 the OS releases it when the tab backgrounds.
 
-**Update flow**: non-navigation requests are cache-first (works fully offline); the page
-navigation itself is network-first with `{cache: 'no-store'}`, bypassing both the SW's own cache
-and the browser's HTTP cache — without this, a `Cache-Control` header from the host (e.g. GitHub
-Pages' `max-age=600`) or naive cache-first navigation would make the client permanently unable to
-ever see a newer deploy, since the very file responsible for detecting updates would itself be
-frozen in the cache. Bump `APP_VERSION` (semver: `MAJOR.MINOR.PATCH`) on every deploy you want
-offline/installed users prompted about — it's what makes the embedded SW script byte-differ from
-the previous one and trigger the install/waiting lifecycle. When a new version installs, the
-`updatefound`/`statechange` listeners near `showUpdateBanner()` surface a banner (not a silent
-swap) so the user explicitly chooses to reload via `applyUpdate()` — appropriate given the app is
-used live during a match, where content changing under the user unprompted would be disruptive.
-A manual "🔄 Check for updates" button (`checkForUpdates()`, Settings → Information) explicitly
-fetches the live file (`cache: 'no-store'`), regex-extracts its embedded `APP_VERSION`, and only
-offers a reload (via the same `showUpdateBanner()`/`applyUpdate()` banner, with `waitingWorker`
-left `null` so `applyUpdate()` falls through to a plain `location.reload()`) if that differs from
-the running version — it does NOT blindly call `location.reload()`. That earlier, simpler version
-of this button caused an unrecoverable "page not available" browser error when tapped offline,
-because reloading with no cached fallback match available surfaced the browser's own network
-error page instead of anything this app could catch or handle. Checking first avoids ever
-attempting a reload the button can't already tell will fail.
+**Update flow — manual only, by design**: every request, including page navigation, is
+cache-first (`caches.match(e.request).then(r=>r||fetch(e.request))`) — opening the app never
+touches the network or triggers any update detection, on purpose (the user explicitly asked for
+this; an earlier network-first-navigation design auto-checked on every open, which wasn't
+wanted). The only way to get fresh content is the "🔄 Check for updates" button
+(`checkForUpdates()`, Settings → Information): it fetches the live file with
+`{cache: 'no-store'}` (bypassing both the SW cache and the browser's HTTP cache — necessary since
+a `Cache-Control` header from the host, e.g. GitHub Pages' `max-age=600`, would otherwise silently
+serve a stale copy), regex-extracts its embedded `APP_VERSION`, and only shows the update banner
+if that differs from the running version. Confirming via `applyUpdate()` writes the
+already-fetched response (`pendingFreshResponse`) directly into every existing Cache Storage
+entry keyed by the current URL, then reloads — the reload's cache-first lookup finds that
+freshly-written entry immediately, so the new content shows without a second network round-trip.
+Bump `APP_VERSION` (semver: `MAJOR.MINOR.PATCH`) on every deploy you want the button to be able to
+detect — it's what the regex compares and what changes the embedded SW script's bytes (so a
+subsequent normal page load still eventually installs the new SW's `install`/`activate`
+lifecycle, e.g. to prune old-versioned caches). Do not reintroduce network-first navigation or an
+automatic `updatefound` listener/banner — both were tried and explicitly reverted at the user's
+request in favor of check-only-via-button. If reintroducing any automatic check, confirm with the
+user first, since this has already been requested and removed once.
+
+Earlier iteration note: a simpler version of the manual button just called `location.reload()`
+unconditionally, which surfaced the browser's own "page not available" error when offline (no
+cached fallback could satisfy the reload). Checking first — before ever attempting a reload —
+avoids that.
 
 **iOS home-screen quirk**: a standalone ("Add to Home Screen") PWA on iOS does not reliably run
 the update-check flow on a cold app-switcher relaunch, even though the identical code works
