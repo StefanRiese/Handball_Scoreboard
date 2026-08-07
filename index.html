@@ -97,6 +97,8 @@
 </head>
 <body>
 
+<video id="keepawake" muted playsinline loop style="position:fixed; width:1px; height:1px; opacity:0.01; pointer-events:none;" src="data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJtcDQxaXNvbWlzbzIAAAAIZnJlZQAAAzptZGF0AAAAAgkQAAAAG2f0AAqQ2WnsBagwMDIAAAMAAgAAAwAVHiRNQAAAAARozjGSAAACnwYF//+b3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE2NCByMzA5NSBiYWVlNDAwIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAyMiAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTAgcmVmPTEgZGVibG9jaz0wOjA6MCBhbmFseXNlPTA6MCBtZT1kaWEgc3VibWU9MCBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0wIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MCA4eDhkY3Q9MCBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD02IHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTAgd2VpZ2h0cD0wIGtleWludD01IGtleWludF9taW49MSBzY2VuZWN1dD0wIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9MCByYz1jYnIgbWJ0cmVlPTAgYml0cmF0ZT00IHJhdGV0b2w9MS4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD04MSBxcHN0ZXA9NCB2YnZfbWF4cmF0ZT00IHZidl9idWZzaXplPTIgbmFsX2hyZD1ub25lIGZpbGxlcj0wIGlwX3JhdGlvPTEuNDAgYXE9MACAAAAABmWIhAZInwAAAAIJMAAAAAVBmiAZJQAAAAIJMAAAABNBmkAZLxV3d3d3d3d3d/////+AAAAAAgkwAAAABUGaYBklAAAAAgkwAAAAE0GagBkvFXd3d3d3d3d3/////4AAAAOCbW9vdgAAAGxtdmhkAAAAAOabJsfmmybHAAAH0AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAtF0cmFrAAAAXHRraGQAAAAH5psmx+abJscAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHwbWRpYQAAACBtZGhkAAAAAOabJsfmmybHAAAB9AAAAfRVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABm21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAVtzdGJsAAAAz3N0c2QAAAAAAAAAAQAAAL9hdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGP//AAAAMmF2Y0MB9AAK/+EAG2f0AAqQ2WnsBagwMDIAAAMAAgAAAwAVHiRNQAEABGjOMZIAAAAUYnRydAAAAAAAABAAAAAZkAAAABNjb2xybmNseAAGAAYABgAAAAAQcGFzcAAAAAEAAAABAAAAGHN0dHMAAAAAAAAAAQAAAAUAAABkAAAAFHN0c3MAAAAAAAAAAQAAAAEAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAUAAAABAAAAKHN0c3oAAAAAAAAAAAAAAAUAAALaAAAADwAAAB0AAAAPAAAAHQAAABRzdGNvAAAAAAAAAAEAAAAwAAAAWXVkdGEAAABRbWV0YQAAAAAAAAAhaGRscgAAAABtaGxybWRpcgAAAAAAAAAAAAAAAAAAAAAkaWxzdAAAABypdG9vAAAAFGRhdGEAAAABAAAAAHgyNjQAAAA9dWR0YQAAADVtZXRhAAAAAAAAACFoZGxyAAAAAG1obHJtZGlyAAAAAAAAAAAAAAAAAAAAAAhpbHN0"></video>
+
 <div id="color-modal" onclick="if(event.target===this)cancelColor()">
   <div class="box">
     <div id="color-modal-title" style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
@@ -182,6 +184,7 @@
     <div class="settings-title" id="time-title">Spielzeit</div>
     <div class="settings-row"><span class="settings-row-label" id="showclock-label">Uhr anzeigen</span><button class="toggle-btn" onclick="toggleClockVisible()" id="showclock-btn">An</button></div>
     <div class="field"><span class="field-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value)" /></div>
+    <div class="settings-row"><span class="settings-row-label" id="keepawake-label">Bildschirm wach halten</span><button class="toggle-btn" onclick="toggleKeepAwake()" id="keepawake-btn">An</button></div>
   </div>
 
   <div class="settings-section">
@@ -239,8 +242,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', githubLabel:'Quellcode', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen', developerLabel:'Entwickler', checkingUpdate:'⏳ Suche...', upToDate:'✅ Bereits aktuell', offlineCheckFailed:'📡 Keine Verbindung' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', githubLabel:'Source code', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates', developerLabel:'Developer', checkingUpdate:'⏳ Checking...', upToDate:'✅ Already up to date', offlineCheckFailed:'📡 No connection' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', githubLabel:'Quellcode', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen', developerLabel:'Entwickler', checkingUpdate:'⏳ Suche...', upToDate:'✅ Bereits aktuell', offlineCheckFailed:'📡 Keine Verbindung', keepAwakeLabel:'Bildschirm wach halten' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', githubLabel:'Source code', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates', developerLabel:'Developer', checkingUpdate:'⏳ Checking...', upToDate:'✅ Already up to date', offlineCheckFailed:'📡 No connection', keepAwakeLabel:'Keep screen awake' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -248,7 +251,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.7.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -257,6 +260,7 @@ let state = {
   half: 0, halves: { a: [0, 0], b: [0, 0] },
   history: [], darkMode: true, lang: 'de', showClock: true,
   whatsappEnabled: true,
+  keepAwakeVideo: true,
   halfLength: 30,
   clockRemaining: 30*60,
   clockRunning: false,
@@ -313,6 +317,7 @@ function load() {
       if (typeof p.darkMode === 'boolean') state.darkMode = p.darkMode;
       if (typeof p.showClock === 'boolean') state.showClock = p.showClock;
       if (typeof p.whatsappEnabled === 'boolean') state.whatsappEnabled = p.whatsappEnabled;
+      if (typeof p.keepAwakeVideo === 'boolean') state.keepAwakeVideo = p.keepAwakeVideo;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
       if (p.clockRunning && typeof p.clockEndsAt === 'number') {
@@ -348,6 +353,7 @@ function save() {
       history: state.history, darkMode: state.darkMode, lang: state.lang,
       showClock: state.showClock,
       whatsappEnabled: state.whatsappEnabled,
+      keepAwakeVideo: state.keepAwakeVideo,
       halfLength: state.halfLength,
       clockRunning: state.clockRunning,
       clockRemaining: state.clockRemaining,
@@ -388,6 +394,20 @@ function toggleWhatsappEnabled() {
   state.whatsappEnabled = !state.whatsappEnabled;
   applyWhatsappVisible();
   renderHistory();
+  save();
+}
+
+function applyKeepAwakeSetting() {
+  const btn = document.getElementById('keepawake-btn');
+  if (btn) btn.textContent = state.keepAwakeVideo ? t('on') : t('off');
+  const video = document.getElementById('keepawake');
+  if (video && !state.keepAwakeVideo) video.pause();
+}
+
+function toggleKeepAwake() {
+  state.keepAwakeVideo = !state.keepAwakeVideo;
+  applyKeepAwakeSetting();
+  if (state.keepAwakeVideo) playKeepAwakeVideo();
   save();
 }
 
@@ -435,6 +455,8 @@ function applyLang() {
     document.getElementById('halflen-label').textContent = t('halfLenLabel');
     document.getElementById('showclock-label').textContent = t('showClock');
     document.getElementById('showclock-btn').textContent = state.showClock ? t('on') : t('off');
+    document.getElementById('keepawake-label').textContent = t('keepAwakeLabel');
+    document.getElementById('keepawake-btn').textContent = state.keepAwakeVideo ? t('on') : t('off');
     const hb = document.getElementById('half-btn');
     if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
     const hbf = document.getElementById('half-btn-fallback');
@@ -829,6 +851,19 @@ if ('wakeLock' in navigator) {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') req(); });
 }
 
+// The Wake Lock API above is unreliable specifically in standalone ("Add to Home Screen")
+// contexts on iOS — it can silently have no effect there even though it works in a regular
+// Safari tab. A muted, looping video is the classic, more reliable fallback for that case,
+// since continuous media playback independently inhibits iOS's auto-lock timer.
+const keepAwakeVideo = document.getElementById('keepawake');
+function playKeepAwakeVideo() {
+  if (keepAwakeVideo && state.keepAwakeVideo) keepAwakeVideo.play().catch(() => {});
+}
+if (keepAwakeVideo) {
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') playKeepAwakeVideo(); });
+  document.addEventListener('touchstart', playKeepAwakeVideo, { once: true, passive: true });
+}
+
 let pendingFreshResponse = null;
 
 function showUpdateBanner() {
@@ -889,6 +924,8 @@ function init() {
   applyLang();
   applyClockVisible();
   applyWhatsappVisible();
+  applyKeepAwakeSetting();
+  playKeepAwakeVideo();
   document.getElementById('version-info').textContent = `Version ${APP_VERSION}`;
   if (state.showClock && state.clockRunning && state.clockRemaining > 0) {
     clearInterval(clockTimer);

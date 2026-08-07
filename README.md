@@ -42,7 +42,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - Große, touch-freundliche Buttons mit Druck-Feedback
 - Zoom (Doppeltipp & Pinch) deaktiviert
 - Seite fixiert gegen versehentliches Verschieben
-- Bildschirm bleibt während des Spiels wach (Wake Lock API, iOS 16.4+)
+- Bildschirm bleibt während des Spiels wach (Wake Lock API, iOS 16.4+, mit zusätzlichem Fallback für installierte Home-Bildschirm-Apps; in den Einstellungen abschaltbar)
 - Angepasstes, kompakteres Layout im Querformat (z. B. für Schiedsrichter mit Smartphone im Landscape-Modus)
 - Als Web-App mit eigenem Icon installierbar – auf dem iPhone über „Zum Home-Bildschirm", auf Android/Chrome direkt über den Installations-Hinweis des Browsers (Web App Manifest)
 - Bedienelemente mit Screenreader-Beschriftungen (aria-label) für symbolbasierte Buttons
@@ -72,7 +72,7 @@ Nach dem ersten Laden funktioniert die App dank Service Worker auch komplett ohn
 - Eine einzige `index.html`-Datei
 - Datenspeicherung über `localStorage`
 - Offline-Support über einen Service Worker
-- Bildschirm-Wachhaltung über die Wake Lock API
+- Bildschirm-Wachhaltung über die Wake Lock API, mit stummem Video-Loop als Fallback für Home-Bildschirm-Apps auf iOS
 - Web App Manifest (`manifest.json`) für die Installation auf Android/Chrome
 
 ## Lizenz
