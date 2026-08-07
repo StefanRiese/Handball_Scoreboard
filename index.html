@@ -249,7 +249,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -401,7 +401,12 @@ async function requestWakeLock() {
   if (!('wakeLock' in navigator) || !state.wakeLockEnabled) return;
   try {
     wl = await navigator.wakeLock.request('screen');
-    wl.addEventListener('release', () => { wl = null; });
+    wl.addEventListener('release', () => {
+      wl = null;
+      // Re-acquire immediately on drop rather than waiting for the next periodic check —
+      // that gap is exactly where the screen could lock before we notice.
+      if (document.visibilityState === 'visible') requestWakeLock();
+    });
   } catch {}
 }
 
@@ -862,6 +867,12 @@ if ('wakeLock' in navigator) {
   // released for reasons other than the tab backgrounding (observed: the phone still locks
   // itself after the OS auto-lock timeout despite the app staying open and in the foreground).
   setInterval(() => { if ((!wl || wl.released) && document.visibilityState === 'visible') requestWakeLock(); }, 20000);
+  // WebKit requires transient user activation to grant navigator.wakeLock.request() — a
+  // visibilitychange handler or setInterval callback does NOT count as one, so those retries
+  // above can silently fail with NotAllowedError. Piggyback reacquisition on real taps (which
+  // this app has constantly — scoring a goal, any button press) since those DO carry
+  // transient activation and are far more likely to actually succeed.
+  document.addEventListener('touchstart', () => { if (!wl) requestWakeLock(); }, { passive: true });
 }
 
 let pendingFreshResponse = null;

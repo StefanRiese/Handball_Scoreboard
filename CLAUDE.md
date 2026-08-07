@@ -75,19 +75,32 @@ rather than `confirm()` dialogs or immediate deletion.
 **Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
 `sw.js` file) that caches the app shell for offline use; `manifest.json` + the
 `apple-mobile-web-app-*` meta tags cover Android/Chrome and iOS install prompts respectively.
-`navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` and
-also on a 20s interval while visible (not just visibilitychange — observed on-device that the
-lock can be silently released, or ineffective, for reasons other than the tab backgrounding, so
-the interval catches drops that visibilitychange alone would miss). Controlled by
-`state.wakeLockEnabled` (Settings → Darstellung → "Bildschirm wach halten", default on), following
-the same persisted-toggle pattern as `showClock`/`whatsappEnabled`; `toggleWakeLockEnabled()`
-releases the lock immediately when turned off rather than waiting for the next interval tick. A
-muted-video-loop fallback
-was tried and removed (commit reverting "Add keep-awake video fallback") after on-device testing
-showed it did not prevent the OS auto-lock; NoSleep.js's own source only uses that trick for
-pre-Wake-Lock-API browsers and relies on native Wake Lock alone wherever it's available, which is
-why it was abandoned here too rather than iterated on further — don't re-add a video/canvas/audio
-keep-awake hack without new evidence it actually helps on the affected device/iOS version.
+`navigator.wakeLock` keeps the screen on during a match. There were two real, confirmed root
+causes of it failing on iOS standalone home-screen installs (found via WebKit's own bug tracker,
+not guessed):
+
+1. [webkit.org/b/254545](https://bugs.webkit.org/show_bug.cgi?id=254545) — the Wake Lock API
+   flat-out didn't work in Home Screen Web Apps at all (only in full Safari tabs) until Apple
+   fixed it in **iOS/iPadOS 18.4** (shipped March 2025). No app-side code can work around this on
+   older iOS — the only fix is updating iOS.
+2. Even on 18.4+, WebKit requires **transient user activation** (a direct tap) to grant
+   `navigator.wakeLock.request()` — a `visibilitychange` handler or a `setInterval` callback does
+   NOT count as one, so a reacquisition attempt from either can silently fail with
+   `NotAllowedError` (swallowed by our `catch {}`). This is why a periodic-retry-only approach is
+   observed to help ("increases the time the display is awake") without being fully reliable.
+
+Given #2, the retry strategy is layered, cheapest/least-reliable first: `visibilitychange` (async,
+likely rejected per #2 but harmless to try), a 20s `setInterval` safety net (same caveat), and a
+`touchstart` listener that reacquires whenever `!wl` — since this app has near-constant real taps
+(scoring a goal, any button), and a genuine tap *does* carry transient activation, that listener
+is the one actually likely to succeed. Controlled by `state.wakeLockEnabled` (Settings →
+Darstellung → "Bildschirm wach halten", default on), following the same persisted-toggle pattern
+as `showClock`/`whatsappEnabled`; `toggleWakeLockEnabled()` releases the lock immediately when
+turned off. A muted-video-loop fallback was tried and removed (commit reverting "Add keep-awake
+video fallback") after on-device testing showed it did not prevent the OS auto-lock; NoSleep.js's
+own source only uses that trick for pre-Wake-Lock-API browsers and relies on native Wake Lock
+alone wherever it's available, which is why it was abandoned here too — don't re-add a
+video/canvas/audio keep-awake hack without new evidence it actually helps.
 
 **Update flow — manual only, by design**: every request, including page navigation, is
 cache-first (`caches.match(e.request).then(r=>r||fetch(e.request))`) — opening the app never
