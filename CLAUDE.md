@@ -93,6 +93,21 @@ this flag-only approach.
 **Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
 `sw.js` file) that caches the app shell for offline use; `manifest.json` + the
 `apple-mobile-web-app-*` meta tags cover Android/Chrome and iOS install prompts respectively.
+Two things caused offline home-screen launches to fail outright with the *browser's own*
+"can't open the page" error (not anything this app could catch) — meaning the request never
+reached the SW's fetch handler at all, or reached it but missed the cache lookup:
+1. `.register()` had no explicit `scope` — for a `blob:` URL script the default scope is
+   ambiguous, and if it doesn't end up covering the actual launch URL, the SW never intercepts
+   that navigation. Fixed by passing `{ scope: swScope }` explicitly.
+2. The install handler only cached one URL variant (the directory, `swScope`) — but a
+   home-screen relaunch can request the explicit `index.html` URL instead depending on
+   platform/iOS version, missing the cache-first lookup on an exact-URL mismatch. Fixed by
+   caching both `swScope` and `swScope + 'index.html'`, and by having `applyUpdate()` write the
+   fetched response under both of those (not just `location.href`) so a manual update doesn't
+   leave the URL a cold launch actually looks up stale even though the update "succeeded".
+This self-heals on the next connected app open (SW re-registration runs unconditionally on every
+load, not gated behind the manual update-check button) — no manual site-data reset needed for
+this particular fix.
 `navigator.wakeLock` keeps the screen on during a match. There were two real, confirmed root
 causes of it failing on iOS standalone home-screen installs (found via WebKit's own bug tracker,
 not guessed):
