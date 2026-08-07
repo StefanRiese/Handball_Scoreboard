@@ -264,7 +264,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.14.1';
+const APP_VERSION = '1.14.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1127,7 +1127,14 @@ async function checkForUpdates() {
 }
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
-if ('serviceWorker' in navigator) {
+// Only (re-)register while online. Bumping APP_VERSION makes the SW script byte-differ, so the
+// browser tries to install the new version on every open — which requires fetching the shell/
+// manifest/icon fresh over the network. If that first post-deploy open happens to be offline,
+// the install fails and retries on every subsequent open until it finally succeeds online,
+// triggering the OS's own connectivity prompt each time. Skipping registration entirely while
+// offline leaves the already-active (already fully cached) SW in control with zero network
+// attempts — registration resumes normally next time the app opens with a connection.
+if ('serviceWorker' in navigator && navigator.onLine) {
   // Cache the directory URL, the explicit index.html URL (a home-screen relaunch can request
   // either depending on platform/iOS version), and manifest.json/the icon — iOS can refetch
   // those for the installed app's own metadata independent of any page JS, and any uncached
