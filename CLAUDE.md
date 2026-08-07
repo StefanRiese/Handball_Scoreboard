@@ -78,15 +78,6 @@ rather than `confirm()` dialogs or immediate deletion.
 `navigator.wakeLock` keeps the screen on during a match, re-requested on `visibilitychange` since
 the OS releases it when the tab backgrounds.
 
-**Keep-awake fallback**: `navigator.wakeLock` is unreliable specifically in standalone ("Add to
-Home Screen") contexts on iOS — confirmed on-device that it silently has no effect there even
-though it works fine in a regular Safari tab. The `#keepawake` `<video>` element (muted,
-`playsinline`, `loop`, tiny inline base64 `data:` URI — a 16×16px, 1-second, near-zero-bitrate
-black clip generated with GStreamer, no external asset file) is the classic, more reliable
-fallback: continuous media playback independently inhibits iOS's auto-lock timer. Controlled by
-the `state.keepAwakeVideo` setting (Settings → Darstellung → "Bildschirm wach halten"), following
-the same persisted-toggle pattern as `showClock`/`whatsappEnabled`.
-
 **Update flow — manual only, by design**: every request, including page navigation, is
 cache-first (`caches.match(e.request).then(r=>r||fetch(e.request))`) — opening the app never
 touches the network or triggers any update detection, on purpose (the user explicitly asked for
