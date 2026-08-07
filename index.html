@@ -111,14 +111,6 @@
   <button onclick="showView('settings')" id="tab-settings">⚙️ Einstellungen</button>
 </div>
 
-<div id="update-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:0.5px solid var(--border); border-radius:14px; padding:12px 14px;">
-  <span id="update-banner-text" style="font-size:14px; color:var(--text);">Update verfügbar</span>
-  <div style="display:flex; gap:8px; flex-shrink:0;">
-    <button class="btn-secondary" id="update-later-btn" onclick="dismissUpdate()">Später</button>
-    <button class="btn-secondary" id="update-now-btn" onclick="applyUpdate()" style="background:#378add; color:#fff; border-color:transparent;">Aktualisieren</button>
-  </div>
-</div>
-
 <!-- GAME -->
 <div id="view-game" style="display:contents">
   <div class="teams">
@@ -209,6 +201,13 @@
     <div class="settings-row"><span class="settings-row-label" id="github-label">Quellcode</span><a class="toggle-btn" id="github-link" href="https://github.com/StefanRiese/Handball_Scoreboard" target="_blank" rel="noopener" style="text-decoration:none;">🔗 GitHub</a></div>
     <button class="swap-row-btn" id="share-app-btn" onclick="shareAppWhatsApp()">📤 App per WhatsApp teilen</button>
     <button class="swap-row-btn" id="check-update-btn" onclick="checkForUpdates()">🔄 Nach Updates suchen</button>
+    <div id="update-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:14px; padding:12px 14px;">
+      <span id="update-banner-text" style="font-size:14px; color:var(--text);">Update verfügbar</span>
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button class="btn-secondary" id="update-later-btn" onclick="dismissUpdate()">Später</button>
+        <button class="btn-secondary" id="update-now-btn" onclick="applyUpdate()" style="background:#378add; color:#fff; border-color:transparent;">Aktualisieren</button>
+      </div>
+    </div>
     <div id="version-info" style="text-align:center; font-size:12px; color:var(--muted);"></div>
   </div>
 </div>
@@ -249,7 +248,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
