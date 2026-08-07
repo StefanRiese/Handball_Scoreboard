@@ -249,7 +249,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.6.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -830,22 +830,25 @@ if ('wakeLock' in navigator) {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') req(); });
 }
 
-let waitingWorker = null;
+let pendingFreshResponse = null;
 
-function showUpdateBanner(worker) {
-  waitingWorker = worker;
+function showUpdateBanner() {
   const el = document.getElementById('update-banner');
   if (el) el.style.display = 'flex';
 }
 
 function dismissUpdate() {
+  pendingFreshResponse = null;
   const el = document.getElementById('update-banner');
   if (el) el.style.display = 'none';
 }
 
 function applyUpdate() {
-  if (waitingWorker) waitingWorker.postMessage('SKIP_WAITING');
-  else location.reload();
+  if (!pendingFreshResponse) { location.reload(); return; }
+  const res = pendingFreshResponse;
+  caches.keys()
+    .then(keys => Promise.all(keys.map(k => caches.open(k).then(c => c.put(location.href, res.clone())))))
+    .then(() => location.reload());
 }
 
 async function checkForUpdates() {
@@ -856,11 +859,12 @@ async function checkForUpdates() {
   const reset = () => { btn.textContent = original; btn.disabled = false; };
   try {
     const res = await fetch(location.href, { cache: 'no-store' });
-    const html = await res.text();
-    const match = html.match(/APP_VERSION\s*=\s*'([^']+)'/);
+    const text = await res.clone().text();
+    const match = text.match(/APP_VERSION\s*=\s*'([^']+)'/);
     const remoteVersion = match ? match[1] : null;
     if (remoteVersion && remoteVersion !== APP_VERSION) {
-      showUpdateBanner(null);
+      pendingFreshResponse = res;
+      showUpdateBanner();
       reset();
     } else {
       btn.textContent = t('upToDate');
@@ -874,23 +878,9 @@ async function checkForUpdates() {
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
 if ('serviceWorker' in navigator) {
-  const sw = `const CACHE='handball-v${APP_VERSION}';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['${swScope}']))));self.addEventListener('activate',e=>e.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()])));self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();});self.addEventListener('fetch',e=>{if(e.request.mode==='navigate'){e.respondWith(fetch(e.request.url,{cache:'no-store'}).then(res=>{caches.open(CACHE).then(c=>c.put(e.request,res.clone()));return res;}).catch(()=>caches.match(e.request)));return;}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const sw = `const CACHE='handball-v${APP_VERSION}';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['${swScope}']))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
-  navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg => {
-    reg.addEventListener('updatefound', () => {
-      const newWorker = reg.installing;
-      if (!newWorker) return;
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && reg.waiting) showUpdateBanner(reg.waiting);
-      });
-    });
-  });
-  let refreshed = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshed) return;
-    refreshed = true;
-    location.reload();
-  });
+  navigator.serviceWorker.register(URL.createObjectURL(blob));
 }
 
 function init() {
