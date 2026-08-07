@@ -264,7 +264,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.13.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -273,7 +273,7 @@ let state = {
   half: 0, halves: { a: [0, 0], b: [0, 0] },
   history: [], darkMode: true, lang: 'de', showClock: true,
   whatsappEnabled: true,
-  team1IsA: true,
+  team1OnLeft: true,
   autoSwapAtHalftime: false,
   halfLength: 30,
   clockRemaining: 30*60,
@@ -408,7 +408,7 @@ function load() {
       if (typeof p.darkMode === 'boolean') state.darkMode = p.darkMode;
       if (typeof p.showClock === 'boolean') state.showClock = p.showClock;
       if (typeof p.whatsappEnabled === 'boolean') state.whatsappEnabled = p.whatsappEnabled;
-      if (typeof p.team1IsA === 'boolean') state.team1IsA = p.team1IsA;
+      if (typeof p.team1OnLeft === 'boolean') state.team1OnLeft = p.team1OnLeft;
       if (typeof p.autoSwapAtHalftime === 'boolean') state.autoSwapAtHalftime = p.autoSwapAtHalftime;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
@@ -445,7 +445,7 @@ function save() {
       history: state.history, darkMode: state.darkMode, lang: state.lang,
       showClock: state.showClock,
       whatsappEnabled: state.whatsappEnabled,
-      team1IsA: state.team1IsA,
+      team1OnLeft: state.team1OnLeft,
       autoSwapAtHalftime: state.autoSwapAtHalftime,
       halfLength: state.halfLength,
       clockRunning: state.clockRunning,
@@ -562,8 +562,6 @@ function applyLang() {
     const hbf = document.getElementById('half-btn-fallback');
     if (hbf) hbf.textContent = state.half === 0 ? t('half1') : t('half2');
     ['a','b'].forEach(t2 => {
-      const hz = document.getElementById('hz-'+t2);
-      if (hz) hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
       const mb = document.getElementById('corr-minus-'+t2);
       if (mb) mb.setAttribute('aria-label', t('ariaMinus'));
     });
@@ -689,20 +687,28 @@ function readableColor(hex) {
   } catch (e) { return hex; }
 }
 
+// Game-view DOM slots are physically fixed (id suffix 'a' = left card, 'b' = right card) —
+// team1OnLeft decides which team identity (state.a = Team 1, state.b = Team 2, both fixed
+// forever) currently renders in which slot, without moving any of their data around.
+function identityForSlot(slot) {
+  return state.team1OnLeft ? slot : (slot === 'a' ? 'b' : 'a');
+}
+
 function render() {
-  ['a','b'].forEach(t2 => {
-    const s = state[t2];
+  ['a','b'].forEach(slot => {
+    const identity = identityForSlot(slot);
+    const s = state[identity];
     const textColor = readableColor(s.color);
-    document.getElementById('disp-'+t2).textContent = total(t2);
-    document.getElementById('disp-'+t2).style.color = textColor;
-    document.getElementById('name-'+t2).textContent = s.name;
-    document.getElementById('name-'+t2).style.color = textColor;
-    document.getElementById('card-'+t2).style.boxShadow = `inset 0 0 0 2px ${s.color}55`;
-    const hz = document.getElementById('hz-'+t2);
-    hz.textContent = `${t('hz')} ${state.halves[t2][0]}`;
+    document.getElementById('disp-'+slot).textContent = total(identity);
+    document.getElementById('disp-'+slot).style.color = textColor;
+    document.getElementById('name-'+slot).textContent = s.name;
+    document.getElementById('name-'+slot).style.color = textColor;
+    document.getElementById('card-'+slot).style.boxShadow = `inset 0 0 0 2px ${s.color}55`;
+    const hz = document.getElementById('hz-'+slot);
+    hz.textContent = `${t('hz')} ${state.halves[identity][0]}`;
     hz.style.color = textColor;
-    const mb = document.getElementById('corr-minus-'+t2);
-    mb.disabled = state.halves[t2][state.half] === 0;
+    const mb = document.getElementById('corr-minus-'+slot);
+    mb.disabled = state.halves[identity][state.half] === 0;
     mb.style.color = mb.disabled ? '#444' : '';
   });
   const hb = document.getElementById('half-btn');
@@ -718,7 +724,7 @@ function renderSettings() {
     const sec = document.getElementById('set-section-'+t2);
     if (sec) { sec.style.borderColor = state[t2].color; sec.style.boxShadow = `inset 0 0 0 1px ${state[t2].color}`; }
     const title = document.getElementById('set-title-'+t2);
-    if (title) { title.textContent = t(teamLabelKey(t2)); title.style.color = readableColor(state[t2].color); }
+    if (title) { title.textContent = t2 === 'a' ? t('team1') : t('team2'); title.style.color = readableColor(state[t2].color); }
     const el = document.getElementById('set-colors-'+t2);
     el.innerHTML = '';
     PRESETS.forEach(p => {
@@ -745,17 +751,16 @@ function renderSettings() {
   });
 }
 
-// "Team 1"/"Team 2" are identities that travel with a team's data across swapTeams(), not fixed
-// to slot a/b — state.team1IsA tracks which slot currently holds the "Team 1" identity.
-function teamLabelKey(t2) {
-  return (t2 === 'a') === state.team1IsA ? 'team1' : 'team2';
-}
-
 function setName(t2, v) {
   state[t2].name = v;
-  const display = v.trim() || t(teamLabelKey(t2));
-  document.getElementById('name-'+t2).textContent = display;
-  document.getElementById('name-'+t2).style.color = readableColor(state[t2].color);
+  // identityForSlot() is its own inverse (a plain flip), so it also answers "which physical
+  // slot currently displays this identity" — needed since t2 here is the fixed identity (settings
+  // always edits Team 1/Team 2 directly), but the game-view DOM element it must update is keyed
+  // by physical slot, which can differ from the identity once sides have been swapped.
+  const slot = identityForSlot(t2);
+  const display = v.trim() || (t2 === 'a' ? t('team1') : t('team2'));
+  document.getElementById('name-'+slot).textContent = display;
+  document.getElementById('name-'+slot).style.color = readableColor(state[t2].color);
   save();
 }
 
@@ -776,8 +781,20 @@ function openColorModal(t2) {
 
 function cancelColor() { document.getElementById('color-modal').style.display = 'none'; }
 
-function addGoal(t2) { state.halves[t2][state.half]++; if (navigator.vibrate) navigator.vibrate(10); render(); save(); }
-function correct(t2, d) { state.halves[t2][state.half] = Math.max(0, state.halves[t2][state.half] + d); render(); save(); }
+function addGoal(slot) {
+  const identity = identityForSlot(slot);
+  state.halves[identity][state.half]++;
+  if (navigator.vibrate) navigator.vibrate(10);
+  render();
+  save();
+}
+
+function correct(slot, d) {
+  const identity = identityForSlot(slot);
+  state.halves[identity][state.half] = Math.max(0, state.halves[identity][state.half] + d);
+  render();
+  save();
+}
 
 function setHalf(h) {
   if (h !== state.half && state.autoSwapAtHalftime) swapTeamsData();
@@ -787,16 +804,13 @@ function setHalf(h) {
 }
 
 function swapTeamsData() {
-  const tmpN = state.a.name, tmpC = state.a.color;
-  state.a.name = state.b.name; state.a.color = state.b.color;
-  state.b.name = tmpN; state.b.color = tmpC;
-  const tmpH = state.halves.a; state.halves.a = state.halves.b; state.halves.b = tmpH;
-  state.team1IsA = !state.team1IsA;
+  state.team1OnLeft = !state.team1OnLeft;
 }
 
 function swapTeams() {
   swapTeamsData();
-  render(); renderSettings(); save();
+  render();
+  save();
 }
 
 function askFinish() {
@@ -811,18 +825,16 @@ function cancelFinish() {
 
 function saveGame() {
   const now = new Date();
-  // History always lists Team 1 first (left), regardless of which slot (a/b) currently holds
-  // that identity — swapTeams() can leave Team 1's data sitting in either slot.
-  const slot1 = state.team1IsA ? 'a' : 'b';
-  const slot2 = state.team1IsA ? 'b' : 'a';
+  // state.a is always Team 1 and state.b always Team 2 (fixed identities, unaffected by
+  // swapTeams() — that only flips team1OnLeft), so history naturally always lists Team 1 first.
   state.history.unshift({
     id: Date.now(),
     date: now.toLocaleDateString(t('locale'),{day:'2-digit',month:'2-digit',year:'numeric'}),
     time: now.toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'}),
-    ht: { a: state.halves[slot1][0], b: state.halves[slot2][0] },
+    ht: { a: state.halves.a[0], b: state.halves.b[0] },
     teams: [
-      { name: state[slot1].name, score: total(slot1), color: state[slot1].color },
-      { name: state[slot2].name, score: total(slot2), color: state[slot2].color },
+      { name: state.a.name, score: total('a'), color: state.a.color },
+      { name: state.b.name, score: total('b'), color: state.b.color },
     ]
   });
   state.halves = { a: [0,0], b: [0,0] };
