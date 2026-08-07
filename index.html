@@ -73,7 +73,7 @@
     .history-meta span { font-size: 12px; color: var(--muted); }
     .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: 4px 8px; min-height: 44px; min-width: 44px; border-radius: 8px; }
     .history-names-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-    .history-team-name { flex: 1; min-width: 0; font-size: 15px; color: var(--text); text-align: center; word-break: break-word; }
+    .history-team-name { flex: 1; min-width: 0; font-size: 15px; text-align: center; word-break: break-word; }
     .history-score { text-align: center; font-size: 28px; font-weight: 500; margin-bottom: 6px; }
     .history-winner { font-size: 13px; color: var(--muted); text-align: center; }
     .history-del-confirm { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
@@ -260,7 +260,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.9.8';
+const APP_VERSION = '1.9.9';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -899,8 +899,8 @@ function renderHistory() {
     <div class="history-card" style="${isPending ? 'border-color: #e24b4a55;' : ''}">
       <div class="history-meta"><span>${g.date} · ${g.time}</span>${entryActions}</div>
       <div class="history-names-row">
-        <span class="history-team-name">${g.teams[0].name}</span>
-        <span class="history-team-name">${g.teams[1].name}</span>
+        <span class="history-team-name" style="color:${readableColor(g.teams[0].color)}">${g.teams[0].name}</span>
+        <span class="history-team-name" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].name}</span>
       </div>
       <div class="history-score">
         <span style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted)"> : </span><span style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span>
