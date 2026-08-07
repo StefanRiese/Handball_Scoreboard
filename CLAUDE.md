@@ -72,6 +72,24 @@ history each use the same link → Yes/No toggle pattern (a `pending*` module-le
 which of two sibling `<div>`s is visible). Follow this pattern for any new destructive action
 rather than `confirm()` dialogs or immediate deletion.
 
+**Team identity vs. physical display slot**: `state.a`/`state.b` are fixed identities forever —
+`state.a` is always Team 1, `state.b` always Team 2 (name, color, halves never move between
+them). Game-view DOM ids (`disp-a`/`disp-b`, `name-a`/`name-b`, `hz-a`/`hz-b`, `corr-minus-a/b`,
+`card-a`/`card-b`) are physically fixed too — `-a` is always the left card, `-b` always the right.
+`state.team1OnLeft` is the only thing connecting the two: `identityForSlot(slot)` resolves which
+identity currently renders in a given physical slot, and — since it's a plain flip, its own
+inverse — also answers the reverse ("which slot currently shows this identity"), which
+`setName()` needs since it's called with the identity (from the settings inputs, which always
+edit Team 1/Team 2 directly) but must update the correctly-positioned DOM node. `swapTeams()`
+only ever flips this one flag; it does not move any team data. Settings (`renderSettings()`,
+`setName()`, `openColorModal()`) always operate on the fixed identity directly and are entirely
+unaffected by `team1OnLeft` — only `render()`, `addGoal()`, and `correct()` (which receive a
+physical slot from hardcoded HTML `onclick` attributes) need to resolve through
+`identityForSlot()`. `saveGame()` always reads `state.a`/`state.b` directly for the same reason —
+history naturally lists Team 1 first with no extra logic needed. Don't reintroduce data-swapping
+in `swapTeams()`/`swapTeamsData()` — that was the prior design and was deliberately replaced with
+this flag-only approach.
+
 **Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
 `sw.js` file) that caches the app shell for offline use; `manifest.json` + the
 `apple-mobile-web-app-*` meta tags cover Android/Chrome and iOS install prompts respectively.
