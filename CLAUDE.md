@@ -93,12 +93,12 @@ Given #2, the retry strategy is layered, cheapest/least-reliable first: `visibil
 likely rejected per #2 but harmless to try), a 20s `setInterval` safety net (same caveat), and a
 `touchstart` listener that reacquires whenever `!wl` — since this app has near-constant real taps
 (scoring a goal, any button), and a genuine tap *does* carry transient activation, that listener
-is the one actually likely to succeed. Controlled by `state.wakeLockEnabled` (Settings →
-Darstellung → "Bildschirm wach halten", default on), following the same persisted-toggle pattern
-as `showClock`/`whatsappEnabled`; `toggleWakeLockEnabled()` releases the lock immediately when
-turned off. A muted-video-loop fallback was tried and removed (commit reverting "Add keep-awake
-video fallback") after on-device testing showed it did not prevent the OS auto-lock; NoSleep.js's
-own source only uses that trick for pre-Wake-Lock-API browsers and relies on native Wake Lock
+is the one actually likely to succeed. This is always on, unconditionally, with no settings
+toggle — a keep-awake feature that can be silently switched off defeats its own purpose, so don't
+reintroduce a `wakeLockEnabled`-style toggle for it without being asked. A muted-video-loop
+fallback was tried and removed (commit reverting "Add keep-awake video fallback") after on-device
+testing showed it did not prevent the OS auto-lock; NoSleep.js's own source only uses that trick
+for pre-Wake-Lock-API browsers and relies on native Wake Lock
 alone wherever it's available, which is why it was abandoned here too — don't re-add a
 video/canvas/audio keep-awake hack without new evidence it actually helps.
 
