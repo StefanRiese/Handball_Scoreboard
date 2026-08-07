@@ -84,7 +84,7 @@ though it works fine in a regular Safari tab. The `#keepawake` `<video>` element
 `playsinline`, `loop`, tiny inline base64 `data:` URI — a 16×16px, 1-second, near-zero-bitrate
 black clip generated with GStreamer, no external asset file) is the classic, more reliable
 fallback: continuous media playback independently inhibits iOS's auto-lock timer. Controlled by
-the `state.keepAwakeVideo` setting (Settings → Spielzeit → "Bildschirm wach halten"), following
+the `state.keepAwakeVideo` setting (Settings → Darstellung → "Bildschirm wach halten"), following
 the same persisted-toggle pattern as `showClock`/`whatsappEnabled`.
 
 **Update flow — manual only, by design**: every request, including page navigation, is
