@@ -260,7 +260,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.9.9';
+const APP_VERSION = '1.10.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -269,6 +269,7 @@ let state = {
   half: 0, halves: { a: [0, 0], b: [0, 0] },
   history: [], darkMode: true, lang: 'de', showClock: true,
   whatsappEnabled: true,
+  team1IsA: true,
   halfLength: 30,
   clockRemaining: 30*60,
   clockRunning: false,
@@ -401,6 +402,7 @@ function load() {
       if (typeof p.darkMode === 'boolean') state.darkMode = p.darkMode;
       if (typeof p.showClock === 'boolean') state.showClock = p.showClock;
       if (typeof p.whatsappEnabled === 'boolean') state.whatsappEnabled = p.whatsappEnabled;
+      if (typeof p.team1IsA === 'boolean') state.team1IsA = p.team1IsA;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
       if (p.clockRunning && typeof p.clockEndsAt === 'number') {
@@ -436,6 +438,7 @@ function save() {
       history: state.history, darkMode: state.darkMode, lang: state.lang,
       showClock: state.showClock,
       whatsappEnabled: state.whatsappEnabled,
+      team1IsA: state.team1IsA,
       halfLength: state.halfLength,
       clockRunning: state.clockRunning,
       clockRemaining: state.clockRemaining,
@@ -525,8 +528,6 @@ function applyLang() {
     document.getElementById('check-update-btn').textContent = t('checkUpdate');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
-    document.getElementById('set-title-a').textContent = t('team1');
-    document.getElementById('set-title-b').textContent = t('team2');
     document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
     document.querySelectorAll('.lbl-color').forEach(e => e.textContent = t('colorLabel'));
     document.getElementById('swap-btn').textContent = t('swapSides');
@@ -700,7 +701,7 @@ function renderSettings() {
     const sec = document.getElementById('set-section-'+t2);
     if (sec) { sec.style.borderColor = state[t2].color; sec.style.boxShadow = `inset 0 0 0 1px ${state[t2].color}`; }
     const title = document.getElementById('set-title-'+t2);
-    if (title) title.style.color = readableColor(state[t2].color);
+    if (title) { title.textContent = t(teamLabelKey(t2)); title.style.color = readableColor(state[t2].color); }
     const el = document.getElementById('set-colors-'+t2);
     el.innerHTML = '';
     PRESETS.forEach(p => {
@@ -727,9 +728,15 @@ function renderSettings() {
   });
 }
 
+// "Team 1"/"Team 2" are identities that travel with a team's data across swapTeams(), not fixed
+// to slot a/b — state.team1IsA tracks which slot currently holds the "Team 1" identity.
+function teamLabelKey(t2) {
+  return (t2 === 'a') === state.team1IsA ? 'team1' : 'team2';
+}
+
 function setName(t2, v) {
   state[t2].name = v;
-  const display = v.trim() || (t2 === 'a' ? t('team1') : t('team2'));
+  const display = v.trim() || t(teamLabelKey(t2));
   document.getElementById('name-'+t2).textContent = display;
   document.getElementById('name-'+t2).style.color = readableColor(state[t2].color);
   save();
@@ -762,6 +769,7 @@ function swapTeams() {
   state.a.name = state.b.name; state.a.color = state.b.color;
   state.b.name = tmpN; state.b.color = tmpC;
   const tmpH = state.halves.a; state.halves.a = state.halves.b; state.halves.b = tmpH;
+  state.team1IsA = !state.team1IsA;
   render(); renderSettings(); save();
 }
 
@@ -777,14 +785,18 @@ function cancelFinish() {
 
 function saveGame() {
   const now = new Date();
+  // History always lists Team 1 first (left), regardless of which slot (a/b) currently holds
+  // that identity — swapTeams() can leave Team 1's data sitting in either slot.
+  const slot1 = state.team1IsA ? 'a' : 'b';
+  const slot2 = state.team1IsA ? 'b' : 'a';
   state.history.unshift({
     id: Date.now(),
     date: now.toLocaleDateString(t('locale'),{day:'2-digit',month:'2-digit',year:'numeric'}),
     time: now.toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'}),
-    ht: { a: state.halves.a[0], b: state.halves.b[0] },
+    ht: { a: state.halves[slot1][0], b: state.halves[slot2][0] },
     teams: [
-      { name: state.a.name, score: total('a'), color: state.a.color },
-      { name: state.b.name, score: total('b'), color: state.b.color },
+      { name: state[slot1].name, score: total(slot1), color: state[slot1].color },
+      { name: state[slot2].name, score: total(slot2), color: state[slot2].color },
     ]
   });
   state.halves = { a: [0,0], b: [0,0] };
