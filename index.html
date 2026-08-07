@@ -25,13 +25,13 @@
     .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
     .teams { display: flex; gap: 12px; align-items: stretch; }
-    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 24px 10px; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; min-height: 400px; justify-content: center; }
+    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 24px 10px; display: grid; grid-template-rows: auto 1fr; justify-items: center; cursor: pointer; min-height: 400px; }
     .team-card:active { transform: scale(0.98); }
     .hz-badge { position: absolute; top: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: 10px; padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
     #card-a .hz-badge { right: 12px; }
     #card-b .hz-badge { left: 12px; }
-    .team-name { font-size: 16px; font-weight: 500; text-align: center; word-break: break-word; padding: 4px 8px; min-height: 24px; }
-    .team-score { font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
+    .team-name { align-self: start; font-size: 16px; font-weight: 500; text-align: center; word-break: break-word; padding: 4px 8px; min-height: 24px; }
+    .team-score { align-self: center; font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
     .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 46px; height: 46px; border-radius: 10px; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
     .minus-btn:disabled { color: #444; }
     .clock-row { display: flex; align-items: stretch; gap: 8px; margin-top: 4px; }
@@ -260,7 +260,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.9.4';
+const APP_VERSION = '1.9.5';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
