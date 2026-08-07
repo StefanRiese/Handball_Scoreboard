@@ -110,9 +110,19 @@ reached the SW's fetch handler at all, or reached it but missed the cache lookup
    `applyUpdate()` write the fetched HTML response under the shell URL variants too (not just
    `location.href`) so a manual update doesn't leave the URL a cold launch actually looks up
    stale even though the update "succeeded".
-This self-heals on the next connected app open (SW re-registration runs unconditionally on every
-load, not gated behind the manual update-check button) — no manual site-data reset needed for
-this particular fix.
+This self-heals on the next connected app open — no manual site-data reset needed for this
+particular fix.
+
+**SW registration only happens while online** (`navigator.onLine` guard around the whole
+`if ('serviceWorker' in navigator)` block). Bumping `APP_VERSION` makes the SW script byte-differ,
+so the browser tries to install the new version on every open, which requires fetching the
+shell/manifest/icon fresh over the network — if that first post-deploy open happens to be
+offline, the install fails and retries on *every* subsequent open until it finally succeeds
+online, and each failed attempt can trigger the OS's own "no internet, switch to Wi-Fi/turn off
+airplane mode?" prompt (confirmed on-device — this is a different symptom from the "can't open
+the page" error above, but the same underlying cause: a network attempt that shouldn't have
+happened). Skipping registration entirely while offline leaves whatever SW is already active
+(already fully cached from a prior online visit) in control with zero network attempts.
 `navigator.wakeLock` keeps the screen on during a match. There were two real, confirmed root
 causes of it failing on iOS standalone home-screen installs (found via WebKit's own bug tracker,
 not guessed):
