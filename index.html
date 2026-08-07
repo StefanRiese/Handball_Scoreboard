@@ -248,6 +248,7 @@ const STORAGE_KEY = 'handball_v3';
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
 const APP_VERSION = '1.2.1';
+const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
   a: { name: 'TuS Griesheim', color: '#e24b4a' },
@@ -286,7 +287,7 @@ function shareHistoryGame(id) {
 }
 
 function shareAppWhatsApp() {
-  const text = `${t('shareAppText')}\n${location.href}`;
+  const text = `${t('shareAppText')}\n${APP_URL}`;
   window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
