@@ -97,6 +97,12 @@
 </head>
 <body>
 
+<div id="qr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:200; align-items:center; justify-content:center; flex-direction:column; gap:22px;" onclick="if(event.target===this)closeQrModal()">
+  <canvas id="qr-large" style="border-radius:16px;"></canvas>
+  <div id="qr-modal-hint" style="font-size:14px; color:#ccc; text-align:center; padding:0 24px;">Mit einem anderen Handy scannen, um die App zu öffnen.</div>
+  <button onclick="closeQrModal()" id="qr-close-btn" style="padding:14px 28px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Schließen</button>
+</div>
+
 <div id="color-modal" onclick="if(event.target===this)cancelColor()">
   <div class="box">
     <div id="color-modal-title" style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
@@ -201,6 +207,10 @@
     <div class="settings-row"><span class="settings-row-label" id="github-label">Quellcode</span><a class="toggle-btn" id="github-link" href="https://github.com/StefanRiese/Handball_Scoreboard" target="_blank" rel="noopener" style="text-decoration:none;">🔗 GitHub</a></div>
     <button class="swap-row-btn" id="share-app-btn" onclick="shareAppWhatsApp()">📤 App per WhatsApp teilen</button>
     <button class="swap-row-btn" id="add-home-btn" onclick="addToHomeScreen()">📲 Zum Home-Bildschirm hinzufügen</button>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+      <canvas id="qr-preview" width="120" height="120" style="border-radius:8px; cursor:pointer;" onclick="openQrModal()"></canvas>
+      <button class="swap-row-btn" id="qr-enlarge-btn" onclick="openQrModal()" style="width:100%;">🔍 QR-Code vergrößern</button>
+    </div>
     <div id="add-home-instructions" style="display:none; margin-top:-4px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:14px; padding:12px 14px;">
       <div id="add-home-instructions-text" style="font-size:14px; color:var(--text); margin-bottom:10px;"></div>
       <button class="btn-secondary" onclick="dismissAddHomeInstructions()" id="add-home-dismiss-btn">Verstanden</button>
@@ -244,8 +254,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', githubLabel:'Quellcode', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen', developerLabel:'Entwickler', checkingUpdate:'⏳ Suche...', upToDate:'✅ Bereits aktuell', offlineCheckFailed:'📡 Keine Verbindung', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'Verstanden' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', githubLabel:'Source code', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates', developerLabel:'Developer', checkingUpdate:'⏳ Checking...', upToDate:'✅ Already up to date', offlineCheckFailed:'📡 No connection', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', githubLabel:'Quellcode', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen', developerLabel:'Entwickler', checkingUpdate:'⏳ Suche...', upToDate:'✅ Bereits aktuell', offlineCheckFailed:'📡 Keine Verbindung', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'Verstanden', enlargeQr:'🔍 QR-Code vergrößern', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', closeQr:'Schließen' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', githubLabel:'Source code', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates', developerLabel:'Developer', checkingUpdate:'⏳ Checking...', upToDate:'✅ Already up to date', offlineCheckFailed:'📡 No connection', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', enlargeQr:'🔍 Enlarge QR code', qrHint:'Scan with another phone to open the app.', closeQr:'Close' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -253,7 +263,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -329,6 +339,48 @@ async function addToHomeScreen() {
 
 function dismissAddHomeInstructions() {
   document.getElementById('add-home-instructions').style.display = 'none';
+}
+
+// QR code for APP_URL, precomputed offline (qrcode Python lib) rather than pulled from a
+// third-party API at runtime — keeps this a single, dependency-free file with no network calls
+// beyond the app's own content. One bit per module, rows joined by '|'.
+const QR_MATRIX_BITS = '111111101100110001111101001111111|100000101111010010100101101000001|101110100010100101001010001011101|101110101000001010001010101011101|101110100101011000001100101011101|100000100111101000011100101000001|111111101010101010101010101111111|000000001010000001101001100000000|101101110100011011110100001001011|011011010101000010011011001101101|011001110101001011001111010111011|010100001101111010101001101101011|101111110111100000110010110001011|001110001000010011100000111100010|110010110111111110100110001010000|010001011001101010111101111011100|011001101111101100111111011011100|000100000110100101000011101011011|111100110001100101001100000110110|001001000010101110000011110010011|110110101101110100110100100001110|110101001011001101100011001000101|000100111011011011000001101001111|010011011000110010001001101101011|100000101011110101010011111110000|000000001000010101110001100011000|111111101100101010011111101010000|100000101101000000010101100011100|101110100010011001001111111110100|101110101110111000100010000100001|101110101110001000000111111101100|100000100010100111100011101110001|111111101001110111111101001010100';
+
+function drawQrCode(canvas, sizePx) {
+  const rows = QR_MATRIX_BITS.split('|');
+  const n = rows.length;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = sizePx * dpr;
+  canvas.height = sizePx * dpr;
+  canvas.style.width = sizePx + 'px';
+  canvas.style.height = sizePx + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, sizePx, sizePx);
+  const quietZone = sizePx * 0.08;
+  const inner = sizePx - quietZone * 2;
+  const moduleSize = inner / n;
+  ctx.fillStyle = '#000000';
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      if (rows[y][x] === '1') {
+        ctx.fillRect(quietZone + x * moduleSize, quietZone + y * moduleSize, moduleSize, moduleSize);
+      }
+    }
+  }
+}
+
+function openQrModal() {
+  const modal = document.getElementById('qr-modal');
+  const canvas = document.getElementById('qr-large');
+  const size = Math.min(window.innerWidth, window.innerHeight) * 0.75;
+  drawQrCode(canvas, size);
+  modal.style.display = 'flex';
+}
+
+function closeQrModal() {
+  document.getElementById('qr-modal').style.display = 'none';
 }
 
 function total(tm) { return state.halves[tm][0] + state.halves[tm][1]; }
@@ -473,6 +525,9 @@ function applyLang() {
     document.getElementById('share-app-btn').textContent = t('shareApp');
     document.getElementById('add-home-btn').textContent = t('addHome');
     document.getElementById('add-home-dismiss-btn').textContent = t('gotIt');
+    document.getElementById('qr-enlarge-btn').textContent = t('enlargeQr');
+    document.getElementById('qr-modal-hint').textContent = t('qrHint');
+    document.getElementById('qr-close-btn').textContent = t('closeQr');
     document.getElementById('check-update-btn').textContent = t('checkUpdate');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
@@ -958,6 +1013,7 @@ function init() {
   applyClockVisible();
   applyWhatsappVisible();
   applyAddHomeVisibility();
+  drawQrCode(document.getElementById('qr-preview'), 120);
   document.getElementById('version-info').textContent = `Version ${APP_VERSION}`;
   if (state.showClock && state.clockRunning && state.clockRemaining > 0) {
     clearInterval(clockTimer);
