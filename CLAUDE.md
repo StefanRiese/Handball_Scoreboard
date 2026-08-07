@@ -107,11 +107,20 @@ cache-first (`caches.match(e.request).then(r=>r||fetch(e.request))`) — opening
 touches the network or triggers any update detection, on purpose (the user explicitly asked for
 this; an earlier network-first-navigation design auto-checked on every open, which wasn't
 wanted). The only way to get fresh content is the "🔄 Check for updates" button
-(`checkForUpdates()`, Settings → Information): it fetches the live file with
-`{cache: 'no-store'}` (bypassing both the SW cache and the browser's HTTP cache — necessary since
-a `Cache-Control` header from the host, e.g. GitHub Pages' `max-age=600`, would otherwise silently
-serve a stale copy), regex-extracts its embedded `APP_VERSION`, and only shows the update banner
-if that differs from the running version. Confirming via `applyUpdate()` writes the
+(`checkForUpdates()`, Settings → Information): it fetches the live file with a cache-busting
+query string (`?_check=${Date.now()}`) AND `{cache: 'no-store'}`. Both are required, for two
+different layers: `{cache: 'no-store'}` only bypasses the browser's own HTTP cache (needed since a
+`Cache-Control` header from the host, e.g. GitHub Pages' `max-age=600`, would otherwise let the
+browser silently reuse a stale response) — it does nothing about our Service Worker, whose fetch
+handler is cache-first for every request regardless of the caller's `cache` option. Without the
+query-string cache-bust, the SW would just re-serve whatever's already in Cache Storage (i.e. the
+currently-running version) and the check would compare the running version against itself,
+silently never detecting a real update. The query string exists purely to miss the SW's
+`caches.match(e.request)` lookup so its own `r || fetch(e.request)` fallback actually reaches the
+network — don't "simplify" this back to a plain `fetch(location.href, {cache:'no-store'})`, it
+looks equivalent but reintroduces exactly this bug. It regex-extracts the response's embedded
+`APP_VERSION`, and only shows the update banner if that differs from the running version.
+Confirming via `applyUpdate()` writes the
 already-fetched response (`pendingFreshResponse`) directly into every existing Cache Storage
 entry keyed by the current URL, then reloads — the reload's cache-first lookup finds that
 freshly-written entry immediately, so the new content shows without a second network round-trip.
