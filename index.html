@@ -264,7 +264,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.13.2';
+const APP_VERSION = '1.14.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1086,8 +1086,14 @@ function dismissUpdate() {
 function applyUpdate() {
   if (!pendingFreshResponse) { location.reload(); return; }
   const res = pendingFreshResponse;
+  // Write under every URL a cold offline launch might actually request (location.href AND the
+  // canonical shell URLs the install handler uses) — a cold app-icon relaunch can request a
+  // different URL variant than whatever page happened to run this update, and a cache-first
+  // fetch handler needs an exact match or it falls through to network, which fails outright
+  // while offline.
+  const urls = Array.from(new Set([location.href, swScope, swScope + 'index.html']));
   caches.keys()
-    .then(keys => Promise.all(keys.map(k => caches.open(k).then(c => c.put(location.href, res.clone())))))
+    .then(keys => Promise.all(keys.flatMap(k => urls.map(u => caches.open(k).then(c => c.put(u, res.clone()))))))
     .then(() => location.reload());
 }
 
@@ -1122,9 +1128,16 @@ async function checkForUpdates() {
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
 if ('serviceWorker' in navigator) {
-  const sw = `const CACHE='handball-v${APP_VERSION}';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['${swScope}']))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  // Cache both the directory URL and the explicit index.html URL — a home-screen relaunch can
+  // request either depending on platform/iOS version, and a cache-first fetch handler needs an
+  // exact URL match or it falls through to network, which fails outright while offline (surfaced
+  // as the browser's own "can't open the page" error, not anything this app can catch).
+  const shellUrls = JSON.stringify([swScope, swScope + 'index.html']);
+  const sw = `const CACHE='handball-v${APP_VERSION}';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(${shellUrls}))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
-  navigator.serviceWorker.register(URL.createObjectURL(blob));
+  // Explicit scope — for a blob: URL script the default scope is ambiguous, and if it doesn't
+  // end up covering the actual launch URL, the SW never intercepts that navigation at all.
+  navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: swScope });
 }
 
 function init() {
