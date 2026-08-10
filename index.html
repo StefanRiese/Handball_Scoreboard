@@ -177,12 +177,12 @@
   <div class="settings-teams">
     <div class="settings-section" id="set-section-a">
       <div class="settings-title" id="set-title-a">Team 1</div>
-      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-a" enterkeyhint="done" oninput="setName('a', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" /></div>
+      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-a" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" /></div>
       <div class="field"><span class="field-label lbl-color">Farbe</span><div class="colors" id="set-colors-a"></div></div>
     </div>
     <div class="settings-section" id="set-section-b">
       <div class="settings-title" id="set-title-b">Team 2</div>
-      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-b" enterkeyhint="done" oninput="setName('b', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" /></div>
+      <div class="field"><span class="field-label lbl-name">Name</span><input class="name-input" id="set-name-b" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" /></div>
       <div class="field"><span class="field-label lbl-color">Farbe</span><div class="colors" id="set-colors-b"></div></div>
     </div>
   </div>
@@ -767,15 +767,23 @@ function render() {
   if (hbf) hbf.textContent = state.half === 0 ? t('half1') : t('half2');
 }
 
+// Settings sections are keyed by physical slot (set-section-a is always the left column) so
+// they visually track swapTeams() the same way the game view does — each slot here resolves
+// which fixed identity (Team 1/Team 2) currently occupies it via identityForSlot(), and the name
+// input's oninput is (re)bound to that identity on every render since the identity behind a slot
+// can change after a swap.
 function renderSettings() {
   document.getElementById('set-halflen').value = state.halfLength;
-  ['a','b'].forEach(t2 => {
-    document.getElementById('set-name-'+t2).value = state[t2].name;
-    const sec = document.getElementById('set-section-'+t2);
+  ['a','b'].forEach(slot => {
+    const t2 = identityForSlot(slot);
+    const nameInput = document.getElementById('set-name-'+slot);
+    nameInput.value = state[t2].name;
+    nameInput.oninput = () => setName(t2, nameInput.value);
+    const sec = document.getElementById('set-section-'+slot);
     if (sec) { sec.style.borderColor = state[t2].color; sec.style.boxShadow = `inset 0 0 0 1px ${state[t2].color}`; }
-    const title = document.getElementById('set-title-'+t2);
+    const title = document.getElementById('set-title-'+slot);
     if (title) { title.textContent = t2 === 'a' ? t('team1') : t('team2'); title.style.color = readableColor(state[t2].color); }
-    const el = document.getElementById('set-colors-'+t2);
+    const el = document.getElementById('set-colors-'+slot);
     el.innerHTML = '';
     PRESETS.forEach(p => {
       const btn = document.createElement('button');
@@ -860,6 +868,7 @@ function swapTeamsData() {
 function swapTeams() {
   swapTeamsData();
   render();
+  renderSettings();
   save();
   const btn = document.getElementById('swap-btn');
   const original = btn.textContent;
