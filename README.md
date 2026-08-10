@@ -27,21 +27,29 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 ### Seitenwechsel
 - ⇄-Button tauscht, welches Team links und welches rechts angezeigt wird
 - Name, Farbe und Tore bleiben dabei fest dem jeweiligen Team zugeordnet
+- Die Team-Karten in den Einstellungen tauschen dabei ebenfalls die Seite, sodass die Reihenfolge dort immer zur Spielansicht passt
 - Optional automatisch bei jedem Halbzeitwechsel (Einstellung, standardmäßig aus)
 - Kurze Bestätigung nach dem Tausch
 
+### Spielernummern erfassen
+- Optional in den Einstellungen aktivierbar (standardmäßig aus)
+- Bei jedem Tor öffnet sich ein Ziffernblock mit großen Tasten zur schnellen Eingabe der Trikotnummer
+- Das Tor zählt immer sofort – Eingabe überspringen oder daneben tippen lässt das Tor ohne zugeordnete Nummer stehen
+- In der Historie über den 👕-Button pro Spiel einsehbar: Anzahl Tore je Spielernummer, getrennt nach Team
+
 ### Historie
-- Spiele speichern mit Datum, Uhrzeit, Endstand und Gewinner
+- Spiele speichern mit Datum, Uhrzeit, Halbzeit- und Endstand sowie Gewinner
 - Eigener Tab zur Übersicht aller gespeicherten Spiele
 - Einträge nachträglich bearbeitbar (Teamnamen, Spielstand, Datum & Uhrzeit)
 - Einzelne Einträge löschbar
 - Komplette Historie mit einem Klick löschbar (mit Bestätigung)
+- Historie als JSON-Datei exportierbar (Backup oder Weiterverarbeitung außerhalb der App)
 - Dauerhaft im Browser gespeichert
 
 ### Teilen
-- Ergebnis eines gespeicherten Spiels direkt per WhatsApp teilen
+- Ergebnis eines gespeicherten Spiels per WhatsApp teilen oder als Text in die Zwischenablage kopieren (zum Einfügen in eine beliebige andere App)
 - App selbst per WhatsApp teilen oder als QR-Code zum Scannen mit einem anderen Handy anzeigen
-- WhatsApp-Teilen lässt sich in den Einstellungen deaktivieren
+- WhatsApp-Teilen lässt sich in den Einstellungen deaktivieren (die Kopieren-Option bleibt davon unabhängig immer verfügbar)
 
 ### Design
 - Umschaltbares dunkles / helles Theme (Einstellung wird gespeichert)
