@@ -79,16 +79,24 @@ them). Game-view DOM ids (`disp-a`/`disp-b`, `name-a`/`name-b`, `hz-a`/`hz-b`, `
 `state.team1OnLeft` is the only thing connecting the two: `identityForSlot(slot)` resolves which
 identity currently renders in a given physical slot, and — since it's a plain flip, its own
 inverse — also answers the reverse ("which slot currently shows this identity"), which
-`setName()` needs since it's called with the identity (from the settings inputs, which always
-edit Team 1/Team 2 directly) but must update the correctly-positioned DOM node. `swapTeams()`
-only ever flips this one flag; it does not move any team data. Settings (`renderSettings()`,
-`setName()`, `openColorModal()`) always operate on the fixed identity directly and are entirely
-unaffected by `team1OnLeft` — only `render()`, `addGoal()`, and `correct()` (which receive a
-physical slot from hardcoded HTML `onclick` attributes) need to resolve through
-`identityForSlot()`. `saveGame()` always reads `state.a`/`state.b` directly for the same reason —
-history naturally lists Team 1 first with no extra logic needed. Don't reintroduce data-swapping
-in `swapTeams()`/`swapTeamsData()` — that was the prior design and was deliberately replaced with
+`setName()` needs since it's called with the identity but must update the correctly-positioned
+game-view DOM node. `swapTeams()` only ever flips this one flag; it does not move any team data.
+`saveGame()` always reads `state.a`/`state.b` directly for the same reason — history naturally
+lists Team 1 first with no extra logic needed. Don't reintroduce data-swapping in
+`swapTeams()`/`swapTeamsData()` — that was the prior design and was deliberately replaced with
 this flag-only approach.
+
+The settings screen's team sections (`set-section-a`/`set-section-b` and everything inside them)
+are physical slots too, same as the game view — `set-section-a` is always the left column. This
+is so the settings layout visually tracks `swapTeams()`: whichever team is showing on the left in
+the game view also shows on the left in Settings. `renderSettings()` resolves
+`identityForSlot(slot)` per slot on every render and populates that slot's name input, color
+swatches, and title from that identity — including reassigning the name input's `oninput` handler
+each render (`nameInput.oninput = () => setName(t2, nameInput.value)`), since which identity a
+slot edits can change after a swap. `openColorModal(t2)` and the color-dot/`+` button `onclick`s
+are likewise bound to the resolved identity per render, not to a fixed slot. `swapTeams()` calls
+both `render()` and `renderSettings()` since the swap button lives on the Settings tab and the
+settings view needs to reflect the flip immediately, not just on next tab switch.
 
 **Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
 `sw.js` file) that caches the app shell for offline use; `manifest.json` + the
