@@ -14,65 +14,65 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --bg: #0f0f0f; --card: #1a1a1a; --border: rgba(255,255,255,0.08); --text: #f0f0f0; --muted: #888; --btn: #252525; --btn-border: rgba(255,255,255,0.12); }
+    :root { --bg: #0f0f0f; --card: #1a1a1a; --border: rgba(255,255,255,0.08); --text: #f0f0f0; --muted: #888; --btn: #252525; --btn-border: rgba(255,255,255,0.12); --radius-sm: 12px; --radius-md: 16px; --radius-lg: 22px; }
     .light { --bg: #f2f2f7; --card: #ffffff; --border: rgba(0,0,0,0.08); --text: #111; --muted: #888; --btn: #e5e5ea; --btn-border: rgba(0,0,0,0.12); }
     html { height: 100%; overflow: hidden; position: fixed; width: 100%; }
     body { height: 100%; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: env(safe-area-inset-top, 16px) 12px env(safe-area-inset-bottom, 32px); display: flex; flex-direction: column; gap: 14px; transition: background 0.3s; }
-    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; transition: transform 0.1s; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
     button:active { transform: scale(0.93); }
     button:disabled { cursor: not-allowed; transform: none; }
-    .tabbar { display: flex; gap: 4px; background: var(--card); border-radius: 14px; padding: 4px; margin-top: 8px; }
-    .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--muted); min-height: 48px; }
+    .tabbar { display: flex; gap: 4px; background: var(--card); border-radius: var(--radius-md); padding: 4px; margin-top: 8px; }
+    .tabbar button { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
     .teams { display: flex; gap: 12px; align-items: stretch; }
-    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: 20px; padding: 24px 10px; display: grid; grid-template-rows: auto 1fr; justify-items: center; cursor: pointer; min-height: 400px; }
+    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-lg); padding: 24px 10px; display: grid; grid-template-rows: auto 1fr; justify-items: center; cursor: pointer; min-height: 400px; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
     .team-card:active { transform: scale(0.98); }
-    .hz-badge { position: absolute; top: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: 10px; padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
+    .hz-badge { position: absolute; top: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: var(--radius-sm); padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
     #card-a .hz-badge { right: 12px; }
     #card-b .hz-badge { left: 12px; }
     .team-name { align-self: start; margin-top: 34px; font-size: 16px; font-weight: 500; text-align: center; word-break: break-word; padding: 4px 8px; min-height: 24px; }
     .team-score { align-self: center; font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
-    .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 46px; height: 46px; border-radius: 10px; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .minus-btn { position: absolute; bottom: 12px; right: 12px; width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
     .minus-btn:disabled { color: #444; }
     .clock-row { display: flex; align-items: stretch; gap: 8px; margin-top: 4px; }
-    .clock-btn { padding: 14px 8px; border-radius: 14px; font-weight: 600; min-height: 80px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+    .clock-btn { padding: 14px 8px; border-radius: var(--radius-md); font-weight: 600; min-height: 80px; background: var(--btn); border: 0.5px solid var(--btn-border); display: flex; align-items: center; justify-content: center; white-space: nowrap; }
     .clock-start { flex: 0 0 18%; font-size: 28px; line-height: 0; overflow: hidden; }
     .clock-stop { flex: 0 0 18%; font-size: 30px; line-height: 0; overflow: hidden; }
-    .clock-display { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 38px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 1px; padding: 18px 0; border-radius: 14px; background: var(--card); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; }
+    .clock-display { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 38px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 1px; padding: 18px 0; border-radius: var(--radius-md); background: var(--card); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; }
     .clock-display.running { color: #5cb85c; }
     .clock-display.done { color: #e24b4a; }
     .clock-start, .clock-stop { font-family: Arial, Helvetica, sans-serif; }
     .clock-half { flex: 0 0 22%; font-size: 12px; line-height: 1.2; white-space: normal; text-align: center; }
     .action-row { display: flex; gap: 10px; margin-top: 4px; }
-    .save-btn { flex: 1; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.1s; }
+    .save-btn { flex: 1; padding: 16px; border-radius: var(--radius-md); font-size: 15px; font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
     .save-btn:active { transform: scale(0.97); }
     .reset-area { text-align: center; }
     .reset-link { font-size: 14px; color: var(--muted); background: none; border: none; text-decoration: underline; padding: 12px 20px; min-height: 48px; }
     .reset-confirm { display: flex; gap: 10px; justify-content: center; align-items: center; }
     .reset-confirm span { font-size: 13px; color: var(--muted); }
-    .btn-danger { padding: 12px 20px; border-radius: 10px; background: #e24b4a; color: #fff; font-size: 14px; min-height: 48px; }
-    .btn-secondary { padding: 12px 20px; border-radius: 10px; border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 14px; color: var(--text); min-height: 48px; }
-    .btn-primary { padding: 12px 20px; border-radius: 10px; background: #378add; color: #fff; font-size: 14px; min-height: 48px; }
+    .btn-danger { padding: 12px 20px; border-radius: var(--radius-sm); background: #e24b4a; color: #fff; font-size: 14px; min-height: 48px; }
+    .btn-secondary { padding: 12px 20px; border-radius: var(--radius-sm); border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 14px; color: var(--text); min-height: 48px; }
+    .btn-primary { padding: 12px 20px; border-radius: var(--radius-sm); background: #378add; color: #fff; font-size: 14px; min-height: 48px; }
     .settings-teams { display: flex; gap: 12px; align-items: stretch; }
     .settings-teams .settings-section { flex: 1; min-width: 0; }
-    .settings-section { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+    .settings-section { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-lg); padding: 18px; display: flex; flex-direction: column; gap: 16px; }
     .settings-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .field { display: flex; flex-direction: column; gap: 8px; }
     .field-label { font-size: 14px; color: var(--muted); }
-    .name-input, .number-input { font-size: 16px; font-weight: 500; border: 0.5px solid var(--btn-border); border-radius: 10px; background: var(--btn); outline: none; color: var(--text); padding: 12px 14px; width: 100%; }
+    .name-input, .number-input { font-size: 16px; font-weight: 500; border: 0.5px solid var(--btn-border); border-radius: var(--radius-sm); background: var(--btn); outline: none; color: var(--text); padding: 12px 14px; width: 100%; }
     .colors { display: flex; gap: 8px; flex-wrap: wrap; }
     .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
-    .swap-row-btn { padding: 14px; border-radius: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; font-weight: 500; color: var(--text); min-height: 50px; }
+    .swap-row-btn { padding: 14px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; font-weight: 500; color: var(--text); min-height: 50px; }
     .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .settings-row-label { font-size: 15px; color: var(--text); }
-    .toggle-btn { padding: 10px 16px; border-radius: 10px; background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; color: var(--text); min-height: 44px; display: flex; align-items: center; gap: 8px; }
+    .toggle-btn { padding: 10px 16px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; color: var(--text); min-height: 44px; display: flex; align-items: center; gap: 8px; }
     .history { display: flex; flex-direction: column; gap: 10px; }
     .history-empty { text-align: center; color: var(--muted); font-size: 14px; margin-top: 40px; }
     .history-empty .icon { font-size: 40px; margin-bottom: 10px; }
-    .history-card { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: 16px; padding: 16px; }
+    .history-card { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-md); padding: 16px; }
     .history-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .history-meta span { font-size: 12px; color: var(--muted); }
-    .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: 4px 8px; min-height: 44px; min-width: 44px; border-radius: 8px; }
+    .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: 4px 8px; min-height: 44px; min-width: 44px; border-radius: var(--radius-sm); }
     .history-names-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
     .history-team-name { flex: 1; min-width: 0; font-size: 15px; text-align: center; word-break: break-word; }
     .history-score { display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 500; margin-bottom: 6px; }
@@ -87,14 +87,14 @@
     .history-del-confirm .btn-danger { padding: 8px 16px; font-size: 13px; min-height: 38px; }
     .history-del-confirm .btn-secondary { padding: 8px 16px; font-size: 13px; min-height: 38px; }
     #color-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
-    #color-modal .box { background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
+    #color-modal .box { background:var(--card); border-radius:var(--radius-lg); padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
     #color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
     .color-dot:focus-visible, #color-grid button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
     #player-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
-    #player-modal .box { background:var(--card); border-radius:20px; padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
+    #player-modal .box { background:var(--card); border-radius:var(--radius-lg); padding:24px; width:300px; display:flex; flex-direction:column; gap:16px; }
     #player-number-display { font-size:48px; font-weight:700; text-align:center; color:var(--text); min-height:56px; }
     .keypad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    .keypad-btn { font-size:26px; font-weight:600; padding:0; min-height:64px; border-radius:14px; background:var(--btn); border:0.5px solid var(--btn-border); color:var(--text); }
+    .keypad-btn { font-size:26px; font-weight:600; padding:0; min-height:64px; border-radius:var(--radius-md); background:var(--btn); border:0.5px solid var(--btn-border); color:var(--text); }
     .keypad-btn:active { filter:brightness(0.8); }
 
     @media (orientation: landscape) and (max-height: 500px) {
@@ -110,7 +110,7 @@
 <body>
 
 <div id="qr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:200; align-items:center; justify-content:center; flex-direction:column; gap:22px;" onclick="closeQrModal()">
-  <canvas id="qr-large" style="border-radius:16px; cursor:pointer;"></canvas>
+  <canvas id="qr-large" style="border-radius:var(--radius-md); cursor:pointer;"></canvas>
   <div id="qr-modal-hint" style="font-size:14px; color:#ccc; text-align:center; padding:0 24px;">Mit einem anderen Handy scannen, um die App zu öffnen.</div>
 </div>
 
@@ -118,7 +118,7 @@
   <div class="box">
     <div id="color-modal-title" style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
     <div id="color-grid"></div>
-    <button id="color-cancel" onclick="cancelColor()" style="padding:14px; border-radius:12px; background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
+    <button id="color-cancel" onclick="cancelColor()" style="padding:14px; border-radius:var(--radius-sm); background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
   </div>
 </div>
 
@@ -140,7 +140,7 @@
       <button class="keypad-btn" onclick="pressDigit(0)">0</button>
       <button class="keypad-btn" style="background:#2e7d32; color:#fff; border-color:transparent;" aria-label="Bestätigen" onclick="confirmPlayerNumber()">✓</button>
     </div>
-    <button id="player-skip-btn" class="btn-secondary" onclick="skipPlayerNumber()" style="padding:14px; border-radius:12px; font-size:15px;">Überspringen</button>
+    <button id="player-skip-btn" class="btn-secondary" onclick="skipPlayerNumber()" style="padding:14px; font-size:15px;">Überspringen</button>
   </div>
 </div>
 
@@ -245,16 +245,16 @@
     <div class="settings-title" id="info-title">Information</div>
     <div class="settings-row"><span class="settings-row-label" id="developer-label">Entwickler</span><span class="settings-row-label" style="color:var(--text);">Stefan Riese</span></div>
     <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
-      <canvas id="qr-preview" width="120" height="120" style="border-radius:8px; cursor:pointer;" onclick="openQrModal()"></canvas>
+      <canvas id="qr-preview" width="120" height="120" style="border-radius:var(--radius-sm); cursor:pointer;" onclick="openQrModal()"></canvas>
     </div>
     <button class="swap-row-btn" id="share-app-btn" onclick="shareAppWhatsApp()">📤 App per WhatsApp teilen</button>
     <button class="swap-row-btn" id="add-home-btn" onclick="addToHomeScreen()">📲 Zum Home-Bildschirm hinzufügen</button>
-    <div id="add-home-instructions" style="display:none; margin-top:-4px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:14px; padding:12px 14px;">
+    <div id="add-home-instructions" style="display:none; margin-top:-4px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:var(--radius-md); padding:12px 14px;">
       <div id="add-home-instructions-text" style="font-size:14px; color:var(--text); margin-bottom:10px;"></div>
       <button class="btn-secondary" onclick="dismissAddHomeInstructions()" id="add-home-dismiss-btn" style="display:block; margin:0 auto;">Verstanden</button>
     </div>
     <button class="swap-row-btn" id="check-update-btn" onclick="checkForUpdates()">🔄 Nach Updates suchen</button>
-    <div id="update-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:14px; padding:12px 14px;">
+    <div id="update-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:var(--radius-md); padding:12px 14px;">
       <span id="update-banner-text" style="font-size:14px; color:var(--text);">Update verfügbar</span>
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button class="btn-secondary" id="update-later-btn" onclick="dismissUpdate()">Später</button>
