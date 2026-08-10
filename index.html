@@ -25,7 +25,7 @@
     .tabbar button { flex: 1; padding: 12px 0; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
     .teams { display: flex; gap: 12px; align-items: stretch; }
-    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 24px 10px; display: grid; grid-template-rows: auto 1fr; justify-items: center; cursor: pointer; min-height: 400px; }
+    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: 20px; padding: 24px 10px; display: grid; grid-template-rows: auto 1fr; justify-items: center; cursor: pointer; min-height: 400px; }
     .team-card:active { transform: scale(0.98); }
     .hz-badge { position: absolute; top: 12px; background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: 10px; padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
     #card-a .hz-badge { right: 12px; }
@@ -55,7 +55,7 @@
     .btn-primary { padding: 12px 20px; border-radius: 10px; background: #378add; color: #fff; font-size: 14px; min-height: 48px; }
     .settings-teams { display: flex; gap: 12px; align-items: stretch; }
     .settings-teams .settings-section { flex: 1; min-width: 0; }
-    .settings-section { background: var(--card); border: 0.5px solid var(--border); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+    .settings-section { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
     .settings-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .field { display: flex; flex-direction: column; gap: 8px; }
     .field-label { font-size: 14px; color: var(--muted); }
@@ -69,7 +69,7 @@
     .history { display: flex; flex-direction: column; gap: 10px; }
     .history-empty { text-align: center; color: var(--muted); font-size: 14px; margin-top: 40px; }
     .history-empty .icon { font-size: 40px; margin-bottom: 10px; }
-    .history-card { background: var(--card); border: 0.5px solid var(--border); border-radius: 16px; padding: 16px; }
+    .history-card { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: 16px; padding: 16px; }
     .history-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .history-meta span { font-size: 12px; color: var(--muted); }
     .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: 4px 8px; min-height: 44px; min-width: 44px; border-radius: 8px; }
@@ -831,7 +831,7 @@ function render() {
     document.getElementById('name-'+slot).textContent = s.name;
     document.getElementById('name-'+slot).style.color = textColor;
     const card = document.getElementById('card-'+slot);
-    card.style.boxShadow = `inset 0 0 0 2px ${s.color}55`;
+    card.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 2px ${s.color}55`;
     card.style.background = state.cardAccentEnabled
       ? `radial-gradient(120% 70% at 50% 0%, ${s.color}29 0%, ${s.color}14 35%, ${s.color}00 80%), var(--card)`
       : 'var(--card)';
@@ -861,7 +861,7 @@ function renderSettings() {
     nameInput.value = state[t2].name;
     nameInput.oninput = () => setName(t2, nameInput.value);
     const sec = document.getElementById('set-section-'+slot);
-    if (sec) { sec.style.borderColor = state[t2].color; sec.style.boxShadow = `inset 0 0 0 1px ${state[t2].color}`; }
+    if (sec) { sec.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 1px ${state[t2].color}`; }
     const title = document.getElementById('set-title-'+slot);
     if (title) { title.textContent = t2 === 'a' ? t('team1') : t('team2'); title.style.color = readableColor(state[t2].color); }
     const el = document.getElementById('set-colors-'+slot);
@@ -1273,7 +1273,7 @@ function renderHistory() {
          <div class="history-winner">${winner(g)}</div>
          ${halftimeLine}`;
     return `
-    <div class="history-card" style="${isPending ? 'border-color: #e24b4a55;' : ''}">
+    <div class="history-card" style="${isPending ? 'box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 1.5px #e24b4a55;' : ''}">
       <div class="history-meta"><span>${g.date} · ${g.time}</span>${entryActions}</div>
       ${body}
       ${delSection}
