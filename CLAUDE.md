@@ -72,6 +72,16 @@ history each use the same link → Yes/No toggle pattern (a `pending*` module-le
 which of two sibling `<div>`s is visible). Follow this pattern for any new destructive action
 rather than `confirm()` dialogs or immediate deletion.
 
+**Per-entry toggle-view pattern (history cards)**: delete (`pendingDeleteId`), edit
+(`pendingEditId`), the share menu (`pendingShareId`), and the scorers panel
+(`pendingScorersId`) are four mutually-exclusive per-entry states in `renderHistory()` — every
+`ask*`/`toggle*` setter that opens one explicitly nulls the other three, and `showView('history')`
+clears all four on tab switch. Delete/edit/share replace the entry's action row (📤/✏️/✕) with
+their own panel; the scorers panel is the exception — it's non-destructive and shown *alongside*
+the action row (`entryActions`'s condition excludes only `isPending`/`isEditing`/`isSharing`, not
+`isViewingScorers`) so the 👕 button stays visible to toggle it back off. Follow this exclusion
+list when adding a fifth per-entry view rather than inventing a separate mechanism.
+
 **Team identity vs. physical display slot**: `state.a`/`state.b` are fixed identities forever —
 `state.a` is always Team 1, `state.b` always Team 2 (name, color, halves never move between
 them). Game-view DOM ids (`disp-a`/`disp-b`, `name-a`/`name-b`, `hz-a`/`hz-b`, `corr-minus-a/b`,
@@ -97,6 +107,28 @@ slot edits can change after a swap. `openColorModal(t2)` and the color-dot/`+` b
 are likewise bound to the resolved identity per render, not to a fixed slot. `swapTeams()` calls
 both `render()` and `renderSettings()` since the swap button lives on the Settings tab and the
 settings view needs to reflect the flip immediately, not just on next tab switch.
+
+**History entry shape**: `state.history` entries are `{ id, date, time, teams: [teamA, teamB] }`,
+where each `teamN` is `{ name, score, color, halftimeScore, scorers }`. `halftimeScore` and
+`scorers` live per-team (not in a separate top-level object) so every consumer — `renderHistory()`,
+`gameShareText()`, JSON export (`exportHistory()`, which just serializes `state.history` as-is) —
+reads from one place. There is deliberately no migration path for the pre-existing older shape
+(a separate top-level `ht: {a,b}`, and no `scorers` at all) since the app has no real users yet;
+don't add back a migration in `load()` without checking whether that's still true.
+
+**Player-number tracking**: `state.trackPlayerNumbers` (Settings → Tore/Goals, default off) and
+`state.scorers = { a: [], b: [] }` (flat arrays of `{ half, number }` in scoring order per
+identity, `number` is `null` when skipped) are the live-game equivalents of `teams[i].scorers`
+persisted at `saveGame()` / cleared at `saveGame()`/`resetGame()`. `addGoal()` always increments
+the score and calls `save()`/`render()` immediately regardless of the setting — a fast tap during
+a live match must never be blocked on the keypad popup — then, only if the setting is on, opens
+`openPlayerNumberModal(identity)`. That modal's keypad (`pressDigit`/`pressBackspace`) writes into
+module-level `playerNumberInput`; confirming or skipping both funnel through `recordScorer()`,
+which is the only place that pushes into `state.scorers[identity]` and closes the modal — tapping
+outside the modal is wired to `skipPlayerNumber()` for the same effect. `correct()` (the minus
+button) pops the last entry off `state.scorers[identity]` whenever the log has more entries than
+the current goal total, keeping the two in sync even if tracking was toggled on/off mid-match
+rather than gating the pop on the current setting value.
 
 **Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
 `sw.js` file) that caches the app shell for offline use; `manifest.json` + the
@@ -200,6 +232,19 @@ The in-app "🔄 Check for updates" button works reliably from *within* the alre
 standalone instance (confirmed on-device) since it's a same-process JS reload rather than a fresh
 WKWebView cold start; prefer that button over force-quitting/relaunching when debugging why an
 installed icon seems stuck on an old version.
+
+**Design tokens**: corner radii and spacing are CSS custom properties on `:root` —
+`--radius-sm/md/lg` (12/16/22px) and `--space-1..5` (4/8/12/16/24px). New `border-radius`/`gap`/
+`padding`/`margin` values should reuse one of these rather than introducing another one-off px
+value; values that don't cleanly fit the scale (there are still some, e.g. 14px/18px/20px) were
+deliberately left as literals rather than forced onto the scale and changing visual sizing.
+`state.cardAccentEnabled` (Settings → Darstellung/Appearance, default on) gates the radial-gradient
+team-color accent that `render()` applies to `card-a`/`card-b`'s `background` — when off it falls
+back to plain `var(--card)`. `.team-score.pulse` (a `scorePulse` keyframe) is toggled in `render()`
+only when a slot's score text actually changes (compared before overwriting `textContent`), not on
+every `render()` call, so it doesn't fire on unrelated state changes (e.g. a settings edit).
+`:focus-visible` styling is one global rule (`button, input, [tabindex]`) — don't add
+element-specific `:focus-visible` rules again (there used to be a `.color-dot`-only one).
 
 **Touch-only target**: this app is used one-handed on a phone touchscreen during a live match —
 optimize for tap targets, haptic feedback (`navigator.vibrate`), and portrait/landscape layout,

@@ -53,6 +53,10 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 
 ### Design
 - Umschaltbares dunkles / helles Theme (Einstellung wird gespeichert)
+- Dezenter Farbverlauf in der Teamfarbe auf den Spiel-Karten, per Einstellung abschaltbar
+- Weiche Schatten statt harter Kanten auf Karten, einheitliche Eckenradien und Abstände
+- Kurzer Puls-Effekt auf dem Spielstand bei jedem Tor
+- Sichtbarer Fokusring bei Tastatur-/Screenreader-Navigation
 
 ## Mobile-Optimierung
 - Große, touch-freundliche Buttons mit Druck-Feedback
