@@ -71,7 +71,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 Nach dem ersten Laden funktioniert die App dank Service Worker auch komplett ohne Internetverbindung.
 
 ## Updates
-Die App prüft nicht automatisch im Hintergrund auf neue Versionen – das würde während eines laufenden Spiels unerwartet Inhalte verändern. Über „🔄 Nach Updates suchen" in den Einstellungen lässt sich jederzeit manuell prüfen, ob eine neuere Version vorliegt.
+Die App prüft nicht automatisch im Hintergrund auf neue Versionen – das würde während eines laufenden Spiels unerwartet Inhalte verändern. Über „🔄 Nach Updates suchen" in den Einstellungen lässt sich jederzeit manuell prüfen, ob eine neuere Version vorliegt. Auch der Service Worker selbst aktualisiert seinen Cache nur, wenn diese Prüfung explizit ausgelöst wird – ein bloßes Öffnen der App mit Internetverbindung reicht nicht aus, um im Hintergrund neue Inhalte zu laden.
 
 ## Installation auf dem iPhone
 Am einfachsten über **„📲 Zum Home-Bildschirm hinzufügen"** in den Einstellungen der App – zeigt direkt die passende Anleitung an. Alternativ manuell:
