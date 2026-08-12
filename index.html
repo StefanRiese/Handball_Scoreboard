@@ -235,7 +235,7 @@
   <div class="settings-section">
     <div class="settings-title" id="time-title">Spielzeit</div>
     <div class="settings-row"><span class="settings-row-label" id="showclock-label">Uhr anzeigen</span><button class="toggle-btn" onclick="toggleClockVisible()" id="showclock-btn">An</button></div>
-    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value, this)" onblur="if(this.value.trim()===''){this.value='1';setHalfLength('1',this);}" /></div>
+    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this)" onblur="if(this.value.trim()===''){this.value='1';setHalfLength(this);}" /></div>
     <div class="settings-row"><span class="settings-row-label" id="autoswap-label">Seiten bei Halbzeit wechseln</span><button class="toggle-btn" onclick="toggleAutoSwap()" id="autoswap-btn">Aus</button></div>
   </div>
 
@@ -317,7 +317,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.17.5';
+const APP_VERSION = '1.17.6';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -788,14 +788,24 @@ function stopAndReset() {
   save();
 }
 
-function setHalfLength(v, el) {
-  // Don't clamp on an empty field — the user is likely mid-edit (cleared it to type a new
-  // value), and forcing a value back in immediately would corrupt the next keystroke.
-  if (v.trim() === '') return;
-  const n = parseInt(v, 10);
-  if (isNaN(n)) return;
-  const clamped = Math.min(99, Math.max(1, n));
-  if (clamped !== n && el) el.value = clamped;
+// Rewrites a number input's own visible value in place when it's out of [min,max], so a numeric
+// field never displays something the app wouldn't actually use — used on any number input where
+// out-of-range values would otherwise only be silently clamped in the model while the field kept
+// showing whatever was typed. Left alone on an empty field: the user is likely mid-edit (cleared
+// it to type a new value), and forcing a value back in immediately would corrupt the next
+// keystroke.
+function clampNumberInput(el, min, max) {
+  if (el.value.trim() === '') return null;
+  const n = parseInt(el.value, 10);
+  if (isNaN(n)) return null;
+  const clamped = Math.min(max, Math.max(min, n));
+  if (clamped !== n) el.value = clamped;
+  return clamped;
+}
+
+function setHalfLength(el) {
+  const clamped = clampNumberInput(el, 1, 99);
+  if (clamped === null) return;
   state.halfLength = clamped;
   if (!state.clockRunning) { state.clockRemaining = clamped * 60; renderClock(); }
   save();
@@ -1211,8 +1221,8 @@ function saveEditGame(id) {
   const name1 = document.getElementById('edit-name1-'+id).value.trim();
   if (name0) g.teams[0].name = name0;
   if (name1) g.teams[1].name = name1;
-  g.teams[0].score = Math.max(0, parseInt(document.getElementById('edit-score0-'+id).value, 10) || 0);
-  g.teams[1].score = Math.max(0, parseInt(document.getElementById('edit-score1-'+id).value, 10) || 0);
+  g.teams[0].score = Math.min(99, Math.max(0, parseInt(document.getElementById('edit-score0-'+id).value, 10) || 0));
+  g.teams[1].score = Math.min(99, Math.max(0, parseInt(document.getElementById('edit-score1-'+id).value, 10) || 0));
   const dateVal = document.getElementById('edit-date-'+id).value;
   const timeVal = document.getElementById('edit-time-'+id).value;
   if (dateVal && timeVal) {
@@ -1342,8 +1352,8 @@ function renderHistory() {
            <input class="name-input" id="edit-name1-${g.id}" value="${g.teams[1].name}" />
          </div>
          <div class="history-edit-row">
-           <input class="number-input" id="edit-score0-${g.id}" type="number" min="0" inputmode="numeric" value="${g.teams[0].score}" />
-           <input class="number-input" id="edit-score1-${g.id}" type="number" min="0" inputmode="numeric" value="${g.teams[1].score}" />
+           <input class="number-input" id="edit-score0-${g.id}" type="number" min="0" max="99" inputmode="numeric" value="${g.teams[0].score}" oninput="clampNumberInput(this,0,99)" onblur="if(this.value.trim()==='')this.value='0'" />
+           <input class="number-input" id="edit-score1-${g.id}" type="number" min="0" max="99" inputmode="numeric" value="${g.teams[1].score}" oninput="clampNumberInput(this,0,99)" onblur="if(this.value.trim()==='')this.value='0'" />
          </div>
          <div class="history-edit-row">
            <input class="number-input" id="edit-date-${g.id}" type="date" value="${toDateInputValue(g.id)}" />
