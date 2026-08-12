@@ -53,6 +53,15 @@
     .reset-link { font-size: 14px; color: var(--muted); background: none; border: none; text-decoration: underline; padding: var(--space-3) 20px; min-height: 48px; }
     .reset-confirm { display: flex; gap: 10px; justify-content: center; align-items: center; }
     .reset-confirm span { font-size: 13px; color: var(--muted); }
+    .goals-view { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+    .goals-view-team { margin-bottom: var(--space-3); }
+    .goals-view-team:last-child { margin-bottom: 0; }
+    .goals-view-title { font-weight: 600; font-size: 14px; margin-bottom: var(--space-2); }
+    .goals-view-list { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .goals-view-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .goals-view-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding-bottom: var(--space-1); border-bottom: 0.5px solid var(--border); }
+    .goals-view-table td { padding: var(--space-1) 0; border-bottom: 0.5px solid var(--border); }
+    .goals-view-table tr:last-child td { border-bottom: none; }
     .btn-danger { padding: var(--space-3) 20px; border-radius: var(--radius-sm); background: #e24b4a; color: #fff; font-size: 14px; min-height: 48px; }
     .btn-secondary { padding: var(--space-3) 20px; border-radius: var(--radius-sm); border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 14px; color: var(--text); min-height: 48px; }
     .btn-primary { padding: var(--space-3) 20px; border-radius: var(--radius-sm); background: #378add; color: #fff; font-size: 14px; min-height: 48px; }
@@ -191,16 +200,18 @@
     <button class="btn-secondary" id="finish-no" onclick="cancelFinish()">Nein</button>
   </div>
 
-  <div class="reset-area">
+  <div class="reset-area" style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:var(--space-4);">
     <div id="reset-link-area">
       <button class="reset-link" id="reset-link" onclick="document.getElementById('reset-link-area').style.display='none';document.getElementById('reset-confirm-area').style.display='flex'">Spiel zurücksetzen</button>
     </div>
-    <div id="reset-confirm-area" class="reset-confirm" style="display:none">
-      <span id="reset-confirm-text">Wirklich?</span>
-      <button class="btn-danger" id="reset-yes" onclick="resetGame()">Ja</button>
-      <button class="btn-secondary" id="reset-no" onclick="document.getElementById('reset-confirm-area').style.display='none';document.getElementById('reset-link-area').style.display='block'">Nein</button>
-    </div>
+    <button class="reset-link" id="goals-link" onclick="toggleGoalsView()">🥅 Tore anzeigen</button>
   </div>
+  <div id="reset-confirm-area" class="reset-confirm" style="display:none">
+    <span id="reset-confirm-text">Wirklich?</span>
+    <button class="btn-danger" id="reset-yes" onclick="resetGame()">Ja</button>
+    <button class="btn-secondary" id="reset-no" onclick="document.getElementById('reset-confirm-area').style.display='none';document.getElementById('reset-link-area').style.display='block'">Nein</button>
+  </div>
+  <div id="goals-view-area" class="goals-view" style="display:none;"></div>
 </div>
 
 <!-- SETTINGS -->
@@ -296,8 +307,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen', developerLabel:'Entwickler', checkingUpdate:'⏳ Suche...', upToDate:'✅ Bereits aktuell', offlineCheckFailed:'📡 Keine Verbindung', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates', developerLabel:'Developer', checkingUpdate:'⏳ Checking...', upToDate:'✅ Already up to date', offlineCheckFailed:'📡 No connection', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'Spiel zurücksetzen', reallyReset:'Wirklich?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen', developerLabel:'Entwickler', checkingUpdate:'⏳ Suche...', upToDate:'✅ Bereits aktuell', offlineCheckFailed:'📡 Keine Verbindung', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'Reset game', reallyReset:'Sure?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates', developerLabel:'Developer', checkingUpdate:'⏳ Checking...', upToDate:'✅ Already up to date', offlineCheckFailed:'📡 No connection', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -602,6 +613,7 @@ function toggleAutoSwap() {
 function toggleTrackPlayerNumbers() {
   state.trackPlayerNumbers = !state.trackPlayerNumbers;
   document.getElementById('trackplayers-btn').textContent = state.trackPlayerNumbers ? t('on') : t('off');
+  renderGoalsView();
   save();
 }
 
@@ -669,6 +681,8 @@ function applyLang() {
     document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
     document.querySelectorAll('.lbl-color').forEach(e => e.textContent = t('colorLabel'));
     document.getElementById('swap-btn').textContent = t('swapSides');
+    document.getElementById('goals-link').textContent = goalsViewOpen ? t('hideGoals') : t('showGoals');
+    renderGoalsView();
     document.getElementById('appearance-title').textContent = t('appearance');
     document.getElementById('design-label').textContent = t('design');
     document.getElementById('language-label').textContent = t('language');
@@ -856,6 +870,59 @@ function render() {
   if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
   const hbf = document.getElementById('half-btn-fallback');
   if (hbf) hbf.textContent = state.half === 0 ? t('half1') : t('half2');
+  renderGoalsView();
+}
+
+let goalsViewOpen = false;
+
+function toggleGoalsView() {
+  if (!state.trackPlayerNumbers) return;
+  goalsViewOpen = !goalsViewOpen;
+  document.getElementById('goals-link').textContent = goalsViewOpen ? t('hideGoals') : t('showGoals');
+  document.getElementById('goals-view-area').style.display = goalsViewOpen ? 'block' : 'none';
+  renderGoalsView();
+}
+
+// Live per-team goal list for the ongoing match (order matches the physical left/right layout
+// above it via identityForSlot). Only offered at all while trackPlayerNumbers is on — with it
+// off there's nothing logged to show, so the link itself is hidden rather than shown empty.
+// state.scorers[identity] only holds entries recorded while the setting was on, and only for the
+// most recent goals — earlier goals scored before it was turned on have no entry at all, so the
+// leading (total - recorded.length) goals are rendered as unknown ('–') rather than misaligned.
+function renderGoalsView() {
+  const link = document.getElementById('goals-link');
+  const area = document.getElementById('goals-view-area');
+  if (!state.trackPlayerNumbers) {
+    link.style.display = 'none';
+    goalsViewOpen = false;
+    area.style.display = 'none';
+    return;
+  }
+  link.style.display = '';
+  if (!goalsViewOpen) return;
+  const numbersFor = identity => {
+    const recorded = state.scorers[identity];
+    const untracked = Math.max(0, total(identity) - recorded.length);
+    return Array(untracked).fill(null).concat(recorded.map(r => r.number));
+  };
+  const teamBlock = slot => {
+    const identity = identityForSlot(slot);
+    const s = state[identity];
+    const counts = {};
+    let unknown = 0;
+    numbersFor(identity).forEach(n => { if (n == null) unknown++; else counts[n] = (counts[n]||0) + 1; });
+    const rows = Object.keys(counts).map(Number).sort((a,b) => a-b)
+      .map(n => `<tr><td>#${n}</td><td>${counts[n]}</td></tr>`).join('')
+      + (unknown ? `<tr><td>${t('unknownScorer')}</td><td>${unknown}</td></tr>` : '');
+    const body = rows
+      ? `<table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>`
+      : `<div class="goals-view-list">${t('noGoalsYet')}</div>`;
+    return `<div class="goals-view-team">
+      <div class="goals-view-title" style="color:${readableColor(s.color)}">${s.name}</div>
+      ${body}
+    </div>`;
+  };
+  document.getElementById('goals-view-area').innerHTML = teamBlock('a') + teamBlock('b');
 }
 
 // Settings sections are keyed by physical slot (set-section-a is always the left column) so
@@ -988,6 +1055,7 @@ function recordScorer(number) {
   if (playerModalIdentity) {
     state.scorers[playerModalIdentity].push({ half: state.half, number });
     save();
+    renderGoalsView();
   }
   document.getElementById('player-modal').style.display = 'none';
   playerModalIdentity = null;
@@ -1046,6 +1114,11 @@ function saveGame() {
   state.clockEndsAt = null;
   clearInterval(clockTimer);
   state.clockRemaining = state.halfLength * 60;
+  if (goalsViewOpen) {
+    goalsViewOpen = false;
+    document.getElementById('goals-view-area').style.display = 'none';
+    document.getElementById('goals-link').textContent = t('showGoals');
+  }
   save();
   render();
   renderClock();
@@ -1204,29 +1277,30 @@ function renderHistory() {
     // Only offer the scorers view for games that actually have at least one recorded number —
     // older games and games saved while "track player numbers" was off have none. Shown as a
     // per-player goal tally (how many each player scored), not the sequence they were scored in.
-    const scorerParts = team => {
+    const scorerRows = team => {
       if (!Array.isArray(team.scorers) || !team.scorers.length) return null;
       const counts = {};
       let unknown = 0;
       team.scorers.forEach(s => { if (s.number == null) unknown++; else counts[s.number] = (counts[s.number]||0) + 1; });
-      const parts = Object.keys(counts).map(Number).sort((a,b) => a-b).map(n => `#${n}: ${counts[n]}`);
-      if (unknown) parts.push(`${t('unknownScorer')}: ${unknown}`);
-      return parts.length ? parts : null;
+      const rows = Object.keys(counts).map(Number).sort((a,b) => a-b)
+        .map(n => `<tr><td>#${n}</td><td>${counts[n]}</td></tr>`).join('')
+        + (unknown ? `<tr><td>${t('unknownScorer')}</td><td>${unknown}</td></tr>` : '');
+      return rows || null;
     };
-    const scorers0 = scorerParts(g.teams[0]);
-    const scorers1 = scorerParts(g.teams[1]);
+    const scorers0 = scorerRows(g.teams[0]);
+    const scorers1 = scorerRows(g.teams[1]);
     const hasScorers = scorers0 || scorers1;
     const scorersBtn = hasScorers
       ? `<button class="del-btn" aria-label="${t('scorersTitle')}" onclick="toggleScorersView(${g.id})">👕</button>`
       : '';
-    const scorerBlock = (team, parts) => parts
-      ? `<div style="margin-top:8px;">
-           <div style="color:${readableColor(team.color)}">${team.name}</div>
-           ${parts.map(p => `<div>${p}</div>`).join('')}
+    const scorerBlock = (team, rows) => rows
+      ? `<div class="goals-view-team">
+           <div class="goals-view-title" style="color:${readableColor(team.color)}">${team.name}</div>
+           <table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>
          </div>`
       : '';
     const scorersSection = isViewingScorers
-      ? `<div style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); font-size:13px;">
+      ? `<div class="goals-view" style="margin-top:10px;">
            ${scorerBlock(g.teams[0], scorers0)}
            ${scorerBlock(g.teams[1], scorers1)}
          </div>`
