@@ -235,7 +235,7 @@
   <div class="settings-section">
     <div class="settings-title" id="time-title">Spielzeit</div>
     <div class="settings-row"><span class="settings-row-label" id="showclock-label">Uhr anzeigen</span><button class="toggle-btn" onclick="toggleClockVisible()" id="showclock-btn">An</button></div>
-    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value)" /></div>
+    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value, this)" /></div>
     <div class="settings-row"><span class="settings-row-label" id="autoswap-label">Seiten bei Halbzeit wechseln</span><button class="toggle-btn" onclick="toggleAutoSwap()" id="autoswap-btn">Aus</button></div>
   </div>
 
@@ -317,7 +317,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.17.3';
+const APP_VERSION = '1.17.4';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -788,12 +788,16 @@ function stopAndReset() {
   save();
 }
 
-function setHalfLength(v) {
-  let n = parseInt(v, 10);
-  if (isNaN(n) || n < 1) n = 1;
-  if (n > 99) n = 99;
-  state.halfLength = n;
-  if (!state.clockRunning) { state.clockRemaining = n * 60; renderClock(); }
+function setHalfLength(v, el) {
+  // Don't clamp on an empty field — the user is likely mid-edit (cleared it to type a new
+  // value), and forcing a value back in immediately would corrupt the next keystroke.
+  if (v.trim() === '') return;
+  const n = parseInt(v, 10);
+  if (isNaN(n)) return;
+  const clamped = Math.min(99, Math.max(1, n));
+  if (clamped !== n && el) el.value = clamped;
+  state.halfLength = clamped;
+  if (!state.clockRunning) { state.clockRemaining = clamped * 60; renderClock(); }
   save();
 }
 
