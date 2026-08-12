@@ -316,7 +316,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.17.0';
+const APP_VERSION = '1.17.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1475,8 +1475,16 @@ if ('serviceWorker' in navigator && navigator.onLine) {
   // miss falls through to network, which fails outright while offline. That failure surfaces as
   // the OS's own "no internet, switch to Wi-Fi?" prompt or the browser's "can't open the page"
   // error — neither of which this app's code ever gets a chance to catch or handle.
+  // The cache name is deliberately NOT derived from APP_VERSION (it used to be
+  // `handball-v${APP_VERSION}`) — that made the SW script itself byte-differ on every content-only
+  // version bump, which made the browser's own SW update algorithm silently install (and, on the
+  // next app open, activate) the new version regardless of the manual "Check for updates" button.
+  // A static name means the SW script only changes when this install/activate/fetch logic itself
+  // changes, so a plain content/version bump no longer triggers a background SW reinstall.
+  // applyUpdate() doesn't care about the cache name either way — it writes into every existing
+  // cache by iterating caches.keys().
   const shellUrls = JSON.stringify([swScope, swScope + 'index.html', swScope + 'manifest.json', swScope + 'handball_icon.png']);
-  const sw = `const CACHE='handball-v${APP_VERSION}';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(${shellUrls}))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  const sw = `const CACHE='handball-shell';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(${shellUrls}))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
   // Explicit scope — for a blob: URL script the default scope is ambiguous, and if it doesn't
   // end up covering the actual launch URL, the SW never intercepts that navigation at all.
