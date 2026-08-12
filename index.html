@@ -316,7 +316,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.17.1';
+const APP_VERSION = '1.17.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -884,15 +884,16 @@ function toggleGoalsView() {
 }
 
 // Live per-team goal list for the ongoing match (order matches the physical left/right layout
-// above it via identityForSlot). Only offered at all while trackPlayerNumbers is on — with it
-// off there's nothing logged to show, so the link itself is hidden rather than shown empty.
+// above it via identityForSlot). Only offered at all while trackPlayerNumbers is on AND at least
+// one goal has been scored — with either not true there's nothing to show, so the link itself is
+// hidden rather than shown empty.
 // state.scorers[identity] only holds entries recorded while the setting was on, and only for the
 // most recent goals — earlier goals scored before it was turned on have no entry at all, so the
 // leading (total - recorded.length) goals are rendered as unknown ('–') rather than misaligned.
 function renderGoalsView() {
   const link = document.getElementById('goals-link');
   const area = document.getElementById('goals-view-area');
-  if (!state.trackPlayerNumbers) {
+  if (!state.trackPlayerNumbers || total('a') + total('b') === 0) {
     link.style.display = 'none';
     goalsViewOpen = false;
     area.style.display = 'none';
