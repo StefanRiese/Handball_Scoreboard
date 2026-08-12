@@ -235,7 +235,7 @@
   <div class="settings-section">
     <div class="settings-title" id="time-title">Spielzeit</div>
     <div class="settings-row"><span class="settings-row-label" id="showclock-label">Uhr anzeigen</span><button class="toggle-btn" onclick="toggleClockVisible()" id="showclock-btn">An</button></div>
-    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value, this)" /></div>
+    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this.value, this)" onblur="if(this.value.trim()===''){this.value='1';setHalfLength('1',this);}" /></div>
     <div class="settings-row"><span class="settings-row-label" id="autoswap-label">Seiten bei Halbzeit wechseln</span><button class="toggle-btn" onclick="toggleAutoSwap()" id="autoswap-btn">Aus</button></div>
   </div>
 
@@ -317,7 +317,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.17.4';
+const APP_VERSION = '1.17.5';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
