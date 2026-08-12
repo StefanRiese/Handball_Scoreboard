@@ -154,15 +154,26 @@ This self-heals on the next connected app open — no manual site-data reset nee
 particular fix.
 
 **SW registration only happens while online** (`navigator.onLine` guard around the whole
-`if ('serviceWorker' in navigator)` block). Bumping `APP_VERSION` makes the SW script byte-differ,
-so the browser tries to install the new version on every open, which requires fetching the
-shell/manifest/icon fresh over the network — if that first post-deploy open happens to be
+`if ('serviceWorker' in navigator)` block). The SW's `CACHE` name is a static string
+(`'handball-shell'`) rather than `handball-v${APP_VERSION}` — it used to be version-derived, but
+that made the SW script itself byte-differ on every content-only version bump, which made the
+browser silently install (and, on the app's next open, activate — deleting the old cache) the new
+SW version in the background regardless of the manual "🔄 Check for updates" button, i.e. an
+unwanted auto-update the user never asked for. With a static name, a plain `APP_VERSION` bump for
+a content/feature change no longer touches the SW script at all, so `.register()` finds it
+byte-identical and does nothing — content updates only ever happen through `applyUpdate()`
+explicitly writing into the existing cache. The SW script (and therefore a real reinstall) only
+changes when this install/activate/fetch logic itself is edited, or `shellUrls` changes — in that
+case the browser does still try to install the new version on every open, which requires fetching
+the shell/manifest/icon fresh over the network: if that first post-deploy open happens to be
 offline, the install fails and retries on *every* subsequent open until it finally succeeds
 online, and each failed attempt can trigger the OS's own "no internet, switch to Wi-Fi/turn off
 airplane mode?" prompt (confirmed on-device — this is a different symptom from the "can't open
 the page" error above, but the same underlying cause: a network attempt that shouldn't have
 happened). Skipping registration entirely while offline leaves whatever SW is already active
-(already fully cached from a prior online visit) in control with zero network attempts.
+(already fully cached from a prior online visit) in control with zero network attempts. Don't
+reintroduce a version-derived cache name — that's exactly the silent-auto-update behavior this was
+changed to avoid.
 `navigator.wakeLock` keeps the screen on during a match. There were two real, confirmed root
 causes of it failing on iOS standalone home-screen installs (found via WebKit's own bug tracker,
 not guessed):
