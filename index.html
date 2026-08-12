@@ -317,7 +317,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.17.6';
+const APP_VERSION = '1.18.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -346,11 +346,35 @@ let pendingEditId = null;
 let pendingShareId = null;
 let pendingScorersId = null;
 
+// Aggregates a team's per-goal scorer log (state.scorers[identity], carried onto the saved
+// history entry as teams[i].scorers) into a per-player goal count — shared by the history
+// scorer-view table and gameShareText()'s plain-text summary so both read the same tally.
+function scorerTally(team) {
+  if (!Array.isArray(team.scorers) || !team.scorers.length) return null;
+  const counts = {};
+  let unknown = 0;
+  team.scorers.forEach(s => { if (s.number == null) unknown++; else counts[s.number] = (counts[s.number]||0) + 1; });
+  const numbers = Object.keys(counts).map(Number).sort((a,b) => a-b);
+  return numbers.length || unknown ? { numbers, counts, unknown } : null;
+}
+
+function scorerSummaryText(team) {
+  const tally = scorerTally(team);
+  if (!tally) return null;
+  const parts = tally.numbers.map(n => `#${n} (${tally.counts[n]})`);
+  if (tally.unknown) parts.push(`${t('unknownScorer')} (${tally.unknown})`);
+  return parts.join(', ');
+}
+
 function gameShareText(g) {
+  const scorers0 = scorerSummaryText(g.teams[0]);
+  const scorers1 = scorerSummaryText(g.teams[1]);
   const lines = [
     `🤾 ${g.teams[0].name} ${g.teams[0].score}:${g.teams[1].score} ${g.teams[1].name}`,
     t('gameFinished'),
     `${t('halftime')}: ${g.teams[0].halftimeScore}:${g.teams[1].halftimeScore}`,
+    ...(scorers0 ? [`${g.teams[0].name}: ${scorers0}`] : []),
+    ...(scorers1 ? [`${g.teams[1].name}: ${scorers1}`] : []),
     winner(g),
     `${g.date} · ${g.time}`,
   ];
@@ -1294,14 +1318,10 @@ function renderHistory() {
     // older games and games saved while "track player numbers" was off have none. Shown as a
     // per-player goal tally (how many each player scored), not the sequence they were scored in.
     const scorerRows = team => {
-      if (!Array.isArray(team.scorers) || !team.scorers.length) return null;
-      const counts = {};
-      let unknown = 0;
-      team.scorers.forEach(s => { if (s.number == null) unknown++; else counts[s.number] = (counts[s.number]||0) + 1; });
-      const rows = Object.keys(counts).map(Number).sort((a,b) => a-b)
-        .map(n => `<tr><td>#${n}</td><td>${counts[n]}</td></tr>`).join('')
-        + (unknown ? `<tr><td>${t('unknownScorer')}</td><td>${unknown}</td></tr>` : '');
-      return rows || null;
+      const tally = scorerTally(team);
+      if (!tally) return null;
+      return tally.numbers.map(n => `<tr><td>#${n}</td><td>${tally.counts[n]}</td></tr>`).join('')
+        + (tally.unknown ? `<tr><td>${t('unknownScorer')}</td><td>${tally.unknown}</td></tr>` : '');
     };
     const scorers0 = scorerRows(g.teams[0]);
     const scorers1 = scorerRows(g.teams[1]);
