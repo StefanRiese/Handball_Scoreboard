@@ -13,7 +13,7 @@ README.md for the full user-facing feature list and deployment instructions (Git
 - `index.html` — the entire application (HTML + CSS + JS in one file). This is the only file you
   will normally need to edit.
 - `manifest.json` — Web App Manifest for Android/Chrome install prompts.
-- `handball_icon.png` — home-screen / manifest icon (1024×1024).
+- `handball_icon.png` — home-screen / manifest icon (512×512, matching `manifest.json`).
 - `README.md` — user-facing feature docs (German).
 
 There is intentionally no `src/`, no framework, and no bundler. Keep new code inside
@@ -153,6 +153,28 @@ reached the SW's fetch handler at all, or reached it but missed the cache lookup
 This self-heals on the next connected app open — no manual site-data reset needed for this
 particular fix.
 
+3. The install handler originally cached all four shell URLs via a single `cache.addAll(...)`
+   call, which is all-or-nothing — if even one of the four fetches failed (a momentary network
+   blip, a slow host, anything transient), the *entire* install failed and left nothing cached at
+   all, not even the URLs that did succeed. Since install (via `register()`) retries on every
+   online app open, this was intermittent rather than a hard failure — but it meant an offline
+   open could hit zero cached shell despite install having "run" one or more times before. Fixed
+   by caching each shell URL independently (`Promise.allSettled(SHELL.map(u =>
+   fetch(u).then(r => c.put(u, r))))`) so one flaky request can't wipe out the others. Don't go
+   back to `cache.addAll()` for this reason.
+
+   `Promise.allSettled` alone introduced a new failure mode, though: it never rejects, so if
+   *every* fetch failed (e.g. a completely dead connection right after the `navigator.onLine`
+   check passed), the install would be reported to the browser as successful with an empty cache
+   — and since nothing about the byte-identical SW script would ever differ on a later attempt,
+   the browser would never retry install again, permanently leaving that install with zero offline
+   coverage. Fixed by checking the settled results for `SHELL[0]`/`SHELL[1]` (the two page-shell
+   URL variants) and throwing if fetching *both* failed, so the browser retries the whole install
+   on the next online `register()` call; a manifest/icon-only failure is left non-fatal since the
+   app still works offline without those two. Verified with a standalone simulation of the
+   install logic (mocked `fetch`/cache) covering total failure, partial failure, and no failure —
+   see git history around this note if that harness is needed again.
+
 **SW registration only happens while online** (`navigator.onLine` guard around the whole
 `if ('serviceWorker' in navigator)` block). The SW's `CACHE` name is a static string
 (`'handball-shell'`) rather than `handball-v${APP_VERSION}` — it used to be version-derived, but
@@ -217,9 +239,13 @@ currently-running version) and the check would compare the running version again
 silently never detecting a real update. The query string exists purely to miss the SW's
 `caches.match(e.request)` lookup so its own `r || fetch(e.request)` fallback actually reaches the
 network — don't "simplify" this back to a plain `fetch(location.href, {cache:'no-store'})`, it
-looks equivalent but reintroduces exactly this bug. It regex-extracts the response's embedded
-`APP_VERSION`, and only shows the update banner if that differs from the running version.
-Confirming via `applyUpdate()` writes the
+looks equivalent but reintroduces exactly this bug. Checks `res.ok` before parsing — `fetch()`
+only rejects on a network failure, not on an HTTP error status, so without this check a
+transient 404/500 from the host would fall through with a non-matching body, `remoteVersion`
+would end up `null`, and that used to land in the "already up to date" branch — silently
+misreporting a failed check as nothing-to-update instead of surfacing an error. It regex-extracts
+the response's embedded `APP_VERSION`, and only shows the update banner if that differs from the
+running version. Confirming via `applyUpdate()` writes the
 already-fetched response (`pendingFreshResponse`) directly into every existing Cache Storage
 entry keyed by the current URL, then reloads — the reload's cache-first lookup finds that
 freshly-written entry immediately, so the new content shows without a second network round-trip.
