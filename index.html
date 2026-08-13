@@ -317,7 +317,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.18.0';
+const APP_VERSION = '1.18.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1479,6 +1479,12 @@ async function checkForUpdates() {
     // cache, not our Cache Storage lookup), so a plain fetch(location.href) here would just
     // re-serve whatever's already cached and never actually reach the network.
     const res = await fetch(`${location.href}?_check=${Date.now()}`, { cache: 'no-store' });
+    // fetch() only rejects on a network failure, not on an HTTP error status — without this check
+    // a transient 404/500 from the host would fall through with res.ok===false, its error-page
+    // body wouldn't match the APP_VERSION regex, and remoteVersion would end up null, which
+    // previously landed in the "up to date" branch below — silently misreporting a failed check
+    // as nothing-to-update instead of an error.
+    if (!res.ok) throw new Error(`check-for-updates fetch failed: ${res.status}`);
     const text = await res.clone().text();
     const match = text.match(/APP_VERSION\s*=\s*'([^']+)'/);
     const remoteVersion = match ? match[1] : null;
@@ -1497,13 +1503,15 @@ async function checkForUpdates() {
 }
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
-// Only (re-)register while online. Bumping APP_VERSION makes the SW script byte-differ, so the
-// browser tries to install the new version on every open — which requires fetching the shell/
-// manifest/icon fresh over the network. If that first post-deploy open happens to be offline,
-// the install fails and retries on every subsequent open until it finally succeeds online,
-// triggering the OS's own connectivity prompt each time. Skipping registration entirely while
-// offline leaves the already-active (already fully cached) SW in control with zero network
-// attempts — registration resumes normally next time the app opens with a connection.
+// Only (re-)register while online. A plain content/version bump no longer touches the SW script
+// (see the static-CACHE-name note below), so most opens are a no-op registration; it's only when
+// this install/activate/fetch logic itself changes that the browser fetches the shell/manifest/
+// icon fresh over the network on the next open, and only then can a first post-deploy offline
+// open hit a failed install that retries on every subsequent online open until it succeeds,
+// potentially triggering the OS's own connectivity prompt each time. Skipping registration
+// entirely while offline leaves the already-active (already fully cached) SW in control with
+// zero network attempts — registration resumes normally next time the app opens with a
+// connection.
 if ('serviceWorker' in navigator && navigator.onLine) {
   // Cache the directory URL, the explicit index.html URL (a home-screen relaunch can request
   // either depending on platform/iOS version), and manifest.json/the icon — iOS can refetch
@@ -1519,8 +1527,20 @@ if ('serviceWorker' in navigator && navigator.onLine) {
   // changes, so a plain content/version bump no longer triggers a background SW reinstall.
   // applyUpdate() doesn't care about the cache name either way — it writes into every existing
   // cache by iterating caches.keys().
+  // Install caches each shell URL independently (Promise.allSettled) rather than via
+  // cache.addAll(), which is all-or-nothing — a single flaky fetch (one bad request out of the
+  // four) would otherwise fail the ENTIRE install and leave nothing cached at all, not even the
+  // URLs that succeeded. But allSettled alone never rejects, so a *total* failure (e.g. the very
+  // first install attempt hitting a dead network right after the navigator.onLine check passed)
+  // would otherwise be reported to the browser as a successful install with an empty cache — and
+  // since nothing about the SW script would differ on a later retry, the browser would never
+  // re-attempt install again, permanently leaving an empty offline cache. SHELL[0]/SHELL[1] are
+  // the two page-shell URL variants (the directory and explicit index.html) — if fetching BOTH
+  // of those specifically failed, the install is rejected so the browser retries the whole
+  // install on the next online register() call; a manifest/icon-only failure is not fatal since
+  // the app still works offline without those.
   const shellUrls = JSON.stringify([swScope, swScope + 'index.html', swScope + 'manifest.json', swScope + 'handball_icon.png']);
-  const sw = `const CACHE='handball-shell';self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(${shellUrls}))));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  const sw = `const CACHE='handball-shell';const SHELL=${shellUrls};self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>fetch(u).then(r=>c.put(u,r))))).then(rs=>{if(rs[0].status==='rejected'&&rs[1].status==='rejected')throw new Error('shell cache install failed');})));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
   // Explicit scope — for a blob: URL script the default scope is ambiguous, and if it doesn't
   // end up covering the actual launch URL, the SW never intercepts that navigation at all.
