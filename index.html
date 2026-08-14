@@ -316,7 +316,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.19.1';
+const APP_VERSION = '1.19.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -344,6 +344,13 @@ let playerNumberInput = '';
 let pendingEditId = null;
 let pendingShareId = null;
 let pendingScorersId = null;
+
+// Team names are free-form user input rendered via innerHTML in several places (history cards,
+// the goals view, edit-mode inputs) — escape before interpolating so a name containing HTML
+// metacharacters can't break out of its tag/attribute and inject markup or script.
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 // Aggregates a team's per-goal scorer log (state.scorers[identity], carried onto the saved
 // history entry as teams[i].scorers) into a per-player goal count — shared by the history
@@ -831,8 +838,12 @@ function clampNumberInput(el, min, max) {
 function setHalfLength(el) {
   const clamped = clampNumberInput(el, 1, 99);
   if (clamped === null) return;
+  // Only carry the new length into clockRemaining when the clock is still at the untouched full
+  // length of the previous setting — otherwise this would silently discard a paused mid-half
+  // countdown just because the half-length field was edited for an unrelated reason.
+  const isUntouched = !state.clockRunning && state.clockRemaining === state.halfLength * 60;
   state.halfLength = clamped;
-  if (!state.clockRunning) { state.clockRemaining = clamped * 60; renderClock(); }
+  if (isUntouched) { state.clockRemaining = clamped * 60; renderClock(); }
   save();
 }
 
@@ -961,17 +972,16 @@ function renderGoalsView() {
   const teamBlock = slot => {
     const identity = identityForSlot(slot);
     const s = state[identity];
-    const counts = {};
-    let unknown = 0;
-    numbersFor(identity).forEach(n => { if (n == null) unknown++; else counts[n] = (counts[n]||0) + 1; });
-    const rows = Object.keys(counts).map(Number).sort((a,b) => a-b)
-      .map(n => `<tr><td>#${n}</td><td>${counts[n]}</td></tr>`).join('')
-      + (unknown ? `<tr><td>${t('unknownScorer')}</td><td>${unknown}</td></tr>` : '');
+    const tally = scorerTally({ scorers: numbersFor(identity).map(number => ({ number })) });
+    const rows = tally
+      ? tally.numbers.map(n => `<tr><td>#${n}</td><td>${tally.counts[n]}</td></tr>`).join('')
+        + (tally.unknown ? `<tr><td>${t('unknownScorer')}</td><td>${tally.unknown}</td></tr>` : '')
+      : '';
     const body = rows
       ? `<table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>`
       : `<div class="goals-view-list">${t('noGoalsYet')}</div>`;
     return `<div class="goals-view-team">
-      <div class="goals-view-title" style="color:${readableColor(s.color)}">${s.name}</div>
+      <div class="goals-view-title" style="color:${readableColor(s.color)}">${escapeHtml(s.name)}</div>
       ${body}
     </div>`;
   };
@@ -1286,8 +1296,12 @@ function saveEditGame(id) {
     // g.id doubles as the entry's creation timestamp (Date.now() at save time) and is what
     // toDateInputValue()/toTimeInputValue() prefill from if this entry is edited again later —
     // update it to the edited timestamp so a second edit shows the last-saved date/time, not
-    // the original one.
-    g.id = dt.getTime();
+    // the original one. dt.getTime() is only minute-precision (from <input type="date">/"time">),
+    // so nudge forward by 1ms steps if that collides with another entry's id — ids must stay
+    // unique since delete/edit both look entries up by id.
+    let newId = dt.getTime();
+    while (state.history.some(other => other !== g && other.id === newId)) newId++;
+    g.id = newId;
   }
   pendingEditId = null;
   save();
@@ -1359,7 +1373,7 @@ function renderHistory() {
       : '';
     const scorerBlock = (team, rows) => rows
       ? `<div class="goals-view-team">
-           <div class="goals-view-title" style="color:${readableColor(team.color)}">${team.name}</div>
+           <div class="goals-view-title" style="color:${readableColor(team.color)}">${escapeHtml(team.name)}</div>
            <table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>
          </div>`
       : '';
@@ -1396,8 +1410,8 @@ function renderHistory() {
       : `<span></span>`;
     const body = isEditing
       ? `<div class="history-edit-row">
-           <input class="name-input" id="edit-name0-${g.id}" value="${g.teams[0].name}" />
-           <input class="name-input" id="edit-name1-${g.id}" value="${g.teams[1].name}" />
+           <input class="name-input" id="edit-name0-${g.id}" value="${escapeHtml(g.teams[0].name)}" />
+           <input class="name-input" id="edit-name1-${g.id}" value="${escapeHtml(g.teams[1].name)}" />
          </div>
          <div class="history-edit-row">
            <input class="number-input" id="edit-score0-${g.id}" type="number" min="0" max="99" inputmode="numeric" value="${g.teams[0].score}" oninput="clampNumberInput(this,0,99)" onblur="if(this.value.trim()==='')this.value='0'" />
@@ -1412,8 +1426,8 @@ function renderHistory() {
            <button class="btn-primary" onclick="saveEditGame(${g.id})">${t('saveEdit')}</button>
          </div>`
       : `<div class="history-names-row">
-           <span class="history-team-name" style="color:${readableColor(g.teams[0].color)}">${g.teams[0].name}</span>
-           <span class="history-team-name" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].name}</span>
+           <span class="history-team-name" style="color:${readableColor(g.teams[0].color)}">${escapeHtml(g.teams[0].name)}</span>
+           <span class="history-team-name" style="color:${readableColor(g.teams[1].color)}">${escapeHtml(g.teams[1].name)}</span>
          </div>
          <div class="history-score">
            <span class="history-score-num left" style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted); padding:0 8px;">:</span><span class="history-score-num right" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span>
