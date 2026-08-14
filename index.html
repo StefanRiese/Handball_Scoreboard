@@ -135,7 +135,7 @@
 </div>
 
 <div id="player-modal" onclick="if(event.target===this)skipPlayerNumber()">
-  <div class="box">
+  <div class="box" id="player-modal-box">
     <div id="player-modal-title" style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Spielernummer eingeben</div>
     <div id="player-number-display">—</div>
     <div class="keypad-grid">
@@ -308,7 +308,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.20.2';
+const APP_VERSION = '1.20.3';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1183,6 +1183,12 @@ function openPlayerNumberModal(identity, half, pos, globalPos) {
   playerNumberInput = '';
   updatePlayerNumberDisplay();
   document.getElementById('player-modal-title').textContent = `${displayNameFor(identity)}: ${t('enterPlayerNumber')}`;
+  // Same team-color accent formula as the game-view cards (render()), so the modal visually
+  // ties back to whichever team just scored — respects the same cardAccentEnabled toggle.
+  const color = state[identity].color;
+  document.getElementById('player-modal-box').style.background = state.cardAccentEnabled
+    ? `radial-gradient(120% 70% at 50% 0%, ${color}29 0%, ${color}14 35%, ${color}00 80%), var(--card)`
+    : 'var(--card)';
   document.getElementById('player-modal').style.display = 'flex';
 }
 
