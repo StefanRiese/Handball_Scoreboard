@@ -223,52 +223,60 @@ for pre-Wake-Lock-API browsers and relies on native Wake Lock
 alone wherever it's available, which is why it was abandoned here too — don't re-add a
 video/canvas/audio keep-awake hack without new evidence it actually helps.
 
-**Update flow — manual only, by design**: every request, including page navigation, is
-cache-first (`caches.match(e.request).then(r=>r||fetch(e.request))`) — opening the app never
-touches the network or triggers any update detection, on purpose (the user explicitly asked for
-this; an earlier network-first-navigation design auto-checked on every open, which wasn't
-wanted). The only way to get fresh content is the "🔄 Check for updates" button
-(`checkForUpdates()`, Settings → Information): it fetches the live file with a cache-busting
-query string (`?_check=${Date.now()}`) AND `{cache: 'no-store'}`. Both are required, for two
-different layers: `{cache: 'no-store'}` only bypasses the browser's own HTTP cache (needed since a
-`Cache-Control` header from the host, e.g. GitHub Pages' `max-age=600`, would otherwise let the
-browser silently reuse a stale response) — it does nothing about our Service Worker, whose fetch
-handler is cache-first for every request regardless of the caller's `cache` option. Without the
-query-string cache-bust, the SW would just re-serve whatever's already in Cache Storage (i.e. the
+**Update flow — automatic, silent, on every online app open**: `init()` calls `checkForUpdates()`
+whenever `navigator.onLine`, with no button and no confirmation banner — this is the *second*
+design for this flow. The first design (manual-only, a "🔄 Check for updates" button in Settings)
+was deliberately built after an even earlier automatic-check design was reverted at the user's
+request; that manual design was itself later reverted back to automatic-on-open at the user's
+explicit request (2026-08-14), after discovering that iOS evicts an installed PWA's Service Worker
+registration when it's fully force-quit (a behavior also reported in
+[GoogleChrome/workbox#1494](https://github.com/GoogleChrome/workbox/issues/1494)) — the next
+relaunch's first navigation goes uncontrolled straight to the network and picks
+up whatever's live on the host regardless of any in-app "check for updates" button, so the manual
+gate was already being silently bypassed on iOS at exactly the moment (a fresh relaunch) it mattered
+most. Given updates were arriving unrequested anyway on that platform, the manual button added
+UI/i18n surface without actually preventing anything. **If asked to make this manual-only again,
+that's a deliberate reversal of an explicit, dated decision — confirm with the user first**, the
+same way the previous manual design asked to be confirmed before undoing.
+
+`checkForUpdates()` fetches the live file with a cache-busting query string
+(`?_check=${Date.now()}`) AND `{cache: 'no-store'}`. Both are required, for two different layers:
+`{cache: 'no-store'}` only bypasses the browser's own HTTP cache (needed since a `Cache-Control`
+header from the host, e.g. GitHub Pages' `max-age=600`, would otherwise let the browser silently
+reuse a stale response) — it does nothing about our Service Worker, whose fetch handler is
+cache-first for every request regardless of the caller's `cache` option. Without the query-string
+cache-bust, the SW would just re-serve whatever's already in Cache Storage (i.e. the
 currently-running version) and the check would compare the running version against itself,
 silently never detecting a real update. The query string exists purely to miss the SW's
 `caches.match(e.request)` lookup so its own `r || fetch(e.request)` fallback actually reaches the
 network — don't "simplify" this back to a plain `fetch(location.href, {cache:'no-store'})`, it
-looks equivalent but reintroduces exactly this bug. Checks `res.ok` before parsing — `fetch()`
-only rejects on a network failure, not on an HTTP error status, so without this check a
-transient 404/500 from the host would fall through with a non-matching body, `remoteVersion`
-would end up `null`, and that used to land in the "already up to date" branch — silently
-misreporting a failed check as nothing-to-update instead of surfacing an error. It regex-extracts
-the response's embedded `APP_VERSION`, and only shows the update banner if that differs from the
-running version. Confirming via `applyUpdate()` writes the
-already-fetched response (`pendingFreshResponse`) directly into every existing Cache Storage
-entry keyed by the current URL, then reloads — the reload's cache-first lookup finds that
-freshly-written entry immediately, so the new content shows without a second network round-trip.
-Bump `APP_VERSION` (semver: `MAJOR.MINOR.PATCH`) on every deploy you want the button to be able to
-detect — it's what the regex compares and what changes the embedded SW script's bytes (so a
-subsequent normal page load still eventually installs the new SW's `install`/`activate`
-lifecycle, e.g. to prune old-versioned caches). Do not reintroduce network-first navigation or an
-automatic `updatefound` listener/banner — both were tried and explicitly reverted at the user's
-request in favor of check-only-via-button. If reintroducing any automatic check, confirm with the
-user first, since this has already been requested and removed once.
+looks equivalent but reintroduces exactly this bug. Checks `res.ok` before parsing — `fetch()` only
+rejects on a network failure, not on an HTTP error status, so without this check a transient
+404/500 from the host would fall through with a non-matching body and `remoteVersion` would end up
+`null`, silently doing nothing either way; the check just makes "nothing to do" explicit instead of
+accidental. It regex-extracts the response's embedded `APP_VERSION`, and only proceeds if that
+differs from the running version — then writes the already-fetched response directly into every
+existing Cache Storage entry across every shell URL variant (`location.href`, `swScope`,
+`swScope + 'index.html'`) and reloads immediately, with no user-facing confirmation step. Any
+network/offline failure is swallowed silently (`catch` does nothing) — the app just keeps running
+the current cached version and tries again on the next online open. Bump `APP_VERSION` (semver:
+`MAJOR.MINOR.PATCH`) on every deploy you want this to detect — it's what the regex compares and
+what changes the embedded SW script's bytes (so a subsequent normal page load still eventually
+installs the new SW's `install`/`activate` lifecycle, e.g. to prune old-versioned caches).
 
-Earlier iteration note: a simpler version of the manual button just called `location.reload()`
-unconditionally, which surfaced the browser's own "page not available" error when offline (no
-cached fallback could satisfy the reload). Checking first — before ever attempting a reload —
-avoids that.
+Earlier iteration note: a simpler version of the manual button (before it was removed entirely)
+just called `location.reload()` unconditionally on failure, which surfaced the browser's own "page
+not available" error when offline (no cached fallback could satisfy the reload) — this design
+avoids that by only ever reloading after a successful fetch+cache-write, and doing nothing at all
+on failure.
 
-**iOS home-screen quirk**: a standalone ("Add to Home Screen") PWA on iOS does not reliably run
-the update-check flow on a cold app-switcher relaunch, even though the identical code works
-correctly in a regular Safari tab — this is a platform limitation, not a bug in this app's logic.
-The in-app "🔄 Check for updates" button works reliably from *within* the already-running
-standalone instance (confirmed on-device) since it's a same-process JS reload rather than a fresh
-WKWebView cold start; prefer that button over force-quitting/relaunching when debugging why an
-installed icon seems stuck on an old version.
+**iOS home-screen quirk (historical, from the manual-button era)**: a standalone ("Add to Home
+Screen") PWA on iOS did not reliably run the same update-check code on a cold app-switcher
+relaunch as it did in a regular Safari tab. This is now moot for the update flow itself, since
+`checkForUpdates()` runs unconditionally from `init()` on every open rather than from a button a
+user could fail to reach — but the underlying platform behavior (a fresh standalone relaunch not
+reliably running the same JS path as a backgrounded/foregrounded instance) may still be relevant
+to other init-time logic on iOS.
 
 **Design tokens**: corner radii and spacing are CSS custom properties on `:root` —
 `--radius-sm/md/lg` (12/16/22px) and `--space-1..5` (4/8/12/16/24px). New `border-radius`/`gap`/
