@@ -268,14 +268,6 @@
       <div id="add-home-instructions-text" style="font-size:14px; color:var(--text); margin-bottom:10px;"></div>
       <button class="btn-secondary" onclick="dismissAddHomeInstructions()" id="add-home-dismiss-btn" style="display:block; margin:0 auto;">Verstanden</button>
     </div>
-    <button class="swap-row-btn" id="check-update-btn" onclick="checkForUpdates()">🔄 Nach Updates suchen</button>
-    <div id="update-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:var(--radius-md); padding:var(--space-3) 14px;">
-      <span id="update-banner-text" style="font-size:14px; color:var(--text);">Update verfügbar</span>
-      <div style="display:flex; gap:8px; flex-shrink:0;">
-        <button class="btn-secondary" id="update-later-btn" onclick="dismissUpdate()">Später</button>
-        <button class="btn-secondary" id="update-now-btn" onclick="applyUpdate()" style="background:#378add; color:#fff; border-color:transparent;">Aktualisieren</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -307,8 +299,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', updateAvailable:'🎉 Neue Version verfügbar', updateNow:'Aktualisieren', updateLater:'Später', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', checkUpdate:'🔄 Nach Updates suchen', developerLabel:'Entwickler', checkingUpdate:'⏳ Suche...', upToDate:'✅ Bereits aktuell', offlineCheckFailed:'📡 Keine Verbindung', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', updateAvailable:'🎉 New version available', updateNow:'Update', updateLater:'Later', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', checkUpdate:'🔄 Check for updates', developerLabel:'Developer', checkingUpdate:'⏳ Checking...', upToDate:'✅ Already up to date', offlineCheckFailed:'📡 No connection', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', infoTitle:'Information', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', infoTitle:'Information', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -316,7 +308,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.19.4';
+const APP_VERSION = '1.20.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -724,11 +716,6 @@ function applyLang() {
     document.getElementById('clear-confirm-text').textContent = t('reallyClearHistory');
     document.getElementById('clear-yes').textContent = t('yes');
     document.getElementById('clear-no').textContent = t('no');
-    document.getElementById('update-banner-text').textContent = pendingRemoteVersion
-      ? `${t('updateAvailable')} (${pendingRemoteVersion})`
-      : t('updateAvailable');
-    document.getElementById('update-now-btn').textContent = t('updateNow');
-    document.getElementById('update-later-btn').textContent = t('updateLater');
     document.getElementById('sharing-title').textContent = t('sharingTitle');
     document.getElementById('showwhatsapp-label').textContent = t('showWhatsapp');
     document.getElementById('showwhatsapp-btn').textContent = state.whatsappEnabled ? t('on') : t('off');
@@ -739,7 +726,6 @@ function applyLang() {
     document.getElementById('add-home-btn').textContent = t('addHome');
     document.getElementById('add-home-dismiss-btn').textContent = t('gotIt');
     document.getElementById('qr-modal-hint').textContent = t('qrHint');
-    document.getElementById('check-update-btn').textContent = t('checkUpdate');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
     document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
@@ -1559,46 +1545,11 @@ if ('wakeLock' in navigator) {
   document.addEventListener('touchstart', () => { if (!wl) requestWakeLock(); }, { passive: true });
 }
 
-let pendingFreshResponse = null;
-let pendingRemoteVersion = null;
-
-function showUpdateBanner(remoteVersion) {
-  pendingRemoteVersion = remoteVersion;
-  const textEl = document.getElementById('update-banner-text');
-  if (textEl) textEl.textContent = `${t('updateAvailable')} (${remoteVersion})`;
-  const el = document.getElementById('update-banner');
-  if (el) el.style.display = 'flex';
-}
-
-function dismissUpdate() {
-  pendingFreshResponse = null;
-  pendingRemoteVersion = null;
-  const el = document.getElementById('update-banner');
-  if (el) el.style.display = 'none';
-}
-
-function applyUpdate() {
-  if (!pendingFreshResponse) { location.reload(); return; }
-  const res = pendingFreshResponse;
-  // Write under every URL a cold offline launch might actually request (location.href AND the
-  // canonical shell URLs the install handler uses) — a cold app-icon relaunch can request a
-  // different URL variant than whatever page happened to run this update, and a cache-first
-  // fetch handler needs an exact match or it falls through to network, which fails outright
-  // while offline.
-  const urls = Array.from(new Set([location.href, swScope, swScope + 'index.html']));
-  caches.keys()
-    .then(keys => Promise.all(keys.flatMap(k => urls.map(u => caches.open(k).then(c => c.put(u, res.clone()))))))
-    .then(() => location.reload());
-}
-
+// Silently checks for a newer deployed version on every online app open and, if found, writes it
+// into Cache Storage and reloads — no button, no confirmation banner. This intentionally replaces
+// the earlier manual-only ("🔄 Check for updates" button) design; see git history for that
+// version's reasoning if this ever needs revisiting.
 async function checkForUpdates() {
-  const btn = document.getElementById('check-update-btn');
-  btn.disabled = true;
-  btn.textContent = t('checkingUpdate');
-  // Restore to the current-language label (t('checkUpdate')), not a textContent snapshot taken
-  // at click time — if the user switches language while the check is in flight, applyLang()
-  // updates the button, but a snapshot-based reset would silently revert it to the stale language.
-  const reset = () => { btn.textContent = t('checkUpdate'); btn.disabled = false; };
   try {
     // Cache-bust the URL, not just the fetch init — the Service Worker's own fetch handler is
     // cache-first regardless of {cache:'no-store'} (that option only affects the browser's HTTP
@@ -1606,25 +1557,26 @@ async function checkForUpdates() {
     // re-serve whatever's already cached and never actually reach the network.
     const res = await fetch(`${location.href}?_check=${Date.now()}`, { cache: 'no-store' });
     // fetch() only rejects on a network failure, not on an HTTP error status — without this check
-    // a transient 404/500 from the host would fall through with res.ok===false, its error-page
-    // body wouldn't match the APP_VERSION regex, and remoteVersion would end up null, which
-    // previously landed in the "up to date" branch below — silently misreporting a failed check
-    // as nothing-to-update instead of an error.
-    if (!res.ok) throw new Error(`check-for-updates fetch failed: ${res.status}`);
+    // a transient 404/500 from the host would fall through with res.ok===false and its error-page
+    // body wouldn't match the APP_VERSION regex, silently doing nothing either way; checking
+    // res.ok just makes that "nothing to do" explicit instead of accidental.
+    if (!res.ok) return;
     const text = await res.clone().text();
     const match = text.match(/APP_VERSION\s*=\s*'([^']+)'/);
     const remoteVersion = match ? match[1] : null;
-    if (remoteVersion && remoteVersion !== APP_VERSION) {
-      pendingFreshResponse = res;
-      showUpdateBanner(remoteVersion);
-      reset();
-    } else {
-      btn.textContent = t('upToDate');
-      setTimeout(reset, 2000);
-    }
+    if (!remoteVersion || remoteVersion === APP_VERSION) return;
+    // Write under every URL a cold offline launch might actually request (location.href AND the
+    // canonical shell URLs the install handler uses) — a cold app-icon relaunch can request a
+    // different URL variant than whatever page happened to run this update, and a cache-first
+    // fetch handler needs an exact match or it falls through to network, which fails outright
+    // while offline.
+    const urls = Array.from(new Set([location.href, swScope, swScope + 'index.html']));
+    const keys = await caches.keys();
+    await Promise.all(keys.flatMap(k => urls.map(u => caches.open(k).then(c => c.put(u, res.clone())))));
+    location.reload();
   } catch (e) {
-    btn.textContent = t('offlineCheckFailed');
-    setTimeout(reset, 2000);
+    // Offline or a network hiccup — silently keep running the current cached version; the next
+    // online app open tries again.
   }
 }
 
@@ -1688,6 +1640,7 @@ function init() {
     clockTimer = setInterval(tickClock, 250);
   }
   if (!hadData) save();
+  if (navigator.onLine) checkForUpdates();
 }
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 </script>
