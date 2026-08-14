@@ -308,7 +308,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.20.1';
+const APP_VERSION = '1.20.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -339,6 +339,7 @@ let pendingClearAll = false;
 let playerModalIdentity = null;
 let playerModalHalf = null;
 let playerModalPos = null;
+let playerModalGlobalPos = null;
 let playerNumberInput = '';
 // Goals scored back-to-back (e.g. a quick double-tap) before the player-number modal for the
 // first one is confirmed/skipped must not overwrite each other — queued {identity, half} pairs
@@ -588,6 +589,11 @@ function load() {
             if (state.autoSwapAtHalftime) swapTeamsData();
             state.half = 1;
             state.clockRemaining = state.halfLength * 60;
+            // init() only calls save() itself when there was no prior localStorage record at
+            // all (hadData is true here) — without persisting this replayed advance immediately,
+            // reopening again with no intervening goal/clock/settings save() would re-run this
+            // exact branch from the same stale record, flipping sides back a second time.
+            save();
           }
         }
       } else {
@@ -939,7 +945,7 @@ function render() {
       disp.classList.add('pulse');
     }
     disp.style.color = textColor;
-    document.getElementById('name-'+slot).textContent = s.name;
+    document.getElementById('name-'+slot).textContent = displayNameFor(identity);
     document.getElementById('name-'+slot).style.color = textColor;
     const card = document.getElementById('card-'+slot);
     card.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 2px ${s.color}55`;
@@ -1021,7 +1027,7 @@ function renderGoalsView() {
       ? `<table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>`
       : `<div class="goals-view-list">${t('noGoalsYet')}</div>`;
     return `<div class="goals-view-team">
-      <div class="goals-view-title" style="color:${readableColor(s.color)}">${escapeHtml(s.name)}</div>
+      <div class="goals-view-title" style="color:${readableColor(s.color)}">${escapeHtml(displayNameFor(identity))}</div>
       ${body}
     </div>`;
   };
@@ -1048,26 +1054,42 @@ function renderSettings() {
     el.innerHTML = '';
     PRESETS.forEach(p => {
       const btn = document.createElement('button');
+      const selected = state[t2].color === p;
       btn.className = 'color-dot';
       btn.style.background = p;
-      btn.style.border = state[t2].color === p ? '2.5px solid var(--text)' : '2px solid transparent';
-      btn.style.boxShadow = state[t2].color === p ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
-      btn.setAttribute('aria-label', p);
+      btn.style.border = selected ? '2.5px solid var(--text)' : '2px solid transparent';
+      btn.style.boxShadow = selected ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
+      // The hex code alone doesn't tell a screen-reader user which swatch is currently picked —
+      // aria-pressed conveys the same selected/not-selected state the border/box-shadow show
+      // visually, and t('colorLabel') gives the announcement a word instead of a bare hex code.
+      btn.setAttribute('aria-label', `${t('colorLabel')} ${p}`);
+      btn.setAttribute('aria-pressed', String(selected));
       btn.onclick = () => { state[t2].color = p; render(); renderSettings(); save(); };
       el.appendChild(btn);
     });
     const more = document.createElement('button');
+    const moreSelected = !PRESETS.includes(state[t2].color);
     more.className = 'color-dot';
     more.style.background = 'var(--btn)';
     more.style.color = 'var(--muted)';
     more.style.fontSize = '18px';
     more.textContent = '+';
     more.setAttribute('aria-label', t('ariaMoreColors'));
-    more.style.border = !PRESETS.includes(state[t2].color) ? '2.5px solid var(--text)' : '2px solid var(--btn-border)';
-    more.style.boxShadow = !PRESETS.includes(state[t2].color) ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
+    more.setAttribute('aria-pressed', String(moreSelected));
+    more.style.border = moreSelected ? '2.5px solid var(--text)' : '2px solid var(--btn-border)';
+    more.style.boxShadow = moreSelected ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
     more.onclick = () => { openColorModal(t2); };
     el.appendChild(more);
   });
+}
+
+// state[identity].name is kept as the raw (possibly empty) string the user typed — the
+// "Team 1"/"Team 2" placeholder is purely a display fallback, computed fresh here so every
+// consumer shows it consistently (and so it re-localizes correctly on a language switch, instead
+// of being baked into stored data). Settings' own name input is the one exception and always
+// shows the raw value, since it's an editable field, not a display.
+function displayNameFor(identity) {
+  return state[identity].name.trim() || t(identity === 'a' ? 'team1' : 'team2');
 }
 
 function setName(t2, v) {
@@ -1077,8 +1099,7 @@ function setName(t2, v) {
   // always edits Team 1/Team 2 directly), but the game-view DOM element it must update is keyed
   // by physical slot, which can differ from the identity once sides have been swapped.
   const slot = identityForSlot(t2);
-  const display = v.trim() || (t2 === 'a' ? t('team1') : t('team2'));
-  document.getElementById('name-'+slot).textContent = display;
+  document.getElementById('name-'+slot).textContent = displayNameFor(t2);
   document.getElementById('name-'+slot).style.color = readableColor(state[t2].color);
   save();
 }
@@ -1091,7 +1112,8 @@ function openColorModal(t2) {
     const btn = document.createElement('button');
     const selected = state[t2].color === p;
     btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};box-shadow:${selected?'0 0 0 2px rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
-    btn.setAttribute('aria-label', p);
+    btn.setAttribute('aria-label', `${t('colorLabel')} ${p}`);
+    btn.setAttribute('aria-pressed', String(selected));
     btn.onclick = () => { state[colorTarget].color = p; render(); renderSettings(); save(); cancelColor(); };
     grid.appendChild(btn);
   });
@@ -1104,35 +1126,45 @@ function addGoal(slot) {
   const identity = identityForSlot(slot);
   const half = state.half;
   state.halves[identity][half]++;
-  // This goal's 1-indexed position in identity's overall goal count (across both halves) —
-  // stamped now, at the moment it's actually scored, so correct() can later identify exactly
-  // this goal by matching on this number regardless of how many goals happen (or how tracking
-  // gets toggled on/off) in between.
-  const pos = total(identity);
+  // This goal's 1-indexed position within its own half's count (not the combined total across
+  // both halves) — stamped now, at the moment it's actually scored, so correct() can later
+  // identify exactly this goal by matching on (half, pos). Scoping pos to the half matters
+  // because the minus button always decrements whichever half is currently selected, which can
+  // differ from the half the most-recently-scored goal (overall) was in, if the user switched
+  // halves manually in between.
+  const pos = state.halves[identity][half];
+  // This goal's 1-indexed position in identity's combined goal count across both halves —
+  // separate from the half-scoped `pos` above, and used only by saveEditGame() to know which
+  // scorer entries are still within an edited-down final score (the scorers array is a
+  // chronological subsequence of ALL goals, not necessarily the first N, whenever tracking
+  // started mid-match).
+  const globalPos = total(identity);
   if (navigator.vibrate) navigator.vibrate(10);
   render();
   save();
   if (state.trackPlayerNumbers) {
-    if (playerModalIdentity) playerNumberQueue.push({ identity, half, pos });
-    else openPlayerNumberModal(identity, half, pos);
+    if (playerModalIdentity) playerNumberQueue.push({ identity, half, pos, globalPos });
+    else openPlayerNumberModal(identity, half, pos, globalPos);
   }
 }
 
 function correct(slot, d) {
   const identity = identityForSlot(slot);
+  const half = state.half;
   // Capture the position (see addGoal()) of the goal about to be undone before decrementing —
-  // the minus button only ever undoes one goal at a time (d is always -1), so this is exactly
-  // the total(identity) that goal was stamped with when scored.
-  const posBeingUndone = total(identity);
-  state.halves[identity][state.half] = Math.max(0, state.halves[identity][state.half] + d);
-  // Remove that exact goal's scorer-log entry if it has one — matching by stamped position
+  // the minus button only ever undoes one goal at a time (d is always -1) from the currently
+  // selected half, so this is exactly the (half, pos) that goal was stamped with when scored.
+  const posBeingUndone = state.halves[identity][half];
+  state.halves[identity][half] = Math.max(0, state.halves[identity][half] + d);
+  // Remove that exact goal's scorer-log entry if it has one — matching by stamped (half, pos)
   // rather than assuming untracked goals are always the earliest ones (that assumption breaks as
   // soon as tracking is toggled off then on again mid-match, since a later goal could then be the
-  // untracked one). If no entry matches, the undone goal was never tracked, so there's nothing to
-  // remove — the log is already correctly in sync.
+  // untracked one) or that the goal being decremented is necessarily the last one scored overall
+  // (it isn't, if the user switched halves manually since then). If no entry matches, the undone
+  // goal was never tracked, so there's nothing to remove — the log is already correctly in sync.
   if (d < 0) {
     const log = state.scorers[identity];
-    const idx = log.findIndex(entry => entry.pos === posBeingUndone);
+    const idx = log.findIndex(entry => entry.half === half && entry.pos === posBeingUndone);
     if (idx !== -1) log.splice(idx, 1);
   }
   render();
@@ -1143,13 +1175,14 @@ function correct(slot, d) {
 // match must never be blocked on this popup), then optionally opens this keypad to attach a
 // jersey number to that goal. Tapping outside the modal or "Skip" leaves the goal counted with
 // no number recorded, matching a plain tap when tracking is off.
-function openPlayerNumberModal(identity, half, pos) {
+function openPlayerNumberModal(identity, half, pos, globalPos) {
   playerModalIdentity = identity;
   playerModalHalf = half;
   playerModalPos = pos;
+  playerModalGlobalPos = globalPos;
   playerNumberInput = '';
   updatePlayerNumberDisplay();
-  document.getElementById('player-modal-title').textContent = `${state[identity].name}: ${t('enterPlayerNumber')}`;
+  document.getElementById('player-modal-title').textContent = `${displayNameFor(identity)}: ${t('enterPlayerNumber')}`;
   document.getElementById('player-modal').style.display = 'flex';
 }
 
@@ -1178,7 +1211,7 @@ function skipPlayerNumber() {
 
 function recordScorer(number) {
   if (playerModalIdentity) {
-    state.scorers[playerModalIdentity].push({ half: playerModalHalf, number, pos: playerModalPos });
+    state.scorers[playerModalIdentity].push({ half: playerModalHalf, number, pos: playerModalPos, globalPos: playerModalGlobalPos });
     save();
     renderGoalsView();
   }
@@ -1186,10 +1219,11 @@ function recordScorer(number) {
   playerModalIdentity = null;
   playerModalHalf = null;
   playerModalPos = null;
+  playerModalGlobalPos = null;
   playerNumberInput = '';
   if (playerNumberQueue.length) {
     const next = playerNumberQueue.shift();
-    openPlayerNumberModal(next.identity, next.half, next.pos);
+    openPlayerNumberModal(next.identity, next.half, next.pos, next.globalPos);
   }
 }
 
@@ -1231,15 +1265,24 @@ function cancelFinish() {
 
 function saveGame() {
   const now = new Date();
+  // Date.now() is millisecond-precision but not guaranteed unique — two rapid taps on the
+  // finish-confirmation button (plausible on a one-handed touch UI) could otherwise both save
+  // with the same id, and delete/edit both look entries up by id. Nudge forward on collision,
+  // same as saveEditGame() already does for its own (coarser, minute-precision) id reassignment.
+  let id = Date.now();
+  while (state.history.some(g => g.id === id)) id++;
   // state.a is always Team 1 and state.b always Team 2 (fixed identities, unaffected by
   // swapTeams() — that only flips team1OnLeft), so history naturally always lists Team 1 first.
   state.history.unshift({
-    id: Date.now(),
+    id,
     date: now.toLocaleDateString(t('locale'),{day:'2-digit',month:'2-digit',year:'numeric'}),
     time: now.toLocaleTimeString(t('locale'),{hour:'2-digit',minute:'2-digit'}),
+    // Persist the resolved display name, not the raw (possibly empty) state — a saved history
+    // entry has no live state to fall back to later, so an empty name would show up blank
+    // everywhere it's read (history list, share text, JSON export) instead of "Team 1"/"Team 2".
     teams: [
-      { name: state.a.name, score: total('a'), color: state.a.color, halftimeScore: state.halves.a[0], scorers: state.scorers.a },
-      { name: state.b.name, score: total('b'), color: state.b.color, halftimeScore: state.halves.b[0], scorers: state.scorers.b },
+      { name: displayNameFor('a'), score: total('a'), color: state.a.color, halftimeScore: state.halves.a[0], scorers: state.scorers.a },
+      { name: displayNameFor('b'), score: total('b'), color: state.b.color, halftimeScore: state.halves.b[0], scorers: state.scorers.b },
     ]
   });
   state.halves = { a: [0,0], b: [0,0] };
@@ -1255,7 +1298,7 @@ function saveGame() {
   // Discard any pending/queued player-number entry from the finished game — it would otherwise
   // pop up and record against the just-reset scorers of the new game.
   playerNumberQueue = [];
-  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerModalPos = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
+  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerModalPos = null; playerModalGlobalPos = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   if (goalsViewOpen) {
     goalsViewOpen = false;
     document.getElementById('goals-view-area').style.display = 'none';
@@ -1299,7 +1342,7 @@ function resetGame() {
   stopClock();
   state.clockRemaining = state.halfLength * 60;
   playerNumberQueue = [];
-  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerModalPos = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
+  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerModalPos = null; playerModalGlobalPos = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   renderClock();
   save();
   document.getElementById('reset-confirm-area').style.display = 'none';
@@ -1373,11 +1416,21 @@ function saveEditGame(id) {
   // it down too so history/share-text never shows an impossible halftime > final line.
   g.teams[0].halftimeScore = Math.min(g.teams[0].halftimeScore, g.teams[0].score);
   g.teams[1].halftimeScore = Math.min(g.teams[1].halftimeScore, g.teams[1].score);
-  // If the edited final score drops below the number of recorded scorer entries, trim the log
-  // to match — otherwise the scorer panel/share-text keeps attributing more goals to players
-  // than the (now lower) final score.
-  if (Array.isArray(g.teams[0].scorers)) g.teams[0].scorers = g.teams[0].scorers.slice(0, g.teams[0].score);
-  if (Array.isArray(g.teams[1].scorers)) g.teams[1].scorers = g.teams[1].scorers.slice(0, g.teams[1].score);
+  // If the edited final score drops below the number of recorded scorer entries, trim the log to
+  // match — otherwise the scorer panel/share-text keeps attributing more goals to players than
+  // the (now lower) final score. Filter by each entry's stamped globalPos (its 1-indexed position
+  // among ALL of that team's goals, tracked or not — see addGoal()), not by array index: the
+  // scorers array is a chronological SUBSEQUENCE of all goals whenever tracking started mid-match,
+  // so its first N entries aren't necessarily the same as "the goals up to the Nth one overall".
+  // Older entries recorded before globalPos existed fall back to index-based trimming.
+  const trimScorersToScore = (scorers, score) => {
+    if (!Array.isArray(scorers)) return scorers;
+    return scorers.every(e => typeof e.globalPos === 'number')
+      ? scorers.filter(e => e.globalPos <= score)
+      : scorers.slice(0, score);
+  };
+  g.teams[0].scorers = trimScorersToScore(g.teams[0].scorers, g.teams[0].score);
+  g.teams[1].scorers = trimScorersToScore(g.teams[1].scorers, g.teams[1].score);
   const dateVal = document.getElementById('edit-date-'+id).value;
   const timeVal = document.getElementById('edit-time-'+id).value;
   // Only rebuild g.date/g.time/g.id when the date or time inputs were actually changed from what
