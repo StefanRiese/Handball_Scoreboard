@@ -235,12 +235,12 @@
     <div class="settings-title" id="time-title">Spielzeit</div>
     <div class="settings-row"><span class="settings-row-label" id="showclock-label">Uhr anzeigen</span><button class="toggle-btn" onclick="toggleClockVisible()" id="showclock-btn">An</button></div>
     <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this)" onblur="if(this.value.trim()===''){this.value='1';setHalfLength(this);}" /></div>
-    <div class="settings-row"><span class="settings-row-label" id="autoswap-label">Seiten bei Halbzeit wechseln</span><button class="toggle-btn" onclick="toggleAutoSwap()" id="autoswap-btn">Aus</button></div>
+    <div class="settings-row"><span class="settings-row-label" id="autoswap-label">Seiten bei Halbzeit wechseln</span><button class="toggle-btn" onclick="toggleAutoSwap()" id="autoswap-btn">An</button></div>
   </div>
 
   <div class="settings-section">
     <div class="settings-title" id="goals-title">Tore</div>
-    <div class="settings-row"><span class="settings-row-label" id="trackplayers-label">Spielernummern erfassen</span><button class="toggle-btn" onclick="toggleTrackPlayerNumbers()" id="trackplayers-btn">Aus</button></div>
+    <div class="settings-row"><span class="settings-row-label" id="trackplayers-label">Spielernummern erfassen</span><button class="toggle-btn" onclick="toggleTrackPlayerNumbers()" id="trackplayers-btn">An</button></div>
   </div>
 
   <div class="settings-section">
@@ -318,7 +318,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.21.2';
+const APP_VERSION = '1.21.3';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -328,12 +328,12 @@ let state = {
   history: [], darkMode: true, lang: 'de', showClock: true,
   whatsappEnabled: true,
   team1OnLeft: true,
-  autoSwapAtHalftime: false,
+  autoSwapAtHalftime: true,
   halfLength: 30,
   clockRemaining: 30*60,
   clockRunning: false,
   clockEndsAt: null,
-  trackPlayerNumbers: false,
+  trackPlayerNumbers: true,
   scorers: { a: [], b: [] },
   cardAccentEnabled: true,
 };
@@ -349,9 +349,9 @@ const DEFAULT_SETTINGS = {
   darkMode: true, lang: 'de', showClock: true,
   whatsappEnabled: true,
   team1OnLeft: true,
-  autoSwapAtHalftime: false,
+  autoSwapAtHalftime: true,
   halfLength: 30,
-  trackPlayerNumbers: false,
+  trackPlayerNumbers: true,
   cardAccentEnabled: true,
 };
 let colorTarget = null;
