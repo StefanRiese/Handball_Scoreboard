@@ -148,9 +148,9 @@
       <button class="keypad-btn" onclick="pressDigit(7)">7</button>
       <button class="keypad-btn" onclick="pressDigit(8)">8</button>
       <button class="keypad-btn" onclick="pressDigit(9)">9</button>
-      <button class="keypad-btn" aria-label="Löschen" onclick="pressBackspace()">⌫</button>
+      <button class="keypad-btn" id="keypad-backspace-btn" aria-label="Löschen" onclick="pressBackspace()">⌫</button>
       <button class="keypad-btn" onclick="pressDigit(0)">0</button>
-      <button class="keypad-btn" style="background:#2e7d32; color:#fff; border-color:transparent;" aria-label="Bestätigen" onclick="confirmPlayerNumber()">✓</button>
+      <button class="keypad-btn" id="keypad-confirm-btn" style="background:#2e7d32; color:#fff; border-color:transparent;" aria-label="Bestätigen" onclick="confirmPlayerNumber()">✓</button>
     </div>
     <button id="player-skip-btn" class="btn-secondary" onclick="skipPlayerNumber()" style="padding:14px; font-size:15px;">Überspringen</button>
   </div>
@@ -309,8 +309,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version', resetSettings:'⚠️ Auf Standardeinstellungen zurücksetzen', reallyResetSettings:'Wirklich alle Einstellungen zurücksetzen?', resetSettingsTitle:'Allgemein' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version', resetSettings:'⚠️ Reset to default settings', reallyResetSettings:'Really reset all settings?', resetSettingsTitle:'General' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', showWhatsapp:'WhatsApp-Teilen', gameFinished:'✅ Spiel beendet', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version', resetSettings:'⚠️ Auf Standardeinstellungen zurücksetzen', reallyResetSettings:'Wirklich alle Einstellungen zurücksetzen?', resetSettingsTitle:'Allgemein', ariaBackspace:'Löschen', ariaConfirmNumber:'Bestätigen' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', showWhatsapp:'WhatsApp sharing', gameFinished:'✅ Game finished', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version', resetSettings:'⚠️ Reset to default settings', reallyResetSettings:'Really reset all settings?', resetSettingsTitle:'General', ariaBackspace:'Backspace', ariaConfirmNumber:'Confirm' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -318,7 +318,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.21.4';
+const APP_VERSION = '1.21.5';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -582,12 +582,20 @@ function load() {
     if (d) {
       hadData = true;
       const p = JSON.parse(d);
-      if (p.a && p.a.name) state.a.name = p.a.name;
+      // typeof-check the name, not just truthy — a truthy check treats an intentionally-cleared
+      // (empty-string) name as absent and silently reverts it to the hardcoded initial default;
+      // typeof also guards displayNameFor()'s unconditional .trim() against a corrupted
+      // non-string value ever crashing render() on the very first paint.
+      if (p.a && typeof p.a.name === 'string') state.a.name = p.a.name;
       if (p.a && p.a.color) state.a.color = p.a.color;
-      if (p.b && p.b.name) state.b.name = p.b.name;
+      if (p.b && typeof p.b.name === 'string') state.b.name = p.b.name;
       if (p.b && p.b.color) state.b.color = p.b.color;
       if (p.halves && Array.isArray(p.halves.a) && Array.isArray(p.halves.b)) {
-        state.halves = { a: [p.halves.a[0]||0, p.halves.a[1]||0], b: [p.halves.b[0]||0, p.halves.b[1]||0] };
+        // Number(...) casts, not `||0` — a truthy non-number (e.g. a string, from hand-edited or
+        // otherwise corrupted localStorage) would otherwise pass through unchanged and later
+        // corrupt total()'s arithmetic (JS `+` concatenates when either operand is a string).
+        const toHalf = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+        state.halves = { a: [toHalf(p.halves.a[0]), toHalf(p.halves.a[1])], b: [toHalf(p.halves.b[0]), toHalf(p.halves.b[1])] };
       }
       if (p.half === 0 || p.half === 1) state.half = p.half;
       if (Array.isArray(p.history)) state.history = p.history;
@@ -730,9 +738,17 @@ function toggleWhatsappEnabled() {
 }
 
 let wl = null;
+let wakeLockRequesting = false;
 
 async function requestWakeLock() {
   if (!('wakeLock' in navigator)) return;
+  // visibilitychange, the periodic safety-net interval, and every touchstart can all call this
+  // concurrently while an earlier request() is still pending (wl is still null until it
+  // resolves) — without this guard, two in-flight requests can each resolve to a distinct lock
+  // sentinel, and whichever one assigns `wl` last silently orphans the other's own 'release'
+  // listener (which would then null `wl` later even though the real lock is still held).
+  if (wakeLockRequesting) return;
+  wakeLockRequesting = true;
   try {
     wl = await navigator.wakeLock.request('screen');
     wl.addEventListener('release', () => {
@@ -742,6 +758,7 @@ async function requestWakeLock() {
       if (document.visibilityState === 'visible') requestWakeLock();
     });
   } catch {}
+  finally { wakeLockRequesting = false; }
 }
 
 function toggleLang() { state.lang = state.lang === 'de' ? 'en' : 'de'; applyLang(); render(); renderSettings(); save(); }
@@ -766,6 +783,8 @@ function applyLang() {
     document.getElementById('settings-reset-confirm-text').textContent = t('reallyResetSettings');
     document.getElementById('settings-reset-yes').textContent = t('yes');
     document.getElementById('settings-reset-no').textContent = t('no');
+    document.getElementById('keypad-backspace-btn').setAttribute('aria-label', t('ariaBackspace'));
+    document.getElementById('keypad-confirm-btn').setAttribute('aria-label', t('ariaConfirmNumber'));
     document.getElementById('sharing-title').textContent = t('sharingTitle');
     document.getElementById('showwhatsapp-label').textContent = t('showWhatsapp');
     document.getElementById('showwhatsapp-btn').textContent = state.whatsappEnabled ? t('on') : t('off');
@@ -1301,6 +1320,9 @@ function swapTeams() {
 }
 
 function askFinish() {
+  // Mutually exclusive with the reset-game confirmation — both live in the same game view and
+  // otherwise could be left open simultaneously, with either one's Ja acting on stale state.
+  if (document.getElementById('reset-confirm-area').style.display === 'flex') cancelResetGame();
   document.getElementById('save-btn').style.display = 'none';
   document.getElementById('finish-confirm-area').style.display = 'flex';
 }
@@ -1364,6 +1386,8 @@ function saveGame() {
 }
 
 function askResetGame() {
+  // Mutually exclusive with the finish confirmation — see askFinish()'s matching guard.
+  if (document.getElementById('finish-confirm-area').style.display === 'flex') cancelFinish();
   document.getElementById('reset-link-area').style.display = 'none';
   document.getElementById('reset-confirm-area').style.display = 'flex';
   // Hide "show goals" while the confirmation is up so it doesn't crowd the same row as the
@@ -1573,7 +1597,10 @@ function exportHistory() {
   a.href = url;
   a.download = `handball-history-${toDateInputValue(Date.now())}.json`;
   a.click();
-  URL.revokeObjectURL(url);
+  // Defer the revoke rather than calling it synchronously right after click() — older iOS
+  // Safari/WebKit can still be reading the blob asynchronously to hand it to the share/save
+  // sheet, and revoking too early can produce an empty or truncated exported file.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function renderHistory() {
@@ -1692,13 +1719,30 @@ function showView(v) {
   if (v === 'settings') renderSettings();
   else cancelResetSettings();
   if (v === 'history') { pendingDeleteId = null; pendingClearAll = false; pendingEditId = null; pendingShareId = null; pendingScorersId = null; renderHistory(); }
+  // An open reset-game/finish confirmation is Game-tab-only UI — leaving it open across a
+  // round-trip through another tab would show it stuck on return with no state change having
+  // caused it, so clear it the same way the other tabs' own pending confirmations are cleared.
+  if (v !== 'game') {
+    if (document.getElementById('reset-confirm-area').style.display === 'flex') cancelResetGame();
+    if (document.getElementById('finish-confirm-area').style.display === 'flex') cancelFinish();
+  }
 }
 
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('gesturechange', e => e.preventDefault());
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 document.addEventListener('dblclick', e => e.preventDefault());
-document.body.addEventListener('touchmove', e => { e.stopPropagation(); }, { passive: true });
+// stopPropagation() keeps a single-finger scroll from bubbling up to document/window and
+// triggering iOS's rubber-band overscroll on the outer fixed html/body — but since body sits
+// between the touch target and document in the bubble phase, unconditionally stopping
+// propagation here also silently swallowed the document-level touchmove listener above (the one
+// that actually blocks pinch-zoom), on any platform without gesturestart/gesturechange support
+// (e.g. Android Chrome). Handle the multi-touch case here directly instead of relying on it ever
+// reaching that listener.
+document.body.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) { e.preventDefault(); return; }
+  e.stopPropagation();
+}, { passive: false });
 
 if ('wakeLock' in navigator) {
   requestWakeLock();
@@ -1788,7 +1832,12 @@ if ('serviceWorker' in navigator && navigator.onLine) {
   // install on the next online register() call; a manifest/icon-only failure is not fatal since
   // the app still works offline without those.
   const shellUrls = JSON.stringify([swScope, swScope + 'index.html', swScope + 'manifest.json', swScope + 'handball_icon.png']);
-  const sw = `const CACHE='handball-shell';const SHELL=${shellUrls};self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>fetch(u).then(r=>c.put(u,r))))).then(rs=>{if(rs[0].status==='rejected'&&rs[1].status==='rejected')throw new Error('shell cache install failed');})));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  // fetch(u) only rejects on a network failure, not an HTTP error status — without checking r.ok
+  // before c.put(), a transient 404/500 for a shell URL (e.g. during a deploy race) would resolve
+  // successfully and get cached as if it were the real file, with no retry, since the surrounding
+  // Promise.allSettled/rs[0]/rs[1] check below only looks at *rejection*. Throwing on a non-ok
+  // response turns that case into a proper rejection so it's caught by that same existing check.
+  const sw = `const CACHE='handball-shell';const SHELL=${shellUrls};self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>fetch(u).then(r=>{if(!r.ok)throw new Error('bad status');return c.put(u,r);})))).then(rs=>{if(rs[0].status==='rejected'&&rs[1].status==='rejected')throw new Error('shell cache install failed');})));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
   // Explicit scope — for a blob: URL script the default scope is ambiguous, and if it doesn't
   // end up covering the actual launch URL, the SW never intercepts that navigation at all.
