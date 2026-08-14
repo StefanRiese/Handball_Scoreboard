@@ -308,7 +308,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.20.0';
+const APP_VERSION = '1.20.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -329,11 +329,16 @@ let state = {
 };
 let colorTarget = null;
 let clockTimer = null;
+// Tracks each identity's own last-rendered score (keyed by identity, not physical slot) so
+// render()'s goal-pulse animation fires only on an actual score change for that identity, not
+// whenever a slot's displayed score changes for an unrelated reason (e.g. swapTeams()).
+let lastRenderedScore = { a: null, b: null };
 let swapConfirmTimer = null;
 let pendingDeleteId = null;
 let pendingClearAll = false;
 let playerModalIdentity = null;
 let playerModalHalf = null;
+let playerModalPos = null;
 let playerNumberInput = '';
 // Goals scored back-to-back (e.g. a quick double-tap) before the player-number modal for the
 // first one is confirmed/skipped must not overwrite each other — queued {identity, half} pairs
@@ -477,9 +482,13 @@ function applyAddHomeVisibility() {
 
 async function addToHomeScreen() {
   if (deferredInstallEvent) {
-    deferredInstallEvent.prompt();
-    await deferredInstallEvent.userChoice;
+    // Take the event and clear the module-level reference before awaiting anything — a rapid
+    // second tap must not see a still-set deferredInstallEvent and call .prompt() again on the
+    // same BeforeInstallPromptEvent, which the spec disallows after the first prompt.
+    const evt = deferredInstallEvent;
     deferredInstallEvent = null;
+    evt.prompt();
+    await evt.userChoice;
     return;
   }
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -918,8 +927,13 @@ function render() {
     const textColor = readableColor(s.color);
     const disp = document.getElementById('disp-'+slot);
     const newScore = String(total(identity));
-    if (disp.textContent !== newScore) {
-      disp.textContent = newScore;
+    // Pulse only when this identity's own score actually changed since the last render — not
+    // just when the physical slot's displayed text changed, which also happens on swapTeams()
+    // (the same slot now shows a different identity's score) with no goal involved.
+    const scoreChanged = lastRenderedScore[identity] !== null && lastRenderedScore[identity] !== newScore;
+    lastRenderedScore[identity] = newScore;
+    if (disp.textContent !== newScore) disp.textContent = newScore;
+    if (scoreChanged) {
       disp.classList.remove('pulse');
       void disp.offsetWidth; // restart the animation even if triggered again before it finished
       disp.classList.add('pulse');
@@ -954,7 +968,7 @@ function render() {
 function updateResetLinkVisibility() {
   const area = document.getElementById('reset-link-area');
   if (!area || document.getElementById('reset-confirm-area').style.display === 'flex') return;
-  const hasActivity = total('a') + total('b') > 0 || state.clockRunning || state.clockRemaining !== state.halfLength * 60;
+  const hasActivity = total('a') + total('b') > 0 || state.clockRunning || state.clockRemaining !== state.halfLength * 60 || state.half !== 0;
   area.style.display = hasActivity ? 'block' : 'none';
 }
 
@@ -1090,33 +1104,36 @@ function addGoal(slot) {
   const identity = identityForSlot(slot);
   const half = state.half;
   state.halves[identity][half]++;
+  // This goal's 1-indexed position in identity's overall goal count (across both halves) —
+  // stamped now, at the moment it's actually scored, so correct() can later identify exactly
+  // this goal by matching on this number regardless of how many goals happen (or how tracking
+  // gets toggled on/off) in between.
+  const pos = total(identity);
   if (navigator.vibrate) navigator.vibrate(10);
   render();
   save();
   if (state.trackPlayerNumbers) {
-    if (playerModalIdentity) playerNumberQueue.push({ identity, half });
-    else openPlayerNumberModal(identity, half);
+    if (playerModalIdentity) playerNumberQueue.push({ identity, half, pos });
+    else openPlayerNumberModal(identity, half, pos);
   }
 }
 
 function correct(slot, d) {
   const identity = identityForSlot(slot);
+  // Capture the position (see addGoal()) of the goal about to be undone before decrementing —
+  // the minus button only ever undoes one goal at a time (d is always -1), so this is exactly
+  // the total(identity) that goal was stamped with when scored.
+  const posBeingUndone = total(identity);
   state.halves[identity][state.half] = Math.max(0, state.halves[identity][state.half] + d);
-  // Keep the scorer log in sync with the goal count on undo, regardless of whether player-number
-  // tracking is currently on — it may have been toggled off/on mid-match, so the log can be
-  // shorter than the goal total (untracked goals never get an entry — see numbersFor() in
-  // renderGoalsView, which assumes untracked goals are always the earliest ones and recorded
-  // entries the most recent). Since the minus button only ever undoes one goal at a time (d is
-  // always -1), any remaining recorded entry corresponds to the goal just undone under that same
-  // assumption — not just when the log is already longer than the new total, which missed the
-  // case of undoing the single most-recent tracked goal after earlier untracked ones. Remove the
-  // entry logged for the half being corrected, not just the array tail — if the user switched
-  // halves after that goal, the tail could belong to a different half's goal.
-  if (d < 0 && state.scorers[identity].length > 0) {
+  // Remove that exact goal's scorer-log entry if it has one — matching by stamped position
+  // rather than assuming untracked goals are always the earliest ones (that assumption breaks as
+  // soon as tracking is toggled off then on again mid-match, since a later goal could then be the
+  // untracked one). If no entry matches, the undone goal was never tracked, so there's nothing to
+  // remove — the log is already correctly in sync.
+  if (d < 0) {
     const log = state.scorers[identity];
-    let idx = log.length - 1;
-    while (idx >= 0 && log[idx].half !== state.half) idx--;
-    log.splice(idx >= 0 ? idx : log.length - 1, 1);
+    const idx = log.findIndex(entry => entry.pos === posBeingUndone);
+    if (idx !== -1) log.splice(idx, 1);
   }
   render();
   save();
@@ -1126,9 +1143,10 @@ function correct(slot, d) {
 // match must never be blocked on this popup), then optionally opens this keypad to attach a
 // jersey number to that goal. Tapping outside the modal or "Skip" leaves the goal counted with
 // no number recorded, matching a plain tap when tracking is off.
-function openPlayerNumberModal(identity, half) {
+function openPlayerNumberModal(identity, half, pos) {
   playerModalIdentity = identity;
   playerModalHalf = half;
+  playerModalPos = pos;
   playerNumberInput = '';
   updatePlayerNumberDisplay();
   document.getElementById('player-modal-title').textContent = `${state[identity].name}: ${t('enterPlayerNumber')}`;
@@ -1160,17 +1178,18 @@ function skipPlayerNumber() {
 
 function recordScorer(number) {
   if (playerModalIdentity) {
-    state.scorers[playerModalIdentity].push({ half: playerModalHalf, number });
+    state.scorers[playerModalIdentity].push({ half: playerModalHalf, number, pos: playerModalPos });
     save();
     renderGoalsView();
   }
   document.getElementById('player-modal').style.display = 'none';
   playerModalIdentity = null;
   playerModalHalf = null;
+  playerModalPos = null;
   playerNumberInput = '';
   if (playerNumberQueue.length) {
     const next = playerNumberQueue.shift();
-    openPlayerNumberModal(next.identity, next.half);
+    openPlayerNumberModal(next.identity, next.half, next.pos);
   }
 }
 
@@ -1225,6 +1244,9 @@ function saveGame() {
   });
   state.halves = { a: [0,0], b: [0,0] };
   state.scorers = { a: [], b: [] };
+  // Reset to 0 isn't a scored goal — clear the pulse-tracking baseline so render() doesn't
+  // animate a "goal" for the score dropping back to 0.
+  lastRenderedScore = { a: null, b: null };
   state.half = 0;
   state.clockRunning = false;
   state.clockEndsAt = null;
@@ -1233,7 +1255,7 @@ function saveGame() {
   // Discard any pending/queued player-number entry from the finished game — it would otherwise
   // pop up and record against the just-reset scorers of the new game.
   playerNumberQueue = [];
-  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
+  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerModalPos = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   if (goalsViewOpen) {
     goalsViewOpen = false;
     document.getElementById('goals-view-area').style.display = 'none';
@@ -1270,11 +1292,14 @@ function cancelResetGame() {
 function resetGame() {
   state.halves = { a: [0,0], b: [0,0] };
   state.scorers = { a: [], b: [] };
+  // Reset to 0 isn't a scored goal — clear the pulse-tracking baseline so render() doesn't
+  // animate a "goal" for the score dropping back to 0.
+  lastRenderedScore = { a: null, b: null };
   state.half = 0;
   stopClock();
   state.clockRemaining = state.halfLength * 60;
   playerNumberQueue = [];
-  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
+  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerModalPos = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   renderClock();
   save();
   document.getElementById('reset-confirm-area').style.display = 'none';
@@ -1355,7 +1380,12 @@ function saveEditGame(id) {
   if (Array.isArray(g.teams[1].scorers)) g.teams[1].scorers = g.teams[1].scorers.slice(0, g.teams[1].score);
   const dateVal = document.getElementById('edit-date-'+id).value;
   const timeVal = document.getElementById('edit-time-'+id).value;
-  if (dateVal && timeVal) {
+  // Only rebuild g.date/g.time/g.id when the date or time inputs were actually changed from what
+  // they were prefilled with — otherwise an edit that only touched the name/score would still
+  // unconditionally degrade g.id's original Date.now() precision down to this minute-precision
+  // <input type="date">/"time"> value for no reason.
+  const dateTimeChanged = dateVal !== toDateInputValue(id) || timeVal !== toTimeInputValue(id);
+  if (dateVal && timeVal && dateTimeChanged) {
     const [y, mo, da] = dateVal.split('-').map(Number);
     const [hh, mm] = timeVal.split(':').map(Number);
     const dt = new Date(y, mo - 1, da, hh, mm);
