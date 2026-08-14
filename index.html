@@ -318,7 +318,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.22.0';
+const APP_VERSION = '1.22.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1172,7 +1172,11 @@ function openColorModal(t2) {
   ALL_COLORS.forEach(p => {
     const btn = document.createElement('button');
     const selected = state[t2].color === p;
-    btn.style.cssText = `width:36px;height:36px;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};box-shadow:${selected?'0 0 0 2px rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
+    // width:100%/aspect-ratio:1 (not a fixed px size) so each dot always fills its grid column
+    // exactly, however wide that ends up being — a fixed px size doesn't shrink with the column
+    // and silently overflows the modal box's right edge if the box width, its padding, or the
+    // grid gap ever change out from under this hardcoded value.
+    btn.style.cssText = `width:100%;aspect-ratio:1;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};box-shadow:${selected?'0 0 0 2px rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
     btn.setAttribute('aria-label', `${t('colorLabel')} ${p}`);
     btn.setAttribute('aria-pressed', String(selected));
     btn.onclick = () => { state[colorTarget].color = p; render(); renderSettings(); save(); cancelColor(); };
