@@ -316,7 +316,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.19.2';
+const APP_VERSION = '1.19.3';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -341,6 +341,10 @@ let pendingDeleteId = null;
 let pendingClearAll = false;
 let playerModalIdentity = null;
 let playerNumberInput = '';
+// Goals scored back-to-back (e.g. a quick double-tap) before the player-number modal for the
+// first one is confirmed/skipped must not overwrite each other — queued identities are opened
+// one at a time as each modal closes, so every goal still gets its own scorer-log entry.
+let playerNumberQueue = [];
 let pendingEditId = null;
 let pendingShareId = null;
 let pendingScorersId = null;
@@ -569,6 +573,15 @@ function load() {
           state.clockRunning = false;
           state.clockEndsAt = null;
           state.clockRemaining = 0;
+          // The clock ran out while the tab/app was backgrounded, so tickClock()'s
+          // onClockEnd() never fired — replay its halftime auto-advance here so a half-1
+          // buzzer missed while backgrounded still advances state.half / auto-swaps sides,
+          // same as if the app had stayed open through it.
+          if (state.half === 0) {
+            if (state.autoSwapAtHalftime) swapTeamsData();
+            state.half = 1;
+            state.clockRemaining = state.halfLength * 60;
+          }
         }
       } else {
         state.clockRunning = false;
@@ -630,7 +643,10 @@ function applyClockVisible() {
 
 function toggleClockVisible() {
   state.showClock = !state.showClock;
-  if (!state.showClock) { stopAndReset(); }
+  // Hiding the clock display is just a UI declutter, not a "give up on this match clock"
+  // action — pause it (like the pause button) rather than resetting elapsed/remaining time via
+  // stopAndReset(), which is reserved for the explicit ↻ reset-clock button.
+  if (!state.showClock && state.clockRunning) stopClock();
   applyClockVisible();
   save();
 }
@@ -932,7 +948,7 @@ function render() {
 function updateResetLinkVisibility() {
   const area = document.getElementById('reset-link-area');
   if (!area || document.getElementById('reset-confirm-area').style.display === 'flex') return;
-  const hasActivity = total('a') + total('b') > 0 || state.clockRunning;
+  const hasActivity = total('a') + total('b') > 0 || state.clockRunning || state.clockRemaining !== state.halfLength * 60;
   area.style.display = hasActivity ? 'block' : 'none';
 }
 
@@ -1066,15 +1082,25 @@ function addGoal(slot) {
   if (navigator.vibrate) navigator.vibrate(10);
   render();
   save();
-  if (state.trackPlayerNumbers) openPlayerNumberModal(identity);
+  if (state.trackPlayerNumbers) {
+    if (playerModalIdentity) playerNumberQueue.push(identity);
+    else openPlayerNumberModal(identity);
+  }
 }
 
 function correct(slot, d) {
   const identity = identityForSlot(slot);
   state.halves[identity][state.half] = Math.max(0, state.halves[identity][state.half] + d);
   // Keep the scorer log length in sync with the goal count on undo, regardless of whether
-  // player-number tracking is currently on — it may have been toggled off/on mid-match.
-  if (d < 0 && state.scorers[identity].length > total(identity)) state.scorers[identity].pop();
+  // player-number tracking is currently on — it may have been toggled off/on mid-match. Remove
+  // the last entry logged for the half being corrected, not just the array tail — if the user
+  // switched halves after that goal, the tail could belong to a different half's goal.
+  if (d < 0 && state.scorers[identity].length > total(identity)) {
+    const log = state.scorers[identity];
+    let idx = log.length - 1;
+    while (idx >= 0 && log[idx].half !== state.half) idx--;
+    log.splice(idx >= 0 ? idx : log.length - 1, 1);
+  }
   render();
   save();
 }
@@ -1123,6 +1149,7 @@ function recordScorer(number) {
   document.getElementById('player-modal').style.display = 'none';
   playerModalIdentity = null;
   playerNumberInput = '';
+  if (playerNumberQueue.length) openPlayerNumberModal(playerNumberQueue.shift());
 }
 
 function setHalf(h) {
@@ -1177,6 +1204,10 @@ function saveGame() {
   state.clockEndsAt = null;
   clearInterval(clockTimer);
   state.clockRemaining = state.halfLength * 60;
+  // Discard any pending/queued player-number entry from the finished game — it would otherwise
+  // pop up and record against the just-reset scorers of the new game.
+  playerNumberQueue = [];
+  if (playerModalIdentity) { playerModalIdentity = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   if (goalsViewOpen) {
     goalsViewOpen = false;
     document.getElementById('goals-view-area').style.display = 'none';
@@ -1216,6 +1247,8 @@ function resetGame() {
   state.half = 0;
   stopClock();
   state.clockRemaining = state.halfLength * 60;
+  playerNumberQueue = [];
+  if (playerModalIdentity) { playerModalIdentity = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   renderClock();
   save();
   document.getElementById('reset-confirm-area').style.display = 'none';
@@ -1285,6 +1318,10 @@ function saveEditGame(id) {
   if (name1) g.teams[1].name = name1;
   g.teams[0].score = Math.min(99, Math.max(0, parseInt(document.getElementById('edit-score0-'+id).value, 10) || 0));
   g.teams[1].score = Math.min(99, Math.max(0, parseInt(document.getElementById('edit-score1-'+id).value, 10) || 0));
+  // halftimeScore isn't itself editable here — if the edited final score drops below it, clamp
+  // it down too so history/share-text never shows an impossible halftime > final line.
+  g.teams[0].halftimeScore = Math.min(g.teams[0].halftimeScore, g.teams[0].score);
+  g.teams[1].halftimeScore = Math.min(g.teams[1].halftimeScore, g.teams[1].score);
   const dateVal = document.getElementById('edit-date-'+id).value;
   const timeVal = document.getElementById('edit-time-'+id).value;
   if (dateVal && timeVal) {
@@ -1432,7 +1469,7 @@ function renderHistory() {
          <div class="history-score">
            <span class="history-score-num left" style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted); padding:0 8px;">:</span><span class="history-score-num right" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span>
          </div>
-         <div class="history-winner">${winner(g)}</div>
+         <div class="history-winner">${escapeHtml(winner(g))}</div>
          ${halftimeLine}`;
     return `
     <div class="history-card" style="${isPending ? 'box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 1.5px #e24b4a55;' : ''}">
