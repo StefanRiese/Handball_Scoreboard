@@ -316,7 +316,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.19.3';
+const APP_VERSION = '1.19.4';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -337,13 +337,17 @@ let state = {
 };
 let colorTarget = null;
 let clockTimer = null;
+let swapConfirmTimer = null;
 let pendingDeleteId = null;
 let pendingClearAll = false;
 let playerModalIdentity = null;
+let playerModalHalf = null;
 let playerNumberInput = '';
 // Goals scored back-to-back (e.g. a quick double-tap) before the player-number modal for the
-// first one is confirmed/skipped must not overwrite each other — queued identities are opened
-// one at a time as each modal closes, so every goal still gets its own scorer-log entry.
+// first one is confirmed/skipped must not overwrite each other — queued {identity, half} pairs
+// are opened one at a time as each modal closes, so every goal still gets its own scorer-log
+// entry, tagged with the half it was actually scored in (not whatever half is current when the
+// modal is eventually confirmed — a halftime buzzer can fire while it's still open).
 let playerNumberQueue = [];
 let pendingEditId = null;
 let pendingShareId = null;
@@ -429,7 +433,9 @@ function copyHistoryGame(id, btn) {
   if (!g) return;
   copyToClipboard(gameShareText(g), () => {
     if (btn) btn.textContent = '✓';
-    setTimeout(closeShareMenu, 900);
+    // Only close this entry's share menu — if the user has since opened a different entry's
+    // menu, pendingShareId will have moved on and this stale timer must leave it alone.
+    setTimeout(() => { if (pendingShareId === id) closeShareMenu(); }, 900);
   });
 }
 
@@ -623,7 +629,17 @@ function applyTheme() {
   document.getElementById('theme-btn').textContent = state.darkMode ? t('dark') : t('lightMode');
 }
 
-function toggleTheme() { state.darkMode = !state.darkMode; applyTheme(); save(); }
+function toggleTheme() {
+  state.darkMode = !state.darkMode;
+  applyTheme();
+  // readableColor() clamps a team color's lightness against the current theme's card background
+  // before using it as text color — re-render everything that inlines it so switching themes
+  // doesn't leave text computed for the old theme until an unrelated event forces a redraw.
+  render();
+  renderSettings();
+  renderHistory();
+  save();
+}
 
 function toggleCardAccent() {
   state.cardAccentEnabled = !state.cardAccentEnabled;
@@ -859,7 +875,11 @@ function setHalfLength(el) {
   // countdown just because the half-length field was edited for an unrelated reason.
   const isUntouched = !state.clockRunning && state.clockRemaining === state.halfLength * 60;
   state.halfLength = clamped;
-  if (isUntouched) { state.clockRemaining = clamped * 60; renderClock(); }
+  if (isUntouched) state.clockRemaining = clamped * 60;
+  // Always re-render, not just on the isUntouched branch — renderClock() also recomputes the
+  // reset-link visibility (clockRemaining vs. the now-changed halfLength*60), which can flip even
+  // when the clock itself isn't reset.
+  renderClock();
   save();
 }
 
@@ -972,6 +992,10 @@ function toggleGoalsView() {
 function renderGoalsView() {
   const link = document.getElementById('goals-link');
   const area = document.getElementById('goals-view-area');
+  // askResetGame() explicitly hides this link so it doesn't crowd the Ja/Nein confirmation row —
+  // don't let an unrelated render() (e.g. scoring a goal while that confirmation is still up)
+  // bring it back until cancelResetGame()/resetGame() call this again themselves.
+  if (document.getElementById('reset-confirm-area').style.display === 'flex') return;
   if (!state.trackPlayerNumbers || total('a') + total('b') === 0) {
     link.style.display = 'none';
     goalsViewOpen = false;
@@ -1078,24 +1102,31 @@ function cancelColor() { document.getElementById('color-modal').style.display = 
 
 function addGoal(slot) {
   const identity = identityForSlot(slot);
-  state.halves[identity][state.half]++;
+  const half = state.half;
+  state.halves[identity][half]++;
   if (navigator.vibrate) navigator.vibrate(10);
   render();
   save();
   if (state.trackPlayerNumbers) {
-    if (playerModalIdentity) playerNumberQueue.push(identity);
-    else openPlayerNumberModal(identity);
+    if (playerModalIdentity) playerNumberQueue.push({ identity, half });
+    else openPlayerNumberModal(identity, half);
   }
 }
 
 function correct(slot, d) {
   const identity = identityForSlot(slot);
   state.halves[identity][state.half] = Math.max(0, state.halves[identity][state.half] + d);
-  // Keep the scorer log length in sync with the goal count on undo, regardless of whether
-  // player-number tracking is currently on — it may have been toggled off/on mid-match. Remove
-  // the last entry logged for the half being corrected, not just the array tail — if the user
-  // switched halves after that goal, the tail could belong to a different half's goal.
-  if (d < 0 && state.scorers[identity].length > total(identity)) {
+  // Keep the scorer log in sync with the goal count on undo, regardless of whether player-number
+  // tracking is currently on — it may have been toggled off/on mid-match, so the log can be
+  // shorter than the goal total (untracked goals never get an entry — see numbersFor() in
+  // renderGoalsView, which assumes untracked goals are always the earliest ones and recorded
+  // entries the most recent). Since the minus button only ever undoes one goal at a time (d is
+  // always -1), any remaining recorded entry corresponds to the goal just undone under that same
+  // assumption — not just when the log is already longer than the new total, which missed the
+  // case of undoing the single most-recent tracked goal after earlier untracked ones. Remove the
+  // entry logged for the half being corrected, not just the array tail — if the user switched
+  // halves after that goal, the tail could belong to a different half's goal.
+  if (d < 0 && state.scorers[identity].length > 0) {
     const log = state.scorers[identity];
     let idx = log.length - 1;
     while (idx >= 0 && log[idx].half !== state.half) idx--;
@@ -1109,8 +1140,9 @@ function correct(slot, d) {
 // match must never be blocked on this popup), then optionally opens this keypad to attach a
 // jersey number to that goal. Tapping outside the modal or "Skip" leaves the goal counted with
 // no number recorded, matching a plain tap when tracking is off.
-function openPlayerNumberModal(identity) {
+function openPlayerNumberModal(identity, half) {
   playerModalIdentity = identity;
+  playerModalHalf = half;
   playerNumberInput = '';
   updatePlayerNumberDisplay();
   document.getElementById('player-modal-title').textContent = `${state[identity].name}: ${t('enterPlayerNumber')}`;
@@ -1142,14 +1174,18 @@ function skipPlayerNumber() {
 
 function recordScorer(number) {
   if (playerModalIdentity) {
-    state.scorers[playerModalIdentity].push({ half: state.half, number });
+    state.scorers[playerModalIdentity].push({ half: playerModalHalf, number });
     save();
     renderGoalsView();
   }
   document.getElementById('player-modal').style.display = 'none';
   playerModalIdentity = null;
+  playerModalHalf = null;
   playerNumberInput = '';
-  if (playerNumberQueue.length) openPlayerNumberModal(playerNumberQueue.shift());
+  if (playerNumberQueue.length) {
+    const next = playerNumberQueue.shift();
+    openPlayerNumberModal(next.identity, next.half);
+  }
 }
 
 function setHalf(h) {
@@ -1169,9 +1205,13 @@ function swapTeams() {
   renderSettings();
   save();
   const btn = document.getElementById('swap-btn');
-  const original = btn.textContent;
+  // Restore to the real label (t('swapSides')), not a textContent snapshot taken at click time —
+  // a snapshot can itself be the confirmation text if the button is double-tapped before the
+  // first timeout fires, leaving it stuck. Track the timer so a second tap replaces the pending
+  // restore instead of stacking two independent ones.
+  clearTimeout(swapConfirmTimer);
   btn.textContent = t('sidesSwapped');
-  setTimeout(() => { btn.textContent = original; }, 1200);
+  swapConfirmTimer = setTimeout(() => { btn.textContent = t('swapSides'); }, 1200);
 }
 
 function askFinish() {
@@ -1207,7 +1247,7 @@ function saveGame() {
   // Discard any pending/queued player-number entry from the finished game — it would otherwise
   // pop up and record against the just-reset scorers of the new game.
   playerNumberQueue = [];
-  if (playerModalIdentity) { playerModalIdentity = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
+  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   if (goalsViewOpen) {
     goalsViewOpen = false;
     document.getElementById('goals-view-area').style.display = 'none';
@@ -1248,7 +1288,7 @@ function resetGame() {
   stopClock();
   state.clockRemaining = state.halfLength * 60;
   playerNumberQueue = [];
-  if (playerModalIdentity) { playerModalIdentity = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
+  if (playerModalIdentity) { playerModalIdentity = null; playerModalHalf = null; playerNumberInput = ''; document.getElementById('player-modal').style.display = 'none'; }
   renderClock();
   save();
   document.getElementById('reset-confirm-area').style.display = 'none';
@@ -1322,6 +1362,11 @@ function saveEditGame(id) {
   // it down too so history/share-text never shows an impossible halftime > final line.
   g.teams[0].halftimeScore = Math.min(g.teams[0].halftimeScore, g.teams[0].score);
   g.teams[1].halftimeScore = Math.min(g.teams[1].halftimeScore, g.teams[1].score);
+  // If the edited final score drops below the number of recorded scorer entries, trim the log
+  // to match — otherwise the scorer panel/share-text keeps attributing more goals to players
+  // than the (now lower) final score.
+  if (Array.isArray(g.teams[0].scorers)) g.teams[0].scorers = g.teams[0].scorers.slice(0, g.teams[0].score);
+  if (Array.isArray(g.teams[1].scorers)) g.teams[1].scorers = g.teams[1].scorers.slice(0, g.teams[1].score);
   const dateVal = document.getElementById('edit-date-'+id).value;
   const timeVal = document.getElementById('edit-time-'+id).value;
   if (dateVal && timeVal) {
@@ -1548,10 +1593,12 @@ function applyUpdate() {
 
 async function checkForUpdates() {
   const btn = document.getElementById('check-update-btn');
-  const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = t('checkingUpdate');
-  const reset = () => { btn.textContent = original; btn.disabled = false; };
+  // Restore to the current-language label (t('checkUpdate')), not a textContent snapshot taken
+  // at click time — if the user switches language while the check is in flight, applyLang()
+  // updates the button, but a snapshot-based reset would silently revert it to the stale language.
+  const reset = () => { btn.textContent = t('checkUpdate'); btn.disabled = false; };
   try {
     // Cache-bust the URL, not just the fetch init — the Service Worker's own fetch handler is
     // cache-first regardless of {cache:'no-store'} (that option only affects the browser's HTTP
