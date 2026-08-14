@@ -28,12 +28,13 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - ⇄-Button tauscht, welches Team links und welches rechts angezeigt wird
 - Name, Farbe und Tore bleiben dabei fest dem jeweiligen Team zugeordnet
 - Die Team-Karten in den Einstellungen tauschen dabei ebenfalls die Seite, sodass die Reihenfolge dort immer zur Spielansicht passt
-- Optional automatisch bei jedem Halbzeitwechsel (Einstellung, standardmäßig aus)
+- Optional automatisch bei jedem Halbzeitwechsel (Einstellung, standardmäßig an)
 - Kurze Bestätigung nach dem Tausch
 
 ### Spielernummern erfassen
-- Optional in den Einstellungen aktivierbar (standardmäßig aus)
-- Bei jedem Tor öffnet sich ein Ziffernblock mit großen Tasten zur schnellen Eingabe der Trikotnummer
+- In den Einstellungen deaktivierbar (standardmäßig an)
+- Bei jedem Tor öffnet sich ein Ziffernblock mit großen Tasten zur schnellen Eingabe der Trikotnummer, eingefärbt in der Farbe des torschießenden Teams
+- Führende Nullen bleiben erhalten (z. B. „03" oder „00" werden nicht zu „3" bzw. „0")
 - Das Tor zählt immer sofort – Eingabe überspringen oder daneben tippen lässt das Tor ohne zugeordnete Nummer stehen
 - In der Historie über den 👕-Button pro Spiel einsehbar: Anzahl Tore je Spielernummer, getrennt nach Team
 
@@ -58,6 +59,10 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - Kurzer Puls-Effekt auf dem Spielstand bei jedem Tor
 - Sichtbarer Fokusring bei Tastatur-/Screenreader-Navigation
 
+### Einstellungen
+- Alle Team-, Zeit-, Tore- und Darstellungs-Optionen im Tab „Einstellungen" gesammelt
+- „Auf Standardeinstellungen zurücksetzen" (mit Bestätigung) setzt Teamnamen, Teamfarben, Seitenreihenfolge, Design, Sprache und alle Schalter auf die Werkseinstellung zurück – das laufende Spiel und die gespeicherte Historie bleiben davon unberührt
+
 ## Mobile-Optimierung
 - Große, touch-freundliche Buttons mit Druck-Feedback
 - Zoom (Doppeltipp & Pinch) deaktiviert
@@ -71,7 +76,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 Nach dem ersten Laden funktioniert die App dank Service Worker auch komplett ohne Internetverbindung.
 
 ## Updates
-Die App prüft nicht automatisch im Hintergrund auf neue Versionen – das würde während eines laufenden Spiels unerwartet Inhalte verändern. Über „🔄 Nach Updates suchen" in den Einstellungen lässt sich jederzeit manuell prüfen, ob eine neuere Version vorliegt. Auch der Service Worker selbst aktualisiert seinen Cache nur, wenn diese Prüfung explizit ausgelöst wird – ein bloßes Öffnen der App mit Internetverbindung reicht nicht aus, um im Hintergrund neue Inhalte zu laden.
+Beim Öffnen der App wird bei bestehender Internetverbindung automatisch und ohne Rückfrage geprüft, ob eine neuere Version vorliegt – ist das der Fall, wird sie im Hintergrund geladen und die App lädt sich einmal neu. Ohne Internetverbindung läuft einfach die zuletzt geladene Version weiter, ganz ohne Fehlermeldung.
 
 ## Installation auf dem iPhone
 Am einfachsten über **„📲 Zum Home-Bildschirm hinzufügen"** in den Einstellungen der App – zeigt direkt die passende Anleitung an. Alternativ manuell:

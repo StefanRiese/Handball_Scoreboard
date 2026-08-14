@@ -67,10 +67,18 @@ current theme's card background before using a color as *text* — swatches/dots
 picked color. Any new UI that renders a team color as text should go through `readableColor()`,
 not `state[t2].color` directly.
 
-**Confirm-before-destructive-action pattern**: reset game, delete one history entry, and clear all
-history each use the same link → Yes/No toggle pattern (a `pending*` module-level variable flips
-which of two sibling `<div>`s is visible). Follow this pattern for any new destructive action
-rather than `confirm()` dialogs or immediate deletion.
+**Confirm-before-destructive-action pattern**: reset game, delete one history entry, clear all
+history, and reset all settings to default (`confirmResetSettings()`, Settings → the merged
+"Allgemein"/"General" section) each use the same link → Yes/No toggle pattern. Reset game and
+reset settings use direct `style.display` toggles on sibling `<div>`s (no `pending*` variable);
+delete/clear-all history use a `pending*` module-level variable instead since multiple history
+entries share one confirm area and need to know *which* entry/whether "all". Follow whichever
+sub-pattern fits (single fixed action → direct toggle; one-of-many entries → `pending*` id) rather
+than `confirm()` dialogs or immediate deletion. The reset-game confirmation (`reset-confirm-area`)
+and the finish-game confirmation (`finish-confirm-area`) live in the same game view and are
+mutually exclusive — `askResetGame()`/`askFinish()` each close the other's confirmation first — and
+`showView()` closes both when navigating away from the Game tab, the same way Settings/History
+already clear their own pending confirmations on tab switch.
 
 **Per-entry toggle-view pattern (history cards)**: delete (`pendingDeleteId`), edit
 (`pendingEditId`), the share menu (`pendingShareId`), and the scorers panel
@@ -114,21 +122,78 @@ where each `teamN` is `{ name, score, color, halftimeScore, scorers }`. `halftim
 `gameShareText()`, JSON export (`exportHistory()`, which just serializes `state.history` as-is) —
 reads from one place. There is deliberately no migration path for the pre-existing older shape
 (a separate top-level `ht: {a,b}`, and no `scorers` at all) since the app has no real users yet;
-don't add back a migration in `load()` without checking whether that's still true.
+don't add back a migration in `load()` without checking whether that's still true. `exportHistory()`
+defers its `URL.revokeObjectURL()` by 1s after `a.click()` rather than calling it synchronously —
+older iOS Safari can still be asynchronously reading the blob to hand off to the download/share
+sheet at that point, and revoking immediately risked an empty or truncated exported file.
 
-**Player-number tracking**: `state.trackPlayerNumbers` (Settings → Tore/Goals, default off) and
-`state.scorers = { a: [], b: [] }` (flat arrays of `{ half, number }` in scoring order per
-identity, `number` is `null` when skipped) are the live-game equivalents of `teams[i].scorers`
-persisted at `saveGame()` / cleared at `saveGame()`/`resetGame()`. `addGoal()` always increments
-the score and calls `save()`/`render()` immediately regardless of the setting — a fast tap during
-a live match must never be blocked on the keypad popup — then, only if the setting is on, opens
-`openPlayerNumberModal(identity)`. That modal's keypad (`pressDigit`/`pressBackspace`) writes into
-module-level `playerNumberInput`; confirming or skipping both funnel through `recordScorer()`,
-which is the only place that pushes into `state.scorers[identity]` and closes the modal — tapping
-outside the modal is wired to `skipPlayerNumber()` for the same effect. `correct()` (the minus
-button) pops the last entry off `state.scorers[identity]` whenever the log has more entries than
-the current goal total, keeping the two in sync even if tracking was toggled on/off mid-match
-rather than gating the pop on the current setting value.
+**Display name vs. stored name**: `state[identity].name` is kept as the raw (possibly empty)
+string the user typed — `displayNameFor(identity)` is the single place that falls back to the
+`t('team1')`/`t('team2')` placeholder when it's blank, computed fresh on every call rather than
+baked into `state` (so it re-localizes correctly on a language switch). `render()`,
+`renderGoalsView()`, the player-number modal title, and `saveGame()`'s persisted history entry all
+go through it. Settings' own name `<input>` is the one exception and always shows the raw value,
+since it's an editable field, not a display — don't route it through `displayNameFor()` too, or
+clearing the field to type a new name would fight the placeholder mid-edit. `load()` restores
+`state.a.name`/`state.b.name` with a `typeof p.a.name === 'string'` check, not a truthy check — a
+truthy check would treat an intentionally-cleared (empty-string) name as absent and silently
+revert it to the hardcoded initial default on the next app open.
+
+**Player-number tracking**: `state.trackPlayerNumbers` (Settings → Tore/Goals, default **on**) and
+`state.scorers = { a: [], b: [] }` (flat arrays of `{ half, number, pos, globalPos }` in scoring
+order per identity) are the live-game equivalents of `teams[i].scorers` persisted at `saveGame()` /
+cleared at `saveGame()`/`resetGame()`. `number` is kept as the **raw typed string** (e.g. `"03"`,
+`"00"`), not `parseInt`'d — a jersey number is an identifier, not an arithmetic value, and
+`parseInt` would silently drop a leading zero the user deliberately entered; it's `null` when
+skipped. `scorerTally()`'s `numbers` array (used by every scorer-display consumer) sorts these by
+`Number(a) - Number(b)` without reformatting them, so display always matches what was typed.
+
+`addGoal()` always increments the score and calls `save()`/`render()` immediately regardless of
+the setting — a fast tap during a live match must never be blocked on the keypad popup — then,
+only if the setting is on, opens `openPlayerNumberModal(identity, half, pos, globalPos)`, where
+`half` is `state.half` *at the moment the goal was scored* (not read again later) and:
+- `pos` is the goal's 1-indexed position **within that half's own count** — `state.halves[identity][half]` right after incrementing it. `correct()` (the minus button) stamps the same
+  `(half, pos)` for the goal it's about to undo (from `state.halves[identity][state.half]` before
+  decrementing) and removes the scorer-log entry matching that exact pair, if any — scoped to the
+  half because the minus button always decrements whichever half is *currently selected*, which
+  can differ from the half the most-recently-scored goal was actually in if the user switched
+  halves manually since then. No match means the undone goal was never tracked, so nothing to
+  remove.
+- `globalPos` is the goal's 1-indexed position **across both halves combined** (`total(identity)`
+  after incrementing) — used only by `saveEditGame()`'s scorer-log trim when an edited-down final
+  score needs to drop entries: it filters by `entry.globalPos <= newScore` rather than slicing the
+  array by index, since the scorers array is a chronological *subsequence* of all goals (not
+  necessarily a prefix) whenever tracking started mid-match. Falls back to index-based `slice()`
+  only if any entry lacks `globalPos` (older data).
+
+The modal's keypad (`pressDigit`/`pressBackspace`) writes into module-level `playerNumberInput`;
+confirming or skipping both funnel through `recordScorer()`, which is the only place that pushes
+into `state.scorers[identity]` and closes the modal — tapping outside the modal is wired to
+`skipPlayerNumber()` for the same effect. Goals scored back-to-back (e.g. a quick double-tap)
+before the first modal is confirmed/skipped are queued in `playerNumberQueue` (an array of
+`{identity, half, pos, globalPos}`) rather than the second `addGoal()` overwriting the still-open
+modal's state — `recordScorer()` drains the next queued entry after closing. `resetGame()` and
+`saveGame()` both clear the queue and any still-open modal, since a pending entry from the
+finished/discarded game would otherwise record against the next game's just-reset `state.scorers`.
+
+`openPlayerNumberModal()` also tints `#player-modal-box`'s `background` and `boxShadow` with the
+scoring identity's color, using the exact same radial-gradient/inset-border formula as the
+game-view cards (`render()`'s `card-a`/`card-b`) — background respects `cardAccentEnabled`, the
+border doesn't (that toggle only ever controlled the gradient fill).
+
+**Reset to default settings**: `DEFAULT_SETTINGS` (a standalone literal, not derived from the
+mutable `state` object) mirrors the *initial* values of `state`'s Settings-tab fields — team
+names/colors, `darkMode`, `lang`, `showClock`, `whatsappEnabled`, `team1OnLeft`,
+`autoSwapAtHalftime`, `halfLength`, `trackPlayerNumbers`, `cardAccentEnabled` — and is what
+`confirmResetSettings()` (Settings → "Allgemein"/"General", via `askResetSettings()`'s Yes/No
+confirm) restores. Deliberately excludes `half`/`halves`/`history`/`clockRemaining`/
+`clockRunning`/`clockEndsAt`/`scorers` — those are live match/history state, not settings, and
+already have their own separate "Reset game"/"Clear history" actions; don't fold them into this
+one. Keep `DEFAULT_SETTINGS` in sync by hand whenever `state`'s own initial literal changes — there
+is no single source of truth between them since `state` mutates at runtime and can't be read back
+from later. The General section also absorbed what used to be a separate "Information" section
+(version, developer, QR code, share-app, add-to-home-screen) — don't re-split it without being
+asked, that merge was intentional.
 
 **Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
 `sw.js` file) that caches the app shell for offline use; `manifest.json` + the
@@ -175,6 +240,15 @@ particular fix.
    install logic (mocked `fetch`/cache) covering total failure, partial failure, and no failure —
    see git history around this note if that harness is needed again.
 
+4. Each shell fetch's `.then(r=>c.put(u,r))` originally cached whatever `fetch()` resolved to
+   without checking `r.ok` — `fetch()` only rejects on a network failure, not an HTTP error
+   status, so a transient 404/500 for a shell URL (e.g. during a GitHub Pages deploy race) would
+   resolve successfully and get cached as if it were the real file, with `Promise.allSettled`
+   reporting it as fulfilled — bypassing the `SHELL[0]`/`SHELL[1]` rejection check above entirely
+   and leaving the app permanently offline-serving a cached error page with no retry. Fixed by
+   throwing inside that `.then()` when `!r.ok`, turning it into a proper rejection the existing
+   check already handles.
+
 **SW registration only happens while online** (`navigator.onLine` guard around the whole
 `if ('serviceWorker' in navigator)` block). The SW's `CACHE` name is a static string
 (`'handball-shell'`) rather than `handball-v${APP_VERSION}` — it used to be version-derived, but
@@ -216,7 +290,12 @@ likely rejected per #2 but harmless to try), a 20s `setInterval` safety net (sam
 (scoring a goal, any button), and a genuine tap *does* carry transient activation, that listener
 is the one actually likely to succeed. This is always on, unconditionally, with no settings
 toggle — a keep-awake feature that can be silently switched off defeats its own purpose, so don't
-reintroduce a `wakeLockEnabled`-style toggle for it without being asked. A muted-video-loop
+reintroduce a `wakeLockEnabled`-style toggle for it without being asked. `requestWakeLock()` guards
+against re-entry (`wakeLockRequesting`) since all three triggers can fire while an earlier
+`navigator.wakeLock.request()` is still pending (`wl` stays `null` until it resolves) — without the
+guard, two concurrent in-flight requests can each resolve to a distinct lock sentinel, and
+whichever one assigns `wl` last orphans the other's own `release` listener, which can later null
+`wl` even though the real lock is still held. A muted-video-loop
 fallback was tried and removed (commit reverting "Add keep-awake video fallback") after on-device
 testing showed it did not prevent the OS auto-lock; NoSleep.js's own source only uses that trick
 for pre-Wake-Lock-API browsers and relies on native Wake Lock
@@ -286,11 +365,30 @@ deliberately left as literals rather than forced onto the scale and changing vis
 `state.cardAccentEnabled` (Settings → Darstellung/Appearance, default on) gates the radial-gradient
 team-color accent that `render()` applies to `card-a`/`card-b`'s `background` — when off it falls
 back to plain `var(--card)`. `.team-score.pulse` (a `scorePulse` keyframe) is toggled in `render()`
-only when a slot's score text actually changes (compared before overwriting `textContent`), not on
-every `render()` call, so it doesn't fire on unrelated state changes (e.g. a settings edit).
+based on `lastRenderedScore[identity]` — each **identity's own** last-rendered score, tracked
+separately from the physical slot — not on whether the slot's displayed text changed. That
+distinction matters because `swapTeams()` makes the same slot show a different identity's score
+without any goal happening; comparing the slot's own prior text would've pulsed on every swap.
+`lastRenderedScore` is reset to `{a:null, b:null}` in `resetGame()`/`saveGame()` so the score
+dropping back to 0 isn't itself treated as a "changed" score and pulsed.
 `:focus-visible` styling is one global rule (`button, input, [tabindex]`) — don't add
 element-specific `:focus-visible` rules again (there used to be a `.color-dot`-only one).
 
 **Touch-only target**: this app is used one-handed on a phone touchscreen during a live match —
 optimize for tap targets, haptic feedback (`navigator.vibrate`), and portrait/landscape layout,
 not keyboard or mouse interaction.
+
+**Pinch-zoom prevention**: blocked via `gesturestart`/`gesturechange` `preventDefault()` calls
+(Safari-specific events) plus a `document`-level `touchmove` listener that calls `preventDefault()`
+when `e.touches.length > 1` (the cross-browser fallback, since not every mobile browser fires the
+gesture events). `document.body` also has its own `touchmove` listener that calls
+`stopPropagation()` on single-touch moves, to keep them from bubbling up to `document`/`window`
+and triggering iOS's rubber-band overscroll on the outer `fixed`-positioned `html`/`body` — but
+since `body` sits between the touch target and `document` in the bubble phase, it fires *first*,
+so unconditionally calling `stopPropagation()` there also silently swallowed the document-level
+listener's multi-touch check on any platform without gesture-event support (e.g. Android Chrome),
+leaving pinch-zoom unblocked. Fixed by handling the multi-touch case directly in `body`'s own
+listener (`preventDefault()` and `return` before ever reaching `stopPropagation()`) rather than
+relying on it bubbling to `document`. If touching either listener again, keep in mind they're not
+independent — verify pinch-zoom is still blocked on a platform without `gesturestart` support, not
+just on Safari.
