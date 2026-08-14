@@ -308,7 +308,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.20.3';
+const APP_VERSION = '1.20.4';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -366,7 +366,10 @@ function scorerTally(team) {
   const counts = {};
   let unknown = 0;
   team.scorers.forEach(s => { if (s.number == null) unknown++; else counts[s.number] = (counts[s.number]||0) + 1; });
-  const numbers = Object.keys(counts).map(Number).sort((a,b) => a-b);
+  // Keep numbers as the raw entered strings (e.g. "03", "00") rather than Number()-casting them —
+  // that would silently drop a leading zero the user deliberately typed. Object.keys() already
+  // returns strings, so just sort numerically without reformatting them.
+  const numbers = Object.keys(counts).sort((a,b) => Number(a) - Number(b));
   return numbers.length || unknown ? { numbers, counts, unknown } : null;
 }
 
@@ -1208,7 +1211,10 @@ function pressBackspace() {
 }
 
 function confirmPlayerNumber() {
-  recordScorer(playerNumberInput ? parseInt(playerNumberInput, 10) : null);
+  // Keep the raw typed string (e.g. "03", "00") rather than parseInt-ing it — a jersey number is
+  // an identifier, not an arithmetic value, and parseInt would silently drop a leading zero the
+  // user deliberately entered.
+  recordScorer(playerNumberInput || null);
 }
 
 function skipPlayerNumber() {
