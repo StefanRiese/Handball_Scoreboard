@@ -358,10 +358,28 @@ reliably running the same JS path as a backgrounded/foregrounded instance) may s
 to other init-time logic on iOS.
 
 **Design tokens**: corner radii and spacing are CSS custom properties on `:root` —
-`--radius-sm/md/lg` (12/16/22px) and `--space-1..5` (4/8/12/16/24px). New `border-radius`/`gap`/
-`padding`/`margin` values should reuse one of these rather than introducing another one-off px
-value; values that don't cleanly fit the scale (there are still some, e.g. 14px/18px/20px) were
-deliberately left as literals rather than forced onto the scale and changing visual sizing.
+`--radius-sm/md/lg` (12/16/22px) and `--space-1..6` (4/8/12/16/24/32px — `--space-6` added
+alongside a 2026-08 color/spacing pass that also folded several stray `10px`/`6px` literals into
+the scale). New `border-radius`/`gap`/`padding`/`margin` values should reuse one of these rather
+than introducing another one-off px value; a few values that don't cleanly fit the scale (e.g.
+14px/18px/20px, mostly button padding tuned against a `min-height`) are still deliberately left as
+literals rather than forced onto the scale and changing visual sizing.
+
+**Color tokens**: `--bg`/`--card`/`--btn` form a 3-step light ramp (dark theme: darkest → lightest)
+used for background/card/pressable-surface elevation; `--border`/`--btn-border` are low-opacity
+overlays rather than solid colors so they read correctly against either `--bg` or `--card`.
+`--accent` (blue, primary actions), `--success` (green, e.g. the running-clock color and the
+finish-and-save confirmation flash), and `--danger` (red, destructive actions/buttons and the
+finish-of-time clock color) are semantic tokens shared by both themes — introduced so `.btn-primary`/`.btn-danger`/`.clock-display.running`/`.clock-display.done` reference one place instead
+of repeating hex literals. These are deliberately **separate** from `PRESETS`/`ALL_COLORS` (the
+user-facing team-color palette) and from `state.a.color`/`state.b.color`'s hardcoded defaults —
+don't wire those to the semantic tokens, since a user's chosen/default team color and the app's own
+UI chrome color are unrelated concepts that happen to sometimes share a similar hue. Two
+call sites intentionally use a literal green instead of `var(--success)`: the player-number
+keypad's ✓ button (`#2e7d32`) and the save-flash's dark background (`#123821`) — `--success`
+(`#22c55e`) is tuned to read well *as text/an indicator color*, and white text directly on top of
+it fails contrast; those two sites need a darker green fill instead, so keep them as literals
+rather than "simplifying" to `var(--success)`.
 `state.cardAccentEnabled` (Settings → Darstellung/Appearance, default on) gates the radial-gradient
 team-color accent that `render()` applies to `card-a`/`card-b`'s `background` — when off it falls
 back to plain `var(--card)`. `.team-score.pulse` (a `scorePulse` keyframe) is toggled in `render()`
