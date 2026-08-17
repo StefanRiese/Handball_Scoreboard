@@ -318,7 +318,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.22.1';
+const APP_VERSION = '1.22.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1872,6 +1872,13 @@ function init() {
   }
   if (!hadData) save();
   if (navigator.onLine) checkForUpdates();
+  // Ask the browser to exempt this origin's storage (Cache Storage, localStorage) from
+  // eviction under storage pressure. This is a low-confidence mitigation, not a real fix — iOS
+  // Safari's support for the Storage API's persistence request is inconsistent/unreliable, and
+  // the actual root cause found for the standalone-PWA Service Worker eviction behavior (see
+  // CLAUDE.md) is a separate WebKit platform quirk this can't touch. Harmless to request either
+  // way, so there's no reason not to.
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 </script>
