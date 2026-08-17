@@ -318,6 +318,14 @@ UI/i18n surface without actually preventing anything. **If asked to make this ma
 that's a deliberate reversal of an explicit, dated decision — confirm with the user first**, the
 same way the previous manual design asked to be confirmed before undoing.
 
+`init()` also calls `navigator.storage.persist()` (feature-detected, result ignored either way) as
+a mitigation attempt for the same SW-eviction root cause — requesting the origin be exempted from
+storage eviction under pressure. This is **not a real fix**: Safari's support for the Storage API's
+persistence request is inconsistent, and the actual eviction behavior found for standalone-PWA
+Service Workers is a separate platform quirk this call doesn't address. It's harmless to request
+regardless, which is the only reason it's there — don't remove it expecting it solved anything, and
+don't expand it into a bigger "storage management" feature on the assumption it's load-bearing.
+
 `checkForUpdates()` fetches the live file with a cache-busting query string
 (`?_check=${Date.now()}`) AND `{cache: 'no-store'}`. Both are required, for two different layers:
 `{cache: 'no-store'}` only bypasses the browser's own HTTP cache (needed since a `Cache-Control`
