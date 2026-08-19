@@ -344,7 +344,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.27.0';
+const APP_VERSION = '1.27.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1081,11 +1081,14 @@ function render() {
       mb.style.display = available ? 'flex' : 'none';
       mb.disabled = !available;
     } else {
+      // Hidden (not just disabled) when there's nothing to undo in the current half — a
+      // permanently visible but grayed-out control implies an action that's never actually
+      // available yet, same reasoning as the singleRevertMode branch above.
+      const hasGoalToUndo = state.halves[identity][state.half] > 0;
       mb.textContent = '−';
-      mb.style.display = 'flex';
-      mb.disabled = state.halves[identity][state.half] === 0;
+      mb.style.display = hasGoalToUndo ? 'flex' : 'none';
+      mb.disabled = !hasGoalToUndo;
     }
-    mb.style.color = mb.disabled ? '#444' : '';
   });
   const hb = document.getElementById('half-btn');
   if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
