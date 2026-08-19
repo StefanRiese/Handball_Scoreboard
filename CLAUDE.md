@@ -110,8 +110,13 @@ is so the settings layout visually tracks `swapTeams()`: whichever team is showi
 the game view also shows on the left in Settings. `renderSettings()` resolves
 `identityForSlot(slot)` per slot on every render and populates that slot's name input, color
 swatches, and title from that identity — including reassigning the name input's `oninput` handler
-each render (`nameInput.oninput = () => setName(t2, nameInput.value)`), since which identity a
-slot edits can change after a swap. `openColorModal(t2)` and the color-dot/`+` button `onclick`s
+each render (`nameInput.oninput = () => { setName(t2, nameInput.value); autoGrowNameInput(nameInput); }`), since which identity a slot edits can change after a swap. The name field is a
+`<textarea rows="1">`, not an `<input>`, so a long team name wraps onto a second line instead of
+scrolling horizontally — `autoGrowNameInput(el)` (reset height to `auto`, then set it to
+`scrollHeight`) grows the box to fit on every keystroke and on initial render, since a `<textarea>`
+doesn't do this on its own. `onkeydown` still intercepts Enter and blurs instead of inserting a
+newline — team names wrap visually but still can't contain a literal line break.
+`openColorModal(t2)` and the color-dot/`+` button `onclick`s
 are likewise bound to the resolved identity per render, not to a fixed slot. `swapTeams()` calls
 both `render()` and `renderSettings()` since the swap button lives on the Settings tab and the
 settings view needs to reflect the flip immediately, not just on next tab switch.
