@@ -26,21 +26,23 @@
     .tabbar button { flex: 1; padding: var(--space-3) 0; border-radius: var(--radius-sm); font-size: var(--font-md); font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
     .teams { display: flex; gap: var(--space-3); align-items: stretch; }
-    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-lg); padding: var(--space-5) 10px; display: grid; grid-template-rows: auto 1fr; justify-items: center; cursor: pointer; min-height: 400px; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
+    .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-lg); padding: var(--space-5) 10px; cursor: pointer; min-height: 400px; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
     .team-card:active { transform: scale(0.98); }
     .hz-badge { position: absolute; top: var(--space-3); background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: var(--radius-sm); padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
     #card-a .hz-badge { right: var(--space-3); }
     #card-b .hz-badge { left: var(--space-3); }
-    /* Fixed height (room for exactly 4 lines), not min-height — the card's grid-template-rows is
-       "auto 1fr", so this row's height directly determines how much of the card the score row
-       (1fr, align-self:center) gets. A min-height let a long, wrapped team name grow this row,
-       shrinking the score row and visibly pushing the score down/off-center; a fixed height keeps
-       the score vertically centered in the card regardless of how many lines the name wraps to.
-       overflow:hidden caps a name needing more than 4 lines instead of overflowing into the score
-       below it. */
-    .team-name { align-self: start; margin-top: 34px; font-size: var(--font-md); line-height: 1.3; font-weight: 500; text-align: center; word-break: break-word; padding: var(--space-1) var(--space-2); height: 82px; overflow: hidden; }
-    .team-score { align-self: center; font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
-    @keyframes scorePulse { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    /* Fixed height (room for exactly 4 lines) so the name's line count never shifts where it sits
+       at the top of the card — moot for the score's position now that .team-score is absolutely
+       centered in the whole card (see below) rather than centered in the leftover space under the
+       name, but still needed so a long wrapped name doesn't grow past its reserved area.
+       overflow:hidden caps a name needing more than 4 lines instead of overflowing further down. */
+    .team-name { margin-top: 34px; font-size: var(--font-md); line-height: 1.3; font-weight: 500; text-align: center; word-break: break-word; padding: var(--space-1) var(--space-2); height: 82px; overflow: hidden; }
+    /* Absolutely centered in the whole card (not just the space left under the name) — a plain
+       flex/grid "center in remaining space" layout means the name's height always pushes the
+       score off true-center; this centers it against the card's actual bounds regardless of how
+       much room the name above it takes up. */
+    .team-score { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
+    @keyframes scorePulse { 0% { transform: translate(-50%, -50%) scale(1); } 40% { transform: translate(-50%, -50%) scale(1.18); } 100% { transform: translate(-50%, -50%) scale(1); } }
     .team-score.pulse { animation: scorePulse 0.35s ease-out; }
     .minus-btn { position: absolute; bottom: var(--space-3); right: var(--space-3); width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
     .minus-btn:disabled { color: #444; }
@@ -130,9 +132,12 @@
     .keypad-btn:active { filter:brightness(0.8); }
 
     @media (orientation: landscape) and (max-height: 500px) {
-      .team-card { min-height: 200px; padding: 14px 10px; gap: 6px; }
+      .team-card { min-height: 200px; padding: 14px 10px; }
       .team-score { font-size: 60px; }
-      .team-name { margin-top: 22px; }
+      /* Shrunk from the portrait 4-line/82px allowance — on a 200px-min-height landscape card
+         that much height would reach past the card's vertical center and visually collide with
+         the now-absolutely-centered score; 2 lines fits the smaller card without doing that. */
+      .team-name { margin-top: 22px; height: 46px; }
       .hz-badge { padding: 4px 10px; font-size: 14px; }
       .clock-btn { min-height: 54px; }
       .clock-display { font-size: 26px; padding: 10px 0; }
@@ -337,7 +342,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.25.2';
+const APP_VERSION = '1.26.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
