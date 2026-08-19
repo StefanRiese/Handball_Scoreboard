@@ -198,10 +198,38 @@ the `.color-dot` CSS class's fixed 30px) and the full color-picker modal grid
 (`openColorModal()`, which overrides `width`/`height`/`aspect-ratio` afterward so each swatch fills
 its grid column instead of a fixed size). Route any new color-swatch UI through this helper too.
 
+**Single-revert mode**: `state.singleRevertMode` (Settings → Tore, default off) and
+`state.singleRevertSeconds` (default 30, adjustable 1–300) change what the minus button (the same
+physical `corr-minus-a`/`corr-minus-b` button, no separate UI element) does after a goal — instead
+of always being available to decrement whichever half is currently selected (the normal-mode
+behavior, unlimited undos), it becomes a ↺ "revert" icon that's only *visible* (not just
+disabled — `render()` sets `display:none` outside the window, since a dead-looking always-present
+control would misleadingly imply an undo that no longer exists) for `singleRevertSeconds` after the
+goal it would undo, and can only revert that one goal once.
+
+The per-identity window lives in module-level `revertWindow = { a: null, b: null }` (`{ until,
+half }` or `null`) — ephemeral, not part of persisted `state`, same tradeoff as
+`playerNumberQueue`. `addGoal()` calls `openRevertWindow(identity, half)` when the mode is on,
+which replaces any still-open window for that identity (a second goal scored inside the first
+goal's window retargets the revert to the *new* goal rather than leaving both racing on the old
+timer) and schedules a `setTimeout` to close it and `render()` when the window naturally expires.
+`correct()` closes the window itself (`closeRevertWindow(identity)`) immediately after a successful
+revert — that's the actual enforcement of "only one revert per team," not a counter, since the UI
+can't offer a second tap once the window is closed. Storing `half` in the window (not just reading
+`state.half` when the button is pressed) matters because the user can switch halves manually while
+the window is still open; `correct()` special-cases this — when `singleRevertMode` is on and `d<0`,
+it uses `revertWindow[identity].half` instead of `state.half`, so the revert still hits the half
+the goal actually belongs to rather than whatever half happens to be selected at tap time. The
+plain minus button (mode off) is untouched — always acts on `state.half`, as before.
+`resetGame()`/`saveGame()`/`confirmResetSettings()` all call `closeRevertWindow()` for both
+identities, so a window opened by the finished/discarded game's last goal can't apply to the next
+one.
+
 **Reset to default settings**: `DEFAULT_SETTINGS` (a standalone literal, not derived from the
 mutable `state` object) mirrors the *initial* values of `state`'s Settings-tab fields — team
 names/colors, `darkMode`, `lang`, `showClock`, `team1OnLeft`,
-`autoSwapAtHalftime`, `halfLength`, `trackPlayerNumbers`, `cardAccentEnabled` — and is what
+`autoSwapAtHalftime`, `halfLength`, `trackPlayerNumbers`, `cardAccentEnabled`,
+`singleRevertMode`, `singleRevertSeconds` — and is what
 `confirmResetSettings()` (Settings → "Allgemein"/"General", via `askResetSettings()`'s Yes/No
 confirm) restores. Deliberately excludes `half`/`halves`/`history`/`clockRemaining`/
 `clockRunning`/`clockEndsAt`/`scorers` — those are live match/history state, not settings, and

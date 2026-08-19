@@ -270,6 +270,8 @@
   <div class="settings-section">
     <div class="settings-title" id="goals-title">Tore</div>
     <div class="settings-row"><span class="settings-row-label" id="trackplayers-label">Spielernummern erfassen</span><button class="toggle-btn" onclick="toggleTrackPlayerNumbers()" id="trackplayers-btn">An</button></div>
+    <div class="settings-row"><span class="settings-row-label" id="singlerevert-label">Einzel-Rückgängig-Modus</span><button class="toggle-btn" onclick="toggleSingleRevertMode()" id="singlerevert-btn">Aus</button></div>
+    <div class="settings-row"><span class="settings-row-label" id="revertseconds-label">Zeitfenster (Sekunden)</span><input class="number-input number-input-small" id="set-revertseconds" type="number" min="1" max="300" inputmode="numeric" oninput="setRevertSeconds(this)" onblur="if(this.value.trim()===''){this.value='1';setRevertSeconds(this);}" /></div>
   </div>
 
   <div class="settings-section">
@@ -333,8 +335,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', gameFinished:'✅ Spiel beendet', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version', resetSettings:'⚠️ Auf Standardeinstellungen zurücksetzen', reallyResetSettings:'Wirklich alle Einstellungen zurücksetzen?', resetSettingsTitle:'Allgemein', ariaBackspace:'Löschen', ariaConfirmNumber:'Bestätigen' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', gameFinished:'✅ Game finished', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version', resetSettings:'⚠️ Reset to default settings', reallyResetSettings:'Really reset all settings?', resetSettingsTitle:'General', ariaBackspace:'Backspace', ariaConfirmNumber:'Confirm' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', gameFinished:'✅ Spiel beendet', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version', resetSettings:'⚠️ Auf Standardeinstellungen zurücksetzen', reallyResetSettings:'Wirklich alle Einstellungen zurücksetzen?', resetSettingsTitle:'Allgemein', ariaBackspace:'Löschen', ariaConfirmNumber:'Bestätigen', singleRevertModeLabel:'Einzel-Rückgängig-Modus', revertSecondsLabel:'Zeitfenster (Sekunden)', ariaRevertGoal:'Letztes Tor rückgängig machen' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', gameFinished:'✅ Game finished', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version', resetSettings:'⚠️ Reset to default settings', reallyResetSettings:'Really reset all settings?', resetSettingsTitle:'General', ariaBackspace:'Backspace', ariaConfirmNumber:'Confirm', singleRevertModeLabel:'Single revert mode', revertSecondsLabel:'Time window (seconds)', ariaRevertGoal:'Undo last goal' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -342,7 +344,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.26.2';
+const APP_VERSION = '1.27.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -359,6 +361,8 @@ let state = {
   trackPlayerNumbers: true,
   scorers: { a: [], b: [] },
   cardAccentEnabled: true,
+  singleRevertMode: false,
+  singleRevertSeconds: 30,
 };
 
 // The Settings-tab preferences confirmResetSettings() restores — kept as its own literal (not
@@ -375,6 +379,8 @@ const DEFAULT_SETTINGS = {
   halfLength: 30,
   trackPlayerNumbers: true,
   cardAccentEnabled: true,
+  singleRevertMode: false,
+  singleRevertSeconds: 30,
 };
 let colorTarget = null;
 let clockTimer = null;
@@ -382,6 +388,18 @@ let clockTimer = null;
 // render()'s goal-pulse animation fires only on an actual score change for that identity, not
 // whenever a slot's displayed score changes for an unrelated reason (e.g. swapTeams()).
 let lastRenderedScore = { a: null, b: null };
+// Single-revert mode (Settings → Tore): per-identity revert window — `{ until, half }` (epoch-ms
+// close time, and the half the revertible goal was actually scored in) or null if no goal is
+// currently revertible. Storing `half` here (not just reading state.half when the button is
+// pressed) matters because the user could switch halves manually while the window is still open —
+// the revert must still target the half the goal actually belongs to, not whatever half happens
+// to be selected at that later moment. Ephemeral, module-level state (like lastRenderedScore
+// above) rather than part of the persisted `state` object — a missed revert window after an app
+// reload mid-window is an acceptable edge case, same tradeoff as not persisting
+// playerNumberQueue. revertTimer holds the matching setTimeout handle so a new goal can
+// cancel-and-replace a still-open window instead of stacking timers.
+let revertWindow = { a: null, b: null };
+let revertTimer = { a: null, b: null };
 let swapConfirmTimer = null;
 let pendingDeleteId = null;
 let pendingClearAll = false;
@@ -645,6 +663,8 @@ function load() {
       if (typeof p.autoSwapAtHalftime === 'boolean') state.autoSwapAtHalftime = p.autoSwapAtHalftime;
       if (typeof p.trackPlayerNumbers === 'boolean') state.trackPlayerNumbers = p.trackPlayerNumbers;
       if (typeof p.cardAccentEnabled === 'boolean') state.cardAccentEnabled = p.cardAccentEnabled;
+      if (typeof p.singleRevertMode === 'boolean') state.singleRevertMode = p.singleRevertMode;
+      if (typeof p.singleRevertSeconds === 'number' && p.singleRevertSeconds >= 1 && p.singleRevertSeconds <= 300) state.singleRevertSeconds = p.singleRevertSeconds;
       if (p.scorers && Array.isArray(p.scorers.a) && Array.isArray(p.scorers.b)) state.scorers = p.scorers;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
@@ -698,6 +718,8 @@ function save() {
       autoSwapAtHalftime: state.autoSwapAtHalftime,
       trackPlayerNumbers: state.trackPlayerNumbers,
       cardAccentEnabled: state.cardAccentEnabled,
+      singleRevertMode: state.singleRevertMode,
+      singleRevertSeconds: state.singleRevertSeconds,
       scorers: state.scorers,
       halfLength: state.halfLength,
       clockRunning: state.clockRunning,
@@ -760,6 +782,24 @@ function toggleTrackPlayerNumbers() {
   state.trackPlayerNumbers = !state.trackPlayerNumbers;
   document.getElementById('trackplayers-btn').textContent = state.trackPlayerNumbers ? t('on') : t('off');
   renderGoalsView();
+  save();
+}
+
+function toggleSingleRevertMode() {
+  state.singleRevertMode = !state.singleRevertMode;
+  document.getElementById('singlerevert-btn').textContent = state.singleRevertMode ? t('on') : t('off');
+  // Switching off mid-window shouldn't leave a stale revert window open for when it's switched
+  // back on later — close both identities' windows so render() falls back to the plain "−"
+  // button cleanly either way.
+  if (!state.singleRevertMode) { closeRevertWindow('a'); closeRevertWindow('b'); }
+  render();
+  save();
+}
+
+function setRevertSeconds(el) {
+  const clamped = clampNumberInput(el, 1, 300);
+  if (clamped === null) return;
+  state.singleRevertSeconds = clamped;
   save();
 }
 
@@ -841,6 +881,9 @@ function applyLang() {
     document.getElementById('goals-title').textContent = t('goalsTitle');
     document.getElementById('trackplayers-label').textContent = t('trackPlayerNumbersLabel');
     document.getElementById('trackplayers-btn').textContent = state.trackPlayerNumbers ? t('on') : t('off');
+    document.getElementById('singlerevert-label').textContent = t('singleRevertModeLabel');
+    document.getElementById('singlerevert-btn').textContent = state.singleRevertMode ? t('on') : t('off');
+    document.getElementById('revertseconds-label').textContent = t('revertSecondsLabel');
     document.getElementById('player-skip-btn').textContent = t('skip');
     const hb = document.getElementById('half-btn');
     if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
@@ -848,7 +891,7 @@ function applyLang() {
     if (hbf) hbf.textContent = state.half === 0 ? t('half1') : t('half2');
     ['a','b'].forEach(t2 => {
       const mb = document.getElementById('corr-minus-'+t2);
-      if (mb) mb.setAttribute('aria-label', t('ariaMinus'));
+      if (mb) mb.setAttribute('aria-label', state.singleRevertMode ? t('ariaRevertGoal') : t('ariaMinus'));
     });
     document.getElementById('stop-btn').setAttribute('aria-label', t('ariaClockReset'));
   } catch (e) { console.warn('applyLang failed', e); }
@@ -1028,7 +1071,20 @@ function render() {
     hz.textContent = `${t('hz')} ${state.halves[identity][0]}`;
     hz.style.color = textColor;
     const mb = document.getElementById('corr-minus-'+slot);
-    mb.disabled = state.halves[identity][state.half] === 0;
+    if (state.singleRevertMode) {
+      // Revert icon, only visible (not just disabled) for the singleRevertSeconds window after
+      // the goal it would undo — hidden rather than disabled the rest of the time so it doesn't
+      // sit there as a dead control implying an undo that's no longer available.
+      const w = revertWindow[identity];
+      const available = !!w && w.until > Date.now();
+      mb.textContent = '↺';
+      mb.style.display = available ? 'flex' : 'none';
+      mb.disabled = !available;
+    } else {
+      mb.textContent = '−';
+      mb.style.display = 'flex';
+      mb.disabled = state.halves[identity][state.half] === 0;
+    }
     mb.style.color = mb.disabled ? '#444' : '';
   });
   const hb = document.getElementById('half-btn');
@@ -1110,6 +1166,7 @@ function renderGoalsView() {
 // can change after a swap.
 function renderSettings() {
   document.getElementById('set-halflen').value = state.halfLength;
+  document.getElementById('set-revertseconds').value = state.singleRevertSeconds;
   ['a','b'].forEach(slot => {
     const t2 = identityForSlot(slot);
     const nameInput = document.getElementById('set-name-'+slot);
@@ -1229,6 +1286,24 @@ function openColorModal(t2) {
 
 function cancelColor() { document.getElementById('color-modal').style.display = 'none'; }
 
+// Single-revert mode: opens (or refreshes) the revert window for a just-scored goal — a fresh
+// setTimeout replaces any still-open one from an earlier goal, since a new goal scored inside the
+// old window should retarget the window to itself, not let both close together on the old timer.
+function openRevertWindow(identity, half) {
+  clearTimeout(revertTimer[identity]);
+  revertWindow[identity] = { until: Date.now() + state.singleRevertSeconds * 1000, half };
+  revertTimer[identity] = setTimeout(() => { revertWindow[identity] = null; render(); }, state.singleRevertSeconds * 1000);
+}
+
+// Consumes the current revert window (used after a successful revert, or whenever it should be
+// forced shut — e.g. resetGame()/saveGame()) — "only allow to revert one goal per team" is
+// enforced by closing the window immediately after correct() uses it, not by counting reverts.
+function closeRevertWindow(identity) {
+  clearTimeout(revertTimer[identity]);
+  revertTimer[identity] = null;
+  revertWindow[identity] = null;
+}
+
 function addGoal(slot) {
   const identity = identityForSlot(slot);
   const half = state.half;
@@ -1247,6 +1322,7 @@ function addGoal(slot) {
   // started mid-match).
   const globalPos = total(identity);
   if (navigator.vibrate) navigator.vibrate(10);
+  if (state.singleRevertMode) openRevertWindow(identity, half);
   render();
   save();
   if (state.trackPlayerNumbers) {
@@ -1257,7 +1333,12 @@ function addGoal(slot) {
 
 function correct(slot, d) {
   const identity = identityForSlot(slot);
-  const half = state.half;
+  // Single-revert mode targets the half the revertible goal was actually scored in
+  // (revertWindow[identity].half), not necessarily state.half — the user could have switched
+  // halves manually while the window was still open, and the revert must still hit the goal it
+  // was offered for, not whatever half happens to be selected now. The plain minus button (mode
+  // off) keeps its existing behavior of always acting on the currently selected half.
+  const half = (state.singleRevertMode && d < 0 && revertWindow[identity]) ? revertWindow[identity].half : state.half;
   // Capture the position (see addGoal()) of the goal about to be undone before decrementing —
   // the minus button only ever undoes one goal at a time (d is always -1) from the currently
   // selected half, so this is exactly the (half, pos) that goal was stamped with when scored.
@@ -1273,6 +1354,11 @@ function correct(slot, d) {
     const log = state.scorers[identity];
     const idx = log.findIndex(entry => entry.half === half && entry.pos === posBeingUndone);
     if (idx !== -1) log.splice(idx, 1);
+    // Single-revert mode only ever reaches here while the button is visible (i.e. the window is
+    // still open — render() hides/disables it otherwise), so this correct() call is exactly the
+    // one allowed revert; close the window so a second tap (impossible via the UI, but this is
+    // the actual enforcement) can't revert a second goal until a new one reopens it.
+    if (state.singleRevertMode) closeRevertWindow(identity);
   }
   render();
   save();
@@ -1406,6 +1492,11 @@ function saveGame() {
   // Reset to 0 isn't a scored goal — clear the pulse-tracking baseline so render() doesn't
   // animate a "goal" for the score dropping back to 0.
   lastRenderedScore = { a: null, b: null };
+  // A still-open single-revert window belongs to the just-finished game's last goal — closing it
+  // here (rather than leaving its setTimeout to fire later) keeps it from ever applying to the
+  // next game's goals.
+  closeRevertWindow('a');
+  closeRevertWindow('b');
   state.half = 0;
   state.clockRunning = false;
   state.clockEndsAt = null;
@@ -1456,6 +1547,8 @@ function resetGame() {
   // Reset to 0 isn't a scored goal — clear the pulse-tracking baseline so render() doesn't
   // animate a "goal" for the score dropping back to 0.
   lastRenderedScore = { a: null, b: null };
+  closeRevertWindow('a');
+  closeRevertWindow('b');
   state.half = 0;
   stopClock();
   state.clockRemaining = state.halfLength * 60;
@@ -1623,6 +1716,10 @@ function confirmResetSettings() {
   state.halfLength = DEFAULT_SETTINGS.halfLength;
   state.trackPlayerNumbers = DEFAULT_SETTINGS.trackPlayerNumbers;
   state.cardAccentEnabled = DEFAULT_SETTINGS.cardAccentEnabled;
+  state.singleRevertMode = DEFAULT_SETTINGS.singleRevertMode;
+  state.singleRevertSeconds = DEFAULT_SETTINGS.singleRevertSeconds;
+  closeRevertWindow('a');
+  closeRevertWindow('b');
   if (wasUntouched) state.clockRemaining = state.halfLength * 60;
   document.getElementById('settings-reset-link-area').style.display = 'block';
   document.getElementById('settings-reset-confirm-area').style.display = 'none';
