@@ -13,6 +13,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 ### Tore korrigieren
 - „− 1" / „+ 1"-Buttons pro Team für versehentliche Eingaben
 - Kein negativer Spielstand möglich
+- Optionaler „Einzel-Rückgängig-Modus" (Einstellungen, standardmäßig aus): der „−"-Button wird zu einem ↺-Symbol, das nur für ein einstellbares Zeitfenster (standardmäßig 30 Sekunden) nach einem Tor sichtbar ist und jeweils nur das zuletzt erzielte Tor rückgängig machen kann
 
 ### Teamnamen
 - Durch Antippen direkt bearbeitbar
