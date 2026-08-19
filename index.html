@@ -318,7 +318,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.22.2';
+const APP_VERSION = '1.23.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -398,6 +398,16 @@ function scorerTally(team) {
   // returns strings, so just sort numerically without reformatting them.
   const numbers = Object.keys(counts).sort((a,b) => Number(a) - Number(b));
   return numbers.length || unknown ? { numbers, counts, unknown } : null;
+}
+
+// Renders a scorerTally() result as `<tr>` rows for the goals-view-table markup — shared by the
+// live in-game goals view (renderGoalsView()) and the saved-history scorers panel
+// (renderHistory()) so both tables have the same shape by construction. Returns '' for a null
+// tally (no scorers at all), same as an empty tally.
+function scorerTableRows(tally) {
+  if (!tally) return '';
+  return tally.numbers.map(n => `<tr><td>#${n}</td><td>${tally.counts[n]}</td></tr>`).join('')
+    + (tally.unknown ? `<tr><td>${t('unknownScorer')}</td><td>${tally.unknown}</td></tr>` : '');
 }
 
 function scorerSummaryText(team) {
@@ -1008,11 +1018,7 @@ function render() {
     disp.style.color = textColor;
     document.getElementById('name-'+slot).textContent = displayNameFor(identity);
     document.getElementById('name-'+slot).style.color = textColor;
-    const card = document.getElementById('card-'+slot);
-    card.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 2px ${s.color}55`;
-    card.style.background = state.cardAccentEnabled
-      ? `radial-gradient(120% 70% at 50% 0%, ${s.color}29 0%, ${s.color}14 35%, ${s.color}00 80%), var(--card)`
-      : 'var(--card)';
+    applyTeamColorAccent(document.getElementById('card-'+slot), s.color);
     const hz = document.getElementById('hz-'+slot);
     hz.textContent = `${t('hz')} ${state.halves[identity][0]}`;
     hz.style.color = textColor;
@@ -1080,10 +1086,7 @@ function renderGoalsView() {
     const identity = identityForSlot(slot);
     const s = state[identity];
     const tally = scorerTally({ scorers: numbersFor(identity).map(number => ({ number })) });
-    const rows = tally
-      ? tally.numbers.map(n => `<tr><td>#${n}</td><td>${tally.counts[n]}</td></tr>`).join('')
-        + (tally.unknown ? `<tr><td>${t('unknownScorer')}</td><td>${tally.unknown}</td></tr>` : '')
-      : '';
+    const rows = scorerTableRows(tally);
     const body = rows
       ? `<table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>`
       : `<div class="goals-view-list">${t('noGoalsYet')}</div>`;
@@ -1108,7 +1111,7 @@ function renderSettings() {
     nameInput.value = state[t2].name;
     nameInput.oninput = () => setName(t2, nameInput.value);
     const sec = document.getElementById('set-section-'+slot);
-    if (sec) { sec.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 1px ${state[t2].color}`; }
+    if (sec) applyTeamColorAccent(sec, state[t2].color);
     const title = document.getElementById('set-title-'+slot);
     if (title) { title.textContent = t2 === 'a' ? t('team1') : t('team2'); title.style.color = readableColor(state[t2].color); }
     const el = document.getElementById('set-colors-'+slot);
@@ -1151,6 +1154,17 @@ function renderSettings() {
 // shows the raw value, since it's an editable field, not a display.
 function displayNameFor(identity) {
   return state[identity].name.trim() || t(identity === 'a' ? 'team1' : 'team2');
+}
+
+// Shared team-color accent formula — applied to both the game-view cards (render()) and the
+// player-number modal (openPlayerNumberModal()), so the two stay visually in sync by construction
+// rather than by two hand-copied formulas. `background` respects cardAccentEnabled (the gradient
+// fill toggle); `boxShadow`'s inset border does not — that toggle only ever controlled the fill.
+function applyTeamColorAccent(el, color) {
+  el.style.background = state.cardAccentEnabled
+    ? `radial-gradient(120% 70% at 50% 0%, ${color}29 0%, ${color}14 35%, ${color}00 80%), var(--card)`
+    : 'var(--card)';
+  el.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 2px ${color}55`;
 }
 
 function setName(t2, v) {
@@ -1248,16 +1262,9 @@ function openPlayerNumberModal(identity, half, pos, globalPos) {
   playerNumberInput = '';
   updatePlayerNumberDisplay();
   document.getElementById('player-modal-title').textContent = `${displayNameFor(identity)}: ${t('enterPlayerNumber')}`;
-  // Same team-color accent formula as the game-view cards (render()), so the modal visually
-  // ties back to whichever team just scored — respects the same cardAccentEnabled toggle.
-  const color = state[identity].color;
-  const box = document.getElementById('player-modal-box');
-  box.style.background = state.cardAccentEnabled
-    ? `radial-gradient(120% 70% at 50% 0%, ${color}29 0%, ${color}14 35%, ${color}00 80%), var(--card)`
-    : 'var(--card)';
-  // Same team-color inset border as the game-view cards, independent of cardAccentEnabled (that
-  // toggle only controls the gradient fill, not the border).
-  box.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 2px ${color}55`;
+  // Same team-color accent as the game-view cards (applyTeamColorAccent()), so the modal
+  // visually ties back to whichever team just scored.
+  applyTeamColorAccent(document.getElementById('player-modal-box'), state[identity].color);
   document.getElementById('player-modal').style.display = 'flex';
 }
 
@@ -1635,12 +1642,7 @@ function renderHistory() {
     // Only offer the scorers view for games that actually have at least one recorded number —
     // older games and games saved while "track player numbers" was off have none. Shown as a
     // per-player goal tally (how many each player scored), not the sequence they were scored in.
-    const scorerRows = team => {
-      const tally = scorerTally(team);
-      if (!tally) return null;
-      return tally.numbers.map(n => `<tr><td>#${n}</td><td>${tally.counts[n]}</td></tr>`).join('')
-        + (tally.unknown ? `<tr><td>${t('unknownScorer')}</td><td>${tally.unknown}</td></tr>` : '');
-    };
+    const scorerRows = team => scorerTableRows(scorerTally(team));
     const scorers0 = scorerRows(g.teams[0]);
     const scorers1 = scorerRows(g.teams[1]);
     const hasScorers = scorers0 || scorers1;

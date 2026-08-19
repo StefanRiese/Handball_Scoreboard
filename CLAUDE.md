@@ -147,6 +147,10 @@ cleared at `saveGame()`/`resetGame()`. `number` is kept as the **raw typed strin
 `parseInt` would silently drop a leading zero the user deliberately entered; it's `null` when
 skipped. `scorerTally()`'s `numbers` array (used by every scorer-display consumer) sorts these by
 `Number(a) - Number(b)` without reformatting them, so display always matches what was typed.
+`scorerTableRows(tally)` turns a tally into the `<tr>` rows shared by both scorer-table renderers —
+the live goals view (`renderGoalsView()`'s `teamBlock()`) and the saved-history scorers panel
+(`renderHistory()`'s `scorerRows()`/`scorerBlock()`) — so a future change to the row markup (e.g. a
+new column) only needs to happen once.
 
 `addGoal()` always increments the score and calls `save()`/`render()` immediately regardless of
 the setting — a fast tap during a live match must never be blocked on the keypad popup — then,
@@ -176,10 +180,13 @@ modal's state — `recordScorer()` drains the next queued entry after closing. `
 `saveGame()` both clear the queue and any still-open modal, since a pending entry from the
 finished/discarded game would otherwise record against the next game's just-reset `state.scorers`.
 
-`openPlayerNumberModal()` also tints `#player-modal-box`'s `background` and `boxShadow` with the
-scoring identity's color, using the exact same radial-gradient/inset-border formula as the
-game-view cards (`render()`'s `card-a`/`card-b`) — background respects `cardAccentEnabled`, the
-border doesn't (that toggle only ever controlled the gradient fill).
+`openPlayerNumberModal()` also tints `#player-modal-box` with the scoring identity's color via
+`applyTeamColorAccent(el, color)` — the same helper `render()` uses for `card-a`/`card-b` and
+`renderSettings()` uses for `set-section-a`/`set-section-b`, so all three surfaces share one
+formula instead of three copies. `background` (the radial gradient) respects `cardAccentEnabled`;
+`boxShadow`'s inset border does not — that toggle only ever controlled the gradient fill. Route any
+new team-color-accented surface through this helper rather than re-deriving the gradient/shadow
+strings again.
 
 **Reset to default settings**: `DEFAULT_SETTINGS` (a standalone literal, not derived from the
 mutable `state` object) mirrors the *initial* values of `state`'s Settings-tab fields — team
