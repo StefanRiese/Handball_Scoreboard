@@ -186,7 +186,12 @@ finished/discarded game would otherwise record against the next game's just-rese
 formula instead of three copies. `background` (the radial gradient) respects `cardAccentEnabled`;
 `boxShadow`'s inset border does not — that toggle only ever controlled the gradient fill. Route any
 new team-color-accented surface through this helper rather than re-deriving the gradient/shadow
-strings again.
+strings again. Similarly, `createColorSwatchButton(color, selected, onClick)` is the one place that
+builds a circular color-swatch `<button>` (background, selected border/box-shadow,
+aria-label/aria-pressed) — used by both the Settings preset-color row (`renderSettings()`, sized by
+the `.color-dot` CSS class's fixed 30px) and the full color-picker modal grid
+(`openColorModal()`, which overrides `width`/`height`/`aspect-ratio` afterward so each swatch fills
+its grid column instead of a fixed size). Route any new color-swatch UI through this helper too.
 
 **Reset to default settings**: `DEFAULT_SETTINGS` (a standalone literal, not derived from the
 mutable `state` object) mirrors the *initial* values of `state`'s Settings-tab fields — team

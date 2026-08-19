@@ -318,7 +318,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.23.0';
+const APP_VERSION = '1.23.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1117,18 +1117,9 @@ function renderSettings() {
     const el = document.getElementById('set-colors-'+slot);
     el.innerHTML = '';
     PRESETS.forEach(p => {
-      const btn = document.createElement('button');
-      const selected = state[t2].color === p;
-      btn.className = 'color-dot';
-      btn.style.background = p;
-      btn.style.border = selected ? '2.5px solid var(--text)' : '2px solid transparent';
-      btn.style.boxShadow = selected ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
-      // The hex code alone doesn't tell a screen-reader user which swatch is currently picked —
-      // aria-pressed conveys the same selected/not-selected state the border/box-shadow show
-      // visually, and t('colorLabel') gives the announcement a word instead of a bare hex code.
-      btn.setAttribute('aria-label', `${t('colorLabel')} ${p}`);
-      btn.setAttribute('aria-pressed', String(selected));
-      btn.onclick = () => { state[t2].color = p; render(); renderSettings(); save(); };
+      const btn = createColorSwatchButton(p, state[t2].color === p, () => {
+        state[t2].color = p; render(); renderSettings(); save();
+      });
       el.appendChild(btn);
     });
     const more = document.createElement('button');
@@ -1167,6 +1158,27 @@ function applyTeamColorAccent(el, color) {
   el.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 2px ${color}55`;
 }
 
+// Shared circular color-swatch button — used by both the Settings preset-color row
+// (renderSettings()) and the full color-picker modal grid (openColorModal()), so their
+// selected/unselected styling and accessibility attributes can't drift apart via two
+// independently hand-maintained implementations. Sized via the `.color-dot` class (fixed 30px)
+// by default; callers needing a different size (e.g. a responsive grid column) override
+// width/height/aspect-ratio on the returned element afterward.
+function createColorSwatchButton(color, selected, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'color-dot';
+  btn.style.background = color;
+  btn.style.border = selected ? '2.5px solid var(--text)' : '2px solid rgba(128,128,128,0.2)';
+  btn.style.boxShadow = selected ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
+  // The hex code alone doesn't tell a screen-reader user which swatch is currently picked —
+  // aria-pressed conveys the same selected/not-selected state the border/box-shadow show
+  // visually, and t('colorLabel') gives the announcement a word instead of a bare hex code.
+  btn.setAttribute('aria-label', `${t('colorLabel')} ${color}`);
+  btn.setAttribute('aria-pressed', String(selected));
+  btn.onclick = onClick;
+  return btn;
+}
+
 function setName(t2, v) {
   state[t2].name = v;
   // identityForSlot() is its own inverse (a plain flip), so it also answers "which physical
@@ -1184,16 +1196,15 @@ function openColorModal(t2) {
   const grid = document.getElementById('color-grid');
   grid.innerHTML = '';
   ALL_COLORS.forEach(p => {
-    const btn = document.createElement('button');
-    const selected = state[t2].color === p;
-    // width:100%/aspect-ratio:1 (not a fixed px size) so each dot always fills its grid column
-    // exactly, however wide that ends up being — a fixed px size doesn't shrink with the column
-    // and silently overflows the modal box's right edge if the box width, its padding, or the
-    // grid gap ever change out from under this hardcoded value.
-    btn.style.cssText = `width:100%;aspect-ratio:1;border-radius:50%;background:${p};padding:0;border:${selected?'3px solid var(--text)':'2px solid rgba(128,128,128,0.2)'};box-shadow:${selected?'0 0 0 2px rgba(128,128,128,0.5)':'none'};cursor:pointer;`;
-    btn.setAttribute('aria-label', `${t('colorLabel')} ${p}`);
-    btn.setAttribute('aria-pressed', String(selected));
-    btn.onclick = () => { state[colorTarget].color = p; render(); renderSettings(); save(); cancelColor(); };
+    const btn = createColorSwatchButton(p, state[t2].color === p, () => {
+      state[colorTarget].color = p; render(); renderSettings(); save(); cancelColor();
+    });
+    // Override the shared helper's fixed 30px sizing — this grid needs each dot to fill its
+    // column exactly, however wide that ends up being, or a fixed px size silently overflows the
+    // modal box's right edge if the box width, its padding, or the grid gap ever change.
+    btn.style.width = '100%';
+    btn.style.height = 'auto';
+    btn.style.aspectRatio = '1';
     grid.appendChild(btn);
   });
   document.getElementById('color-modal').style.display = 'flex';
