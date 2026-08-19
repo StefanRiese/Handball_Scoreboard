@@ -104,10 +104,14 @@
     .history-del-confirm .btn-danger { padding: var(--space-2) var(--space-4); min-height: 38px; }
     .history-del-confirm .btn-secondary { padding: var(--space-2) var(--space-4); min-height: 38px; }
     #color-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
-    #color-modal .box { background:var(--card); border-radius:var(--radius-lg); padding:var(--space-5); width:300px; display:flex; flex-direction:column; gap:var(--space-4); }
+    #color-modal .box { background:var(--card); border-radius:var(--radius-lg); padding:var(--space-5); width:300px; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; gap:var(--space-4); }
     #color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:var(--space-3); }
     #player-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
-    #player-modal .box { background:var(--card); border-radius:var(--radius-lg); padding:var(--space-5); width:300px; display:flex; flex-direction:column; gap:var(--space-4); }
+    /* max-height/overflow-y as a safety net regardless of viewport — the box's content (title +
+       number display + 4-row keypad + skip button) can be taller than a landscape phone's screen
+       height, and without this it would silently overflow off-screen top/bottom instead of
+       scrolling internally. */
+    #player-modal .box { background:var(--card); border-radius:var(--radius-lg); padding:var(--space-5); width:300px; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; gap:var(--space-4); }
     #player-number-display { font-size:48px; font-weight:700; text-align:center; color:var(--text); min-height:56px; }
     .keypad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3); }
     .keypad-btn { font-size:26px; font-weight:600; padding:0; min-height:64px; border-radius:var(--radius-md); background:var(--btn); border:0.5px solid var(--btn-border); color:var(--text); }
@@ -120,6 +124,10 @@
       .hz-badge { padding: 4px 10px; font-size: 14px; }
       .clock-btn { min-height: 54px; }
       .clock-display { font-size: 26px; padding: 10px 0; }
+      #player-modal .box, #color-modal .box { padding: var(--space-3); gap: var(--space-2); }
+      #player-number-display { font-size: 32px; min-height: 36px; }
+      .keypad-grid { gap: var(--space-2); }
+      .keypad-btn { min-height: 40px; font-size: 20px; }
     }
   </style>
 </head>
@@ -317,7 +325,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.24.3';
+const APP_VERSION = '1.24.4';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
