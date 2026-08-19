@@ -31,14 +31,14 @@
     .hz-badge { position: absolute; top: var(--space-3); background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: var(--radius-sm); padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
     #card-a .hz-badge { right: var(--space-3); }
     #card-b .hz-badge { left: var(--space-3); }
-    /* Fixed height (room for exactly 2 lines), not min-height — the card's grid-template-rows is
+    /* Fixed height (room for exactly 4 lines), not min-height — the card's grid-template-rows is
        "auto 1fr", so this row's height directly determines how much of the card the score row
        (1fr, align-self:center) gets. A min-height let a long, wrapped team name grow this row,
        shrinking the score row and visibly pushing the score down/off-center; a fixed height keeps
-       the score vertically centered in the card regardless of whether the name wraps to 1 or 2
-       lines. overflow:hidden caps a name needing more than 2 lines instead of overflowing into
-       the score below it. */
-    .team-name { align-self: start; margin-top: 34px; font-size: var(--font-md); line-height: 1.3; font-weight: 500; text-align: center; word-break: break-word; padding: var(--space-1) var(--space-2); height: 46px; overflow: hidden; }
+       the score vertically centered in the card regardless of how many lines the name wraps to.
+       overflow:hidden caps a name needing more than 4 lines instead of overflowing into the score
+       below it. */
+    .team-name { align-self: start; margin-top: 34px; font-size: var(--font-md); line-height: 1.3; font-weight: 500; text-align: center; word-break: break-word; padding: var(--space-1) var(--space-2); height: 82px; overflow: hidden; }
     .team-score { align-self: center; font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
     @keyframes scorePulse { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
     .team-score.pulse { animation: scorePulse 0.35s ease-out; }
@@ -337,7 +337,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.25.1';
+const APP_VERSION = '1.25.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
