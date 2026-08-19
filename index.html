@@ -344,7 +344,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.27.1';
+const APP_VERSION = '1.27.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -859,6 +859,8 @@ function applyLang() {
     document.getElementById('qr-modal-hint').textContent = t('qrHint');
     document.getElementById('save-btn').textContent = t('save');
     document.getElementById('finish-confirm-text').textContent = t('finishConfirm');
+    document.getElementById('finish-yes').textContent = t('yes');
+    document.getElementById('finish-no').textContent = t('no');
     document.querySelectorAll('.lbl-name').forEach(e => e.textContent = t('nameLabel'));
     document.querySelectorAll('.lbl-color').forEach(e => e.textContent = t('colorLabel'));
     document.getElementById('swap-btn').textContent = t('swapSides');
@@ -889,10 +891,8 @@ function applyLang() {
     if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
     const hbf = document.getElementById('half-btn-fallback');
     if (hbf) hbf.textContent = state.half === 0 ? t('half1') : t('half2');
-    ['a','b'].forEach(t2 => {
-      const mb = document.getElementById('corr-minus-'+t2);
-      if (mb) mb.setAttribute('aria-label', state.singleRevertMode ? t('ariaRevertGoal') : t('ariaMinus'));
-    });
+    // corr-minus-a/b's aria-label is set inside render() itself (not here) so it updates
+    // immediately when toggleSingleRevertMode() flips the mode, not just on a language switch.
     document.getElementById('stop-btn').setAttribute('aria-label', t('ariaClockReset'));
   } catch (e) { console.warn('applyLang failed', e); }
   renderClock();
@@ -1071,6 +1071,10 @@ function render() {
     hz.textContent = `${t('hz')} ${state.halves[identity][0]}`;
     hz.style.color = textColor;
     const mb = document.getElementById('corr-minus-'+slot);
+    // aria-label lives here (not just applyLang()) so it updates immediately when
+    // toggleSingleRevertMode() flips the mode — applyLang() alone would leave the announced
+    // action stale (still "remove goal") until a separate language switch or reload.
+    mb.setAttribute('aria-label', state.singleRevertMode ? t('ariaRevertGoal') : t('ariaMinus'));
     if (state.singleRevertMode) {
       // Revert icon, only visible (not just disabled) for the singleRevertSeconds window after
       // the goal it would undo — hidden rather than disabled the rest of the time so it doesn't
@@ -1197,8 +1201,7 @@ function renderSettings() {
     more.textContent = '+';
     more.setAttribute('aria-label', t('ariaMoreColors'));
     more.setAttribute('aria-pressed', String(moreSelected));
-    more.style.border = moreSelected ? '2.5px solid var(--text)' : '2px solid var(--btn-border)';
-    more.style.boxShadow = moreSelected ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
+    applySwatchSelectedStyle(more, moreSelected);
     more.onclick = () => { openColorModal(t2); };
     el.appendChild(more);
   });
@@ -1224,6 +1227,15 @@ function applyTeamColorAccent(el, color) {
   el.style.boxShadow = `0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border), inset 0 0 0 2px ${color}55`;
 }
 
+// Selected/unselected ring styling shared by anything that looks like a color swatch (the
+// .color-dot class) — createColorSwatchButton() below and the "+"/more-colors button in
+// renderSettings() (which isn't itself a color pick, so doesn't otherwise fit
+// createColorSwatchButton()'s shape, but still needs to show the same selected-state ring).
+function applySwatchSelectedStyle(el, selected) {
+  el.style.border = selected ? '2.5px solid var(--text)' : '2px solid rgba(128,128,128,0.2)';
+  el.style.boxShadow = selected ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
+}
+
 // Shared circular color-swatch button — used by both the Settings preset-color row
 // (renderSettings()) and the full color-picker modal grid (openColorModal()), so their
 // selected/unselected styling and accessibility attributes can't drift apart via two
@@ -1234,8 +1246,7 @@ function createColorSwatchButton(color, selected, onClick) {
   const btn = document.createElement('button');
   btn.className = 'color-dot';
   btn.style.background = color;
-  btn.style.border = selected ? '2.5px solid var(--text)' : '2px solid rgba(128,128,128,0.2)';
-  btn.style.boxShadow = selected ? '0 0 0 2px rgba(128,128,128,0.4)' : 'none';
+  applySwatchSelectedStyle(btn, selected);
   // The hex code alone doesn't tell a screen-reader user which swatch is currently picked —
   // aria-pressed conveys the same selected/not-selected state the border/box-shadow show
   // visually, and t('colorLabel') gives the announcement a word instead of a bare hex code.
