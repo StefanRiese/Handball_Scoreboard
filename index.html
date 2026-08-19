@@ -41,7 +41,7 @@
        flex/grid "center in remaining space" layout means the name's height always pushes the
        score off true-center; this centers it against the card's actual bounds regardless of how
        much room the name above it takes up. */
-    .team-score { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
+    .team-score { position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
     @keyframes scorePulse { 0% { transform: translate(-50%, -50%) scale(1); } 40% { transform: translate(-50%, -50%) scale(1.18); } 100% { transform: translate(-50%, -50%) scale(1); } }
     .team-score.pulse { animation: scorePulse 0.35s ease-out; }
     .minus-btn { position: absolute; bottom: var(--space-3); right: var(--space-3); width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); font-size: 22px; display: flex; align-items: center; justify-content: center; line-height: 1; }
@@ -342,7 +342,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.26.0';
+const APP_VERSION = '1.26.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
