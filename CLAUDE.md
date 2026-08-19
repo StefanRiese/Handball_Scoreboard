@@ -385,6 +385,20 @@ than introducing another one-off px value; a few values that don't cleanly fit t
 14px/18px/20px, mostly button padding tuned against a `min-height`) are still deliberately left as
 literals rather than forced onto the scale and changing visual sizing.
 
+**Font-size tokens**: `--font-md` (14px) is the one harmonized size for general UI text — buttons,
+settings rows, history text, modal titles/labels, badges, etc. (a 2026-08 pass folded what used to
+be a scattered 11–16px range into this one value). Deliberately **not** applied to: the score
+(`.team-score`, `.history-score` — the goal-counter family, kept large by design), the match clock
+(`.clock-start`/`.clock-stop`/`.clock-display`/`.clock-half` — kept intentionally larger than body
+text, these are the primary in-match controls), the player-number keypad
+(`.keypad-btn`/`#player-number-display` — large for fast entry, same reasoning as the clock), icon-
+glyph-only buttons sized against a fixed square/circle (`.minus-btn`, `.del-btn`, `.hz-badge`), and
+text `<input>`s (`.name-input`/`.number-input` and the history-edit-row variants) — inputs need to
+stay at **16px or larger**, or focusing them triggers iOS Safari's automatic zoom-in; don't
+harmonize an input down to `--font-md` even though 14px looks close enough, and don't shrink
+`.name-input`/`.number-input` below 16px for the same reason. If a new UI text element is added,
+default to `var(--font-md)` unless it clearly belongs to one of these exempted families.
+
 **Color tokens**: `--bg`/`--card`/`--btn` form a 3-step light ramp (dark theme: darkest → lightest)
 used for background/card/pressable-surface elevation; `--border`/`--btn-border` are low-opacity
 overlays rather than solid colors so they read correctly against either `--bg` or `--card`.

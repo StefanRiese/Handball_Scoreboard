@@ -14,7 +14,7 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --bg: #0b0c0f; --card: #17191f; --border: rgba(255,255,255,0.09); --text: #eef0f3; --muted: #8d94a1; --btn: #20232b; --btn-border: rgba(255,255,255,0.12); --accent: #2563eb; --success: #22c55e; --danger: #ef4444; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 22px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; }
+    :root { --bg: #0b0c0f; --card: #17191f; --border: rgba(255,255,255,0.09); --text: #eef0f3; --muted: #8d94a1; --btn: #20232b; --btn-border: rgba(255,255,255,0.12); --accent: #2563eb; --success: #22c55e; --danger: #ef4444; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 22px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font-md: 14px; }
     .light { --bg: #f4f5f9; --card: #ffffff; --border: rgba(15,23,42,0.08); --text: #14161b; --muted: #6b7280; --btn: #edeff3; --btn-border: rgba(15,23,42,0.10); }
     html { height: 100%; overflow: hidden; position: fixed; width: 100%; }
     body { height: 100%; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: env(safe-area-inset-top, var(--space-4)) var(--space-3) env(safe-area-inset-bottom, var(--space-6)); display: flex; flex-direction: column; gap: var(--space-4); transition: background 0.3s; }
@@ -23,7 +23,7 @@
     button:disabled { cursor: not-allowed; transform: none; }
     button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
     .tabbar { display: flex; gap: var(--space-1); background: var(--card); border-radius: var(--radius-md); padding: var(--space-1); margin-top: var(--space-2); }
-    .tabbar button { flex: 1; padding: var(--space-3) 0; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; color: var(--muted); min-height: 48px; }
+    .tabbar button { flex: 1; padding: var(--space-3) 0; border-radius: var(--radius-sm); font-size: var(--font-md); font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
     .teams { display: flex; gap: var(--space-3); align-items: stretch; }
     .team-card { position: relative; flex: 1; min-width: 0; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-lg); padding: var(--space-5) 10px; display: grid; grid-template-rows: auto 1fr; justify-items: center; cursor: pointer; min-height: 400px; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
@@ -31,7 +31,7 @@
     .hz-badge { position: absolute; top: var(--space-3); background: var(--btn); border: 0.5px solid var(--btn-border); border-radius: var(--radius-sm); padding: 6px 14px; font-size: 18px; font-weight: 600; white-space: nowrap; }
     #card-a .hz-badge { right: var(--space-3); }
     #card-b .hz-badge { left: var(--space-3); }
-    .team-name { align-self: start; margin-top: 34px; font-size: 16px; font-weight: 500; text-align: center; word-break: break-word; padding: var(--space-1) var(--space-2); min-height: 24px; }
+    .team-name { align-self: start; margin-top: 34px; font-size: var(--font-md); font-weight: 500; text-align: center; word-break: break-word; padding: var(--space-1) var(--space-2); min-height: 24px; }
     .team-score { align-self: center; font-size: 100px; font-weight: 500; line-height: 1; letter-spacing: -2px; }
     @keyframes scorePulse { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
     .team-score.pulse { animation: scorePulse 0.35s ease-out; }
@@ -45,60 +45,60 @@
     .clock-display.running { color: var(--success); }
     .clock-display.done { color: var(--danger); }
     .clock-start, .clock-stop { font-family: Arial, Helvetica, sans-serif; }
-    .clock-half { flex: 0 0 22%; font-size: 12px; line-height: 1.2; white-space: normal; text-align: center; }
+    .clock-half { flex: 0 0 22%; font-size: var(--font-md); line-height: 1.2; white-space: normal; text-align: center; }
     .action-row { display: flex; gap: var(--space-3); margin-top: var(--space-1); }
-    .save-btn { flex: 1; padding: var(--space-4); border-radius: var(--radius-md); font-size: 15px; font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
+    .save-btn { flex: 1; padding: var(--space-4); border-radius: var(--radius-md); font-size: var(--font-md); font-weight: 500; min-height: 54px; display: block; background: var(--btn); border: 0.5px solid var(--btn-border); color: var(--text); transition: background 0.3s, color 0.3s, transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
     .save-btn:active { transform: scale(0.97); }
     .reset-area { text-align: center; }
     .reset-confirm { display: flex; gap: var(--space-3); justify-content: center; align-items: center; }
-    .reset-confirm span { font-size: 13px; color: var(--muted); }
+    .reset-confirm span { font-size: var(--font-md); color: var(--muted); }
     .goals-view { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
     .goals-view-team { margin-bottom: var(--space-3); }
     .goals-view-team:last-child { margin-bottom: 0; }
-    .goals-view-title { font-weight: 600; font-size: 14px; margin-bottom: var(--space-2); }
-    .goals-view-list { color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .goals-view-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .goals-view-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding-bottom: var(--space-1); border-bottom: 0.5px solid var(--border); }
+    .goals-view-title { font-weight: 600; font-size: var(--font-md); margin-bottom: var(--space-2); }
+    .goals-view-list { color: var(--muted); font-size: var(--font-md); line-height: 1.6; }
+    .goals-view-table { width: 100%; border-collapse: collapse; font-size: var(--font-md); }
+    .goals-view-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: var(--font-md); padding-bottom: var(--space-1); border-bottom: 0.5px solid var(--border); }
     .goals-view-table td { padding: var(--space-1) 0; border-bottom: 0.5px solid var(--border); }
     .goals-view-table tr:last-child td { border-bottom: none; }
-    .btn-danger { padding: var(--space-3) 20px; border-radius: var(--radius-sm); background: var(--danger); color: #fff; font-size: 14px; min-height: 48px; }
-    .btn-secondary { padding: var(--space-3) 20px; border-radius: var(--radius-sm); border: 0.5px solid var(--btn-border); background: var(--btn); font-size: 14px; color: var(--text); min-height: 48px; }
-    .btn-primary { padding: var(--space-3) 20px; border-radius: var(--radius-sm); background: var(--accent); color: #fff; font-size: 14px; min-height: 48px; }
+    .btn-danger { padding: var(--space-3) 20px; border-radius: var(--radius-sm); background: var(--danger); color: #fff; font-size: var(--font-md); min-height: 48px; }
+    .btn-secondary { padding: var(--space-3) 20px; border-radius: var(--radius-sm); border: 0.5px solid var(--btn-border); background: var(--btn); font-size: var(--font-md); color: var(--text); min-height: 48px; }
+    .btn-primary { padding: var(--space-3) 20px; border-radius: var(--radius-sm); background: var(--accent); color: #fff; font-size: var(--font-md); min-height: 48px; }
     .settings-teams { display: flex; gap: var(--space-3); align-items: stretch; }
     .settings-teams .settings-section { flex: 1; min-width: 0; }
     .settings-section { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-lg); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
-    .settings-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .settings-title { font-size: var(--font-md); font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .field { display: flex; flex-direction: column; gap: var(--space-2); }
-    .field-label { font-size: 14px; color: var(--muted); }
+    .field-label { font-size: var(--font-md); color: var(--muted); }
     .name-input, .number-input { font-size: 16px; font-weight: 500; border: 0.5px solid var(--btn-border); border-radius: var(--radius-sm); background: var(--btn); outline: none; color: var(--text); padding: var(--space-3) 14px; width: 100%; }
     .number-input-small { width: 60px; flex: none; text-align: center; padding: var(--space-2) var(--space-1); }
     .colors { display: flex; gap: var(--space-2); flex-wrap: wrap; }
     .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
-    .swap-row-btn { padding: 14px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; font-weight: 500; color: var(--text); min-height: 50px; }
+    .swap-row-btn { padding: 14px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: var(--font-md); font-weight: 500; color: var(--text); min-height: 50px; }
     .settings-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-    .settings-row-label { font-size: 15px; color: var(--text); }
-    .toggle-btn { padding: 10px var(--space-4); border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 14px; color: var(--text); min-height: 44px; display: flex; align-items: center; gap: var(--space-2); }
+    .settings-row-label { font-size: var(--font-md); color: var(--text); }
+    .toggle-btn { padding: 10px var(--space-4); border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: var(--font-md); color: var(--text); min-height: 44px; display: flex; align-items: center; gap: var(--space-2); }
     .history { display: flex; flex-direction: column; gap: var(--space-3); }
-    .history-empty { text-align: center; color: var(--muted); font-size: 14px; margin-top: 40px; }
+    .history-empty { text-align: center; color: var(--muted); font-size: var(--font-md); margin-top: 40px; }
     .history-empty .icon { font-size: 40px; margin-bottom: 10px; }
-    .history-empty .hint { font-size: 12px; margin-top: var(--space-2); opacity: 0.75; }
+    .history-empty .hint { font-size: var(--font-md); margin-top: var(--space-2); opacity: 0.75; }
     .history-card { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 0.5px var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
     .history-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); }
-    .history-meta span { font-size: 12px; color: var(--muted); }
+    .history-meta span { font-size: var(--font-md); color: var(--muted); }
     .del-btn { background: none; border: none; color: #555; font-size: 20px; padding: var(--space-1) var(--space-2); min-height: 44px; min-width: 44px; border-radius: var(--radius-sm); }
     .history-names-row { display: flex; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
-    .history-team-name { flex: 1; min-width: 0; font-size: 15px; text-align: center; word-break: break-word; }
+    .history-team-name { flex: 1; min-width: 0; font-size: var(--font-md); text-align: center; word-break: break-word; }
     .history-score { display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 500; margin-bottom: var(--space-2); }
     .history-score-num { flex: 1; }
     .history-score-num.left { text-align: right; }
     .history-score-num.right { text-align: left; }
-    .history-winner { font-size: 13px; color: var(--muted); text-align: center; }
+    .history-winner { font-size: var(--font-md); color: var(--muted); text-align: center; }
     .history-edit-row { display: flex; gap: var(--space-2); margin-bottom: var(--space-2); }
     .history-edit-row .name-input, .history-edit-row .number-input { font-size: 14px; padding: 10px var(--space-3); }
     .history-del-confirm { display: flex; gap: var(--space-2); justify-content: flex-end; align-items: center; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 0.5px solid var(--border); }
-    .history-del-confirm span { font-size: 13px; color: var(--muted); flex: 1; }
-    .history-del-confirm .btn-danger { padding: var(--space-2) var(--space-4); font-size: 13px; min-height: 38px; }
-    .history-del-confirm .btn-secondary { padding: var(--space-2) var(--space-4); font-size: 13px; min-height: 38px; }
+    .history-del-confirm span { font-size: var(--font-md); color: var(--muted); flex: 1; }
+    .history-del-confirm .btn-danger { padding: var(--space-2) var(--space-4); min-height: 38px; }
+    .history-del-confirm .btn-secondary { padding: var(--space-2) var(--space-4); min-height: 38px; }
     #color-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
     #color-modal .box { background:var(--card); border-radius:var(--radius-lg); padding:var(--space-5); width:300px; display:flex; flex-direction:column; gap:var(--space-4); }
     #color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:var(--space-3); }
@@ -123,20 +123,20 @@
 
 <div id="qr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:200; align-items:center; justify-content:center; flex-direction:column; gap:22px;" onclick="closeQrModal()">
   <canvas id="qr-large" style="border-radius:var(--radius-md); cursor:pointer;"></canvas>
-  <div id="qr-modal-hint" style="font-size:14px; color:#ccc; text-align:center; padding:0 24px;">Mit einem anderen Handy scannen, um die App zu öffnen.</div>
+  <div id="qr-modal-hint" style="font-size:var(--font-md); color:#ccc; text-align:center; padding:0 24px;">Mit einem anderen Handy scannen, um die App zu öffnen.</div>
 </div>
 
 <div id="color-modal" onclick="if(event.target===this)cancelColor()">
   <div class="box">
-    <div id="color-modal-title" style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
+    <div id="color-modal-title" style="font-size:var(--font-md); font-weight:500; color:var(--text); text-align:center;">Farbe wählen</div>
     <div id="color-grid"></div>
-    <button id="color-cancel" onclick="cancelColor()" style="padding:14px; border-radius:var(--radius-sm); background:var(--btn); border:0.5px solid var(--btn-border); font-size:15px; color:var(--text);">Abbrechen</button>
+    <button id="color-cancel" onclick="cancelColor()" style="padding:14px; border-radius:var(--radius-sm); background:var(--btn); border:0.5px solid var(--btn-border); font-size:var(--font-md); color:var(--text);">Abbrechen</button>
   </div>
 </div>
 
 <div id="player-modal" onclick="if(event.target===this)skipPlayerNumber()">
   <div class="box" id="player-modal-box">
-    <div id="player-modal-title" style="font-size:16px; font-weight:500; color:var(--text); text-align:center;">Spielernummer eingeben</div>
+    <div id="player-modal-title" style="font-size:var(--font-md); font-weight:500; color:var(--text); text-align:center;">Spielernummer eingeben</div>
     <div id="player-number-display">—</div>
     <div class="keypad-grid">
       <button class="keypad-btn" onclick="pressDigit(1)">1</button>
@@ -152,7 +152,7 @@
       <button class="keypad-btn" onclick="pressDigit(0)">0</button>
       <button class="keypad-btn" id="keypad-confirm-btn" style="background:#2e7d32; color:#fff; border-color:transparent;" aria-label="Bestätigen" onclick="confirmPlayerNumber()">✓</button>
     </div>
-    <button id="player-skip-btn" class="btn-secondary" onclick="skipPlayerNumber()" style="padding:14px; font-size:15px;">Überspringen</button>
+    <button id="player-skip-btn" class="btn-secondary" onclick="skipPlayerNumber()" style="padding:14px;">Überspringen</button>
   </div>
 </div>
 
@@ -260,7 +260,7 @@
     <button class="swap-row-btn" id="share-app-btn" onclick="shareAppWhatsApp()">📤 App per WhatsApp teilen</button>
     <button class="swap-row-btn" id="add-home-btn" onclick="addToHomeScreen()">📲 Zum Home-Bildschirm hinzufügen</button>
     <div id="add-home-instructions" style="display:none; margin-top:-4px; background:var(--btn); border:0.5px solid var(--btn-border); border-radius:var(--radius-md); padding:var(--space-3) 14px;">
-      <div id="add-home-instructions-text" style="font-size:14px; color:var(--text); margin-bottom:10px;"></div>
+      <div id="add-home-instructions-text" style="font-size:var(--font-md); color:var(--text); margin-bottom:10px;"></div>
       <button class="btn-secondary" onclick="dismissAddHomeInstructions()" id="add-home-dismiss-btn" style="display:block; margin:0 auto;">Verstanden</button>
     </div>
     <div id="settings-reset-area" class="reset-area">
@@ -313,7 +313,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.24.0';
+const APP_VERSION = '1.24.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1623,7 +1623,7 @@ function renderHistory() {
     const isEditing = pendingEditId === g.id;
     const isSharing = pendingShareId === g.id;
     const isViewingScorers = pendingScorersId === g.id;
-    const halftimeLine = `<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;">${t('halftime')} ${g.teams[0].halftimeScore} : ${g.teams[1].halftimeScore}</div>`;
+    const halftimeLine = `<div style="font-size:var(--font-md);color:var(--muted);text-align:center;margin-top:4px;">${t('halftime')} ${g.teams[0].halftimeScore} : ${g.teams[1].halftimeScore}</div>`;
     // Only offer the scorers view for games that actually have at least one recorded number —
     // older games and games saved while "track player numbers" was off have none. Shown as a
     // per-player goal tally (how many each player scored), not the sequence they were scored in.
