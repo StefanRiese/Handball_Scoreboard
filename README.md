@@ -50,7 +50,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 ### Teilen
 - Ergebnis eines gespeicherten Spiels per WhatsApp teilen oder als Text in die Zwischenablage kopieren (zum Einfügen in eine beliebige andere App)
 - App selbst per WhatsApp teilen oder als QR-Code zum Scannen mit einem anderen Handy anzeigen
-- WhatsApp-Teilen lässt sich in den Einstellungen deaktivieren (die Kopieren-Option bleibt davon unabhängig immer verfügbar)
+- WhatsApp-Teilen ist immer verfügbar, ganz ohne Einstellung
 
 ### Design
 - Umschaltbares dunkles / helles Theme (Einstellung wird gespeichert)

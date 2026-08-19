@@ -195,7 +195,7 @@ its grid column instead of a fixed size). Route any new color-swatch UI through 
 
 **Reset to default settings**: `DEFAULT_SETTINGS` (a standalone literal, not derived from the
 mutable `state` object) mirrors the *initial* values of `state`'s Settings-tab fields — team
-names/colors, `darkMode`, `lang`, `showClock`, `whatsappEnabled`, `team1OnLeft`,
+names/colors, `darkMode`, `lang`, `showClock`, `team1OnLeft`,
 `autoSwapAtHalftime`, `halfLength`, `trackPlayerNumbers`, `cardAccentEnabled` — and is what
 `confirmResetSettings()` (Settings → "Allgemein"/"General", via `askResetSettings()`'s Yes/No
 confirm) restores. Deliberately excludes `half`/`halves`/`history`/`clockRemaining`/
