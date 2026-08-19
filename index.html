@@ -74,7 +74,7 @@
     /* Settings' own team-name fields specifically, slightly smaller than the shared 16px default
        used elsewhere — a value below 16px on an editable input triggers iOS Safari's
        auto-zoom-on-focus, but that trade-off was requested deliberately here. */
-    #set-name-a, #set-name-b { font-size: 14px; padding: var(--space-4) 14px; }
+    #set-name-a, #set-name-b { font-size: 14px; padding: var(--space-3) 20px; }
     .number-input-small { width: 60px; flex: none; text-align: center; padding: var(--space-2) var(--space-1); }
     .colors { display: flex; gap: var(--space-2); flex-wrap: wrap; }
     .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
@@ -325,7 +325,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.24.5';
+const APP_VERSION = '1.24.6';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
