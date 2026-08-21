@@ -345,7 +345,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.28.0';
+const APP_VERSION = '1.28.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1816,6 +1816,12 @@ function renderHistory() {
     const scorers0 = scorerRows(g.teams[0]);
     const scorers1 = scorerRows(g.teams[1]);
     const hasScorers = scorers0 || scorers1;
+    // A more prominent summary line than the scorers-panel one above — shown directly under the
+    // score/halftime line regardless of whether the 👕 scorers panel is open, since the score
+    // factor is meant to be a headline number, not something buried behind an extra tap.
+    const scoreFactorLine = hasScorers && state.showScoreFactor
+      ? `<div style="font-size:var(--font-md);color:var(--text);text-align:center;margin-top:4px;">${t('scoreFactorLabel')}: ${scoreFactor(g.teams[0]).factor} : ${scoreFactor(g.teams[1]).factor}</div>`
+      : '';
     const scorersBtn = hasScorers
       ? `<button class="del-btn" aria-label="${t('scorersTitle')}" onclick="toggleScorersView(${g.id})">👕</button>`
       : '';
@@ -1886,7 +1892,8 @@ function renderHistory() {
            <span class="history-score-num left" style="color:${readableColor(g.teams[0].color)}">${g.teams[0].score}</span><span style="color:var(--muted); padding:0 8px;">:</span><span class="history-score-num right" style="color:${readableColor(g.teams[1].color)}">${g.teams[1].score}</span>
          </div>
          <div class="history-winner">${escapeHtml(winner(g))}</div>
-         ${halftimeLine}`;
+         ${halftimeLine}
+         ${scoreFactorLine}`;
     return `
     <div class="history-card" style="${isPending ? 'box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 0 0 1.5px #ef444455;' : ''}">
       <div class="history-meta"><span>${g.date} · ${g.time}</span>${entryActions}</div>
