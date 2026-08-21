@@ -345,7 +345,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.28.3';
+const APP_VERSION = '1.28.4';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1820,7 +1820,7 @@ function renderHistory() {
     // score/halftime line regardless of whether the 🥅 scorers panel is open, since the score
     // factor is meant to be a headline number, not something buried behind an extra tap.
     const scoreFactorLine = hasScorers && state.showScoreFactor
-      ? `<div style="font-size:var(--font-md);color:var(--text);text-align:center;margin-top:4px;">${t('scoreFactorLabel')}: ${scoreFactor(g.teams[0]).factor} : ${scoreFactor(g.teams[1]).factor}</div>`
+      ? `<div style="font-size:var(--font-md);color:var(--muted);text-align:center;margin-top:4px;">${t('scoreFactorLabel')}: ${scoreFactor(g.teams[0]).factor} : ${scoreFactor(g.teams[1]).factor}</div>`
       : '';
     // Same 🥅 symbol as the live game view's "show goals" link (goals-link) — both surface the
     // same kind of per-goal scorer detail, so they should read as the same action visually.
