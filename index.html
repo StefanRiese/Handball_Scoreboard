@@ -272,6 +272,7 @@
     <div class="settings-row"><span class="settings-row-label" id="trackplayers-label">Spielernummern erfassen</span><button class="toggle-btn" onclick="toggleTrackPlayerNumbers()" id="trackplayers-btn">An</button></div>
     <div class="settings-row"><span class="settings-row-label" id="singlerevert-label">Einzel-Rückgängig-Modus</span><button class="toggle-btn" onclick="toggleSingleRevertMode()" id="singlerevert-btn">Aus</button></div>
     <div class="settings-row"><span class="settings-row-label" id="revertseconds-label">Zeitfenster (Sekunden)</span><input class="number-input number-input-small" id="set-revertseconds" type="number" min="1" max="300" inputmode="numeric" oninput="setRevertSeconds(this)" onblur="if(this.value.trim()===''){this.value='1';setRevertSeconds(this);}" /></div>
+    <div class="settings-row"><span class="settings-row-label" id="scorefactor-label">Punktefaktor anzeigen</span><button class="toggle-btn" onclick="toggleShowScoreFactor()" id="scorefactor-btn">An</button></div>
   </div>
 
   <div class="settings-section">
@@ -335,8 +336,8 @@ const ALL_COLORS = [
 ];
 
 const I18N = {
-  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', gameFinished:'✅ Spiel beendet', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version', resetSettings:'⚠️ Auf Standardeinstellungen zurücksetzen', reallyResetSettings:'Wirklich alle Einstellungen zurücksetzen?', resetSettingsTitle:'Allgemein', ariaBackspace:'Löschen', ariaConfirmNumber:'Bestätigen', singleRevertModeLabel:'Einzel-Rückgängig-Modus', revertSecondsLabel:'Zeitfenster (Sekunden)', ariaRevertGoal:'Letztes Tor rückgängig machen' },
-  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', gameFinished:'✅ Game finished', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version', resetSettings:'⚠️ Reset to default settings', reallyResetSettings:'Really reset all settings?', resetSettingsTitle:'General', ariaBackspace:'Backspace', ariaConfirmNumber:'Confirm', singleRevertModeLabel:'Single revert mode', revertSecondsLabel:'Time window (seconds)', ariaRevertGoal:'Undo last goal' },
+  de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', gameFinished:'✅ Spiel beendet', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version', resetSettings:'⚠️ Auf Standardeinstellungen zurücksetzen', reallyResetSettings:'Wirklich alle Einstellungen zurücksetzen?', resetSettingsTitle:'Allgemein', ariaBackspace:'Löschen', ariaConfirmNumber:'Bestätigen', singleRevertModeLabel:'Einzel-Rückgängig-Modus', revertSecondsLabel:'Zeitfenster (Sekunden)', ariaRevertGoal:'Letztes Tor rückgängig machen', distinctScorersLabel:'Verschiedene Torschützen', scoreFactorLabel:'Punktefaktor', showScoreFactorLabel:'Punktefaktor anzeigen' },
+  en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', gameFinished:'✅ Game finished', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version', resetSettings:'⚠️ Reset to default settings', reallyResetSettings:'Really reset all settings?', resetSettingsTitle:'General', ariaBackspace:'Backspace', ariaConfirmNumber:'Confirm', singleRevertModeLabel:'Single revert mode', revertSecondsLabel:'Time window (seconds)', ariaRevertGoal:'Undo last goal', distinctScorersLabel:'Distinct scorers', scoreFactorLabel:'Score factor', showScoreFactorLabel:'Show score factor' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
@@ -363,6 +364,7 @@ let state = {
   cardAccentEnabled: true,
   singleRevertMode: false,
   singleRevertSeconds: 30,
+  showScoreFactor: true,
 };
 
 // The Settings-tab preferences confirmResetSettings() restores — kept as its own literal (not
@@ -381,6 +383,7 @@ const DEFAULT_SETTINGS = {
   cardAccentEnabled: true,
   singleRevertMode: false,
   singleRevertSeconds: 30,
+  showScoreFactor: true,
 };
 let colorTarget = null;
 let clockTimer = null;
@@ -448,6 +451,16 @@ function scorerTableRows(tally) {
   if (!tally) return '';
   return tally.numbers.map(n => `<tr><td>#${n}</td><td>${tally.counts[n]}</td></tr>`).join('')
     + (tally.unknown ? `<tr><td>${t('unknownScorer')}</td><td>${tally.unknown}</td></tr>` : '');
+}
+
+// Score factor = number of distinct scorer numbers × the team's final goal count. Reuses
+// scorerTally() so "distinct scorers" always means the same thing as the scorers panel's own
+// row count (excludes goals logged with no number, same as that panel excluding "Unknown" from
+// its own would-be numbers list).
+function scoreFactor(team) {
+  const tally = scorerTally(team);
+  const distinct = tally ? tally.numbers.length : 0;
+  return { distinct, factor: distinct * team.score };
 }
 
 function scorerSummaryText(team) {
@@ -665,6 +678,7 @@ function load() {
       if (typeof p.cardAccentEnabled === 'boolean') state.cardAccentEnabled = p.cardAccentEnabled;
       if (typeof p.singleRevertMode === 'boolean') state.singleRevertMode = p.singleRevertMode;
       if (typeof p.singleRevertSeconds === 'number' && p.singleRevertSeconds >= 1 && p.singleRevertSeconds <= 300) state.singleRevertSeconds = p.singleRevertSeconds;
+      if (typeof p.showScoreFactor === 'boolean') state.showScoreFactor = p.showScoreFactor;
       if (p.scorers && Array.isArray(p.scorers.a) && Array.isArray(p.scorers.b)) state.scorers = p.scorers;
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
@@ -720,6 +734,7 @@ function save() {
       cardAccentEnabled: state.cardAccentEnabled,
       singleRevertMode: state.singleRevertMode,
       singleRevertSeconds: state.singleRevertSeconds,
+      showScoreFactor: state.showScoreFactor,
       scorers: state.scorers,
       halfLength: state.halfLength,
       clockRunning: state.clockRunning,
@@ -793,6 +808,14 @@ function toggleSingleRevertMode() {
   // button cleanly either way.
   if (!state.singleRevertMode) { closeRevertWindow('a'); closeRevertWindow('b'); }
   render();
+  save();
+}
+
+function toggleShowScoreFactor() {
+  state.showScoreFactor = !state.showScoreFactor;
+  document.getElementById('scorefactor-btn').textContent = state.showScoreFactor ? t('on') : t('off');
+  renderGoalsView();
+  renderHistory();
   save();
 }
 
@@ -886,6 +909,8 @@ function applyLang() {
     document.getElementById('singlerevert-label').textContent = t('singleRevertModeLabel');
     document.getElementById('singlerevert-btn').textContent = state.singleRevertMode ? t('on') : t('off');
     document.getElementById('revertseconds-label').textContent = t('revertSecondsLabel');
+    document.getElementById('scorefactor-label').textContent = t('showScoreFactorLabel');
+    document.getElementById('scorefactor-btn').textContent = state.showScoreFactor ? t('on') : t('off');
     document.getElementById('player-skip-btn').textContent = t('skip');
     const hb = document.getElementById('half-btn');
     if (hb) hb.textContent = state.half === 0 ? t('half1') : t('half2');
@@ -1158,9 +1183,16 @@ function renderGoalsView() {
     const body = rows
       ? `<table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>`
       : `<div class="goals-view-list">${t('noGoalsYet')}</div>`;
+    const factorLine = rows && state.showScoreFactor
+      ? (() => {
+          const { distinct, factor } = scoreFactor({ score: total(identity), scorers: state.scorers[identity] });
+          return `<div style="font-size:var(--font-md);color:var(--muted);margin-top:4px;">${t('distinctScorersLabel')}: ${distinct} · ${t('scoreFactorLabel')}: ${factor}</div>`;
+        })()
+      : '';
     return `<div class="goals-view-team">
       <div class="goals-view-title" style="color:${readableColor(s.color)}">${escapeHtml(displayNameFor(identity))}</div>
       ${body}
+      ${factorLine}
     </div>`;
   };
   document.getElementById('goals-view-area').innerHTML = teamBlock('a') + teamBlock('b');
@@ -1732,6 +1764,7 @@ function confirmResetSettings() {
   state.cardAccentEnabled = DEFAULT_SETTINGS.cardAccentEnabled;
   state.singleRevertMode = DEFAULT_SETTINGS.singleRevertMode;
   state.singleRevertSeconds = DEFAULT_SETTINGS.singleRevertSeconds;
+  state.showScoreFactor = DEFAULT_SETTINGS.showScoreFactor;
   closeRevertWindow('a');
   closeRevertWindow('b');
   if (wasUntouched) state.clockRemaining = state.halfLength * 60;
@@ -1786,12 +1819,20 @@ function renderHistory() {
     const scorersBtn = hasScorers
       ? `<button class="del-btn" aria-label="${t('scorersTitle')}" onclick="toggleScorersView(${g.id})">👕</button>`
       : '';
-    const scorerBlock = (team, rows) => rows
-      ? `<div class="goals-view-team">
+    const scorerBlock = (team, rows) => {
+      if (!rows) return '';
+      const factorLine = state.showScoreFactor
+        ? (() => {
+            const { distinct, factor } = scoreFactor(team);
+            return `<div style="font-size:var(--font-md);color:var(--muted);margin-top:4px;">${t('distinctScorersLabel')}: ${distinct} · ${t('scoreFactorLabel')}: ${factor}</div>`;
+          })()
+        : '';
+      return `<div class="goals-view-team">
            <div class="goals-view-title" style="color:${readableColor(team.color)}">${escapeHtml(team.name)}</div>
            <table class="goals-view-table"><thead><tr><th>${t('playerNumberCol')}</th><th>${t('goalsCol')}</th></tr></thead><tbody>${rows}</tbody></table>
-         </div>`
-      : '';
+           ${factorLine}
+         </div>`;
+    };
     const scorersSection = isViewingScorers
       ? `<div class="goals-view" style="margin-top:10px;">
            ${scorerBlock(g.teams[0], scorers0)}
