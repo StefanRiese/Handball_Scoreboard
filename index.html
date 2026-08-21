@@ -345,7 +345,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.28.1';
+const APP_VERSION = '1.28.2';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1864,7 +1864,7 @@ function renderHistory() {
            ${scorersBtn}
            <button class="del-btn" aria-label="${t('sharingTitle')}" onclick="askShareGame(${g.id})">📤</button>
            <button class="del-btn" aria-label="${t('ariaEditEntry')}" onclick="askEditGame(${g.id})">✏️</button>
-           <button class="del-btn" aria-label="${t('ariaDeleteEntry')}" onclick="askDeleteGame(${g.id})">✕</button>
+           <button class="del-btn" aria-label="${t('ariaDeleteEntry')}" onclick="askDeleteGame(${g.id})">🗑️</button>
          </div>`
       : `<span></span>`;
     const body = isEditing
