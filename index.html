@@ -345,7 +345,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.28.4';
+const APP_VERSION = '1.28.5';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -1993,16 +1993,31 @@ async function checkForUpdates() {
 }
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
-// Only (re-)register while online. A plain content/version bump no longer touches the SW script
-// (see the static-CACHE-name note below), so most opens are a no-op registration; it's only when
-// this install/activate/fetch logic itself changes that the browser fetches the shell/manifest/
-// icon fresh over the network on the next open, and only then can a first post-deploy offline
-// open hit a failed install that retries on every subsequent online open until it succeeds,
-// potentially triggering the OS's own connectivity prompt each time. Skipping registration
-// entirely while offline leaves the already-active (already fully cached) SW in control with
-// zero network attempts — registration resumes normally next time the app opens with a
-// connection.
-if ('serviceWorker' in navigator && navigator.onLine) {
+// (Re-)register while online, OR while offline if there's no SW controlling this page at all —
+// not a blanket navigator.onLine gate. The plain online-only gate this replaced was there to avoid
+// a confirmed on-device issue: a plain content/version bump doesn't touch the SW script (see the
+// static-CACHE-name note below), so most opens are a no-op registration, but when this
+// install/activate/fetch logic itself changes, the browser does try to install the new version on
+// the next open, which requires fetching the shell/manifest/icon over the network — if that first
+// post-deploy open happens to be offline, the install fails and, if register() ran on every open
+// regardless of connectivity, would retry on every subsequent offline open too, each attempt able
+// to trigger the OS's own "no internet, switch to Wi-Fi?" prompt (confirmed on-device). But that
+// scenario always has an old SW still installed and controlling (`navigator.serviceWorker
+// .controller` is non-null) — a deploy doesn't remove the previous worker, it just makes a new one
+// available to install alongside it — so gating on "no controller" instead of "online" still skips
+// registration in exactly that case, with the exact same zero-network-attempt safety.
+// What a blanket online-only gate got wrong: iOS evicts an installed PWA's SW *registration*
+// entirely after a full force-quit (see the update-flow note on this below) — if the very next
+// relaunch happens to be offline, `navigator.serviceWorker.controller` is null (no worker at all,
+// not an old one), and skipping registration in that state means it never even attempts to
+// recover, so *every* subsequent offline reopen keeps hitting the network directly (uncontrolled)
+// and surfacing the browser's own connection-error page instead of ever getting a chance to serve
+// the cached shell — a self-perpetuating failure that used to only clear once the device came back
+// online. Registering a `blob:`-sourced SW needs no network by itself; only an actual `install`
+// (a genuinely new/changed worker) fetches the shell over the network, which is exactly the one
+// case (no existing controller) worth risking a single failed-install attempt for, to have any
+// chance at all of recovering while still offline.
+if ('serviceWorker' in navigator && (navigator.onLine || !navigator.serviceWorker.controller)) {
   // Cache the directory URL, the explicit index.html URL (a home-screen relaunch can request
   // either depending on platform/iOS version), and manifest.json/the icon — iOS can refetch
   // those for the installed app's own metadata independent of any page JS, and any uncached

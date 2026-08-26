@@ -294,8 +294,9 @@ particular fix.
    throwing inside that `.then()` when `!r.ok`, turning it into a proper rejection the existing
    check already handles.
 
-**SW registration only happens while online** (`navigator.onLine` guard around the whole
-`if ('serviceWorker' in navigator)` block). The SW's `CACHE` name is a static string
+**SW registration happens while online, OR while offline if there's no SW controlling this page at
+all** (`navigator.onLine || !navigator.serviceWorker.controller`, not a blanket `navigator.onLine`
+guard — see below for why the blanket version was wrong). The SW's `CACHE` name is a static string
 (`'handball-shell'`) rather than `handball-v${APP_VERSION}` — it used to be version-derived, but
 that made the SW script itself byte-differ on every content-only version bump, which made the
 browser silently install (and, on the app's next open, activate — deleting the old cache) the new
@@ -307,14 +308,30 @@ explicitly writing into the existing cache. The SW script (and therefore a real 
 changes when this install/activate/fetch logic itself is edited, or `shellUrls` changes — in that
 case the browser does still try to install the new version on every open, which requires fetching
 the shell/manifest/icon fresh over the network: if that first post-deploy open happens to be
-offline, the install fails and retries on *every* subsequent open until it finally succeeds
-online, and each failed attempt can trigger the OS's own "no internet, switch to Wi-Fi/turn off
-airplane mode?" prompt (confirmed on-device — this is a different symptom from the "can't open
-the page" error above, but the same underlying cause: a network attempt that shouldn't have
-happened). Skipping registration entirely while offline leaves whatever SW is already active
-(already fully cached from a prior online visit) in control with zero network attempts. Don't
-reintroduce a version-derived cache name — that's exactly the silent-auto-update behavior this was
-changed to avoid.
+offline, the install fails, and if register() ran on every open regardless of connectivity, could
+retry on every subsequent offline open too, each attempt able to trigger the OS's own "no internet,
+switch to Wi-Fi/turn off airplane mode?" prompt (confirmed on-device — this is a different symptom
+from the "can't open the page" error above, but the same underlying cause: a network attempt that
+shouldn't have happened).
+
+The original fix for that was a blanket `navigator.onLine` guard around registration entirely —
+but that was too broad, and caused a *different*, worse bug (reported 2026-08-26): iOS evicts an
+installed PWA's SW *registration* entirely after a full force-quit (see the update-flow note
+below), and if the very next relaunch happens to be offline, a blanket online-only gate means the
+app never even attempts to re-register — `navigator.serviceWorker.controller` is null (no worker
+at all, not an old one still running), so *every* subsequent offline reopen keeps hitting the
+network directly (uncontrolled) and surfacing the browser's own connection-error page instead of
+ever getting a chance to serve the cached shell, a self-perpetuating failure that only cleared once
+the device came back online. The fix: gate on "is there already a controller", not "are we online".
+A post-deploy scenario always still has an *old* SW installed and controlling (a new deploy doesn't
+remove the previous worker, it just makes a new version available to install alongside it) — so
+gating on "no controller" instead of "online" still skips registration in that exact case, with the
+same zero-network-attempt safety the original fix wanted. It's only in the genuine eviction case
+(no controller at all) that this now risks a single failed-install attempt while offline — a
+reasonable trade for having any chance at all of recovering without waiting for connectivity.
+Registering a `blob:`-sourced SW needs no network by itself; only an actual `install` (a genuinely
+new/changed worker) fetches the shell over the network. Don't reintroduce a version-derived cache
+name — that's exactly the silent-auto-update behavior the static name was changed to avoid.
 `navigator.wakeLock` keeps the screen on during a match. There were two real, confirmed root
 causes of it failing on iOS standalone home-screen installs (found via WebKit's own bug tracker,
 not guessed):
