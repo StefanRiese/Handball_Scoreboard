@@ -10,8 +10,11 @@ README.md for the full user-facing feature list and deployment instructions (Git
 
 ## Repository layout
 
-- `index.html` — the entire application (HTML + CSS + JS in one file). This is the only file you
-  will normally need to edit.
+- `index.html` — the entire application (HTML + CSS + JS in one file). This is the file you will
+  normally need to edit most.
+- `sw.js` — the Service Worker (see "Offline/installability" below), registered by `index.html` via
+  `navigator.serviceWorker.register(swScope + 'sw.js', { scope: swScope })`. A plain static file,
+  not a build artifact — edit it directly like any other file in this repo.
 - `manifest.json` — Web App Manifest for Android/Chrome install prompts.
 - `handball_icon.png` — home-screen / manifest icon (512×512, matching `manifest.json`).
 - `README.md` — user-facing feature docs (German).
@@ -27,10 +30,13 @@ There is no build, lint, or test tooling in this repo (no `package.json`). To de
 - **Preview locally**: serve the directory over HTTP (not `file://`, since the Service Worker and
   Wake Lock API require a proper origin) — e.g. `python3 -m http.server 8000` — then open
   `http://localhost:8000/index.html`.
-- **Sanity-check JS syntax** (no linter configured): extract and parse the inline `<script>` block,
-  e.g. `node -e "new Function(require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])"`.
-- **Deploy**: push `index.html`, `handball_icon.png`, and `manifest.json` to the repo root on
-  `main`; GitHub Pages serves it directly (Settings → Pages → Deploy from branch → `main` / root).
+- **Sanity-check JS syntax** (no linter configured): `sw.js` is a plain `.js` file, so
+  `node -e "new Function(require('fs').readFileSync('sw.js','utf8'))"` parses it directly — no
+  extraction needed, unlike `index.html`, which embeds its JS inside an HTML `<script>` block:
+  extract and parse that instead, e.g.
+  `node -e "new Function(require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])"`.
+- **Deploy**: push `index.html`, `sw.js`, `handball_icon.png`, and `manifest.json` to the repo root
+  on `main`; GitHub Pages serves it directly (Settings → Pages → Deploy from branch → `main` / root).
 
 ## Architecture
 
@@ -240,15 +246,21 @@ from later. The General section also absorbed what used to be a separate "Inform
 (version, developer, QR code, share-app, add-to-home-screen) — don't re-split it without being
 asked, that merge was intentional.
 
-**Offline/installability**: a Service Worker is registered from an inline `Blob` URL (no separate
-`sw.js` file) that caches the app shell for offline use; `manifest.json` + the
-`apple-mobile-web-app-*` meta tags cover Android/Chrome and iOS install prompts respectively.
-Two things caused offline home-screen launches to fail outright with the *browser's own*
-"can't open the page" error (not anything this app could catch) — meaning the request never
-reached the SW's fetch handler at all, or reached it but missed the cache lookup:
-1. `.register()` had no explicit `scope` — for a `blob:` URL script the default scope is
-   ambiguous, and if it doesn't end up covering the actual launch URL, the SW never intercepts
-   that navigation. Fixed by passing `{ scope: swScope }` explicitly.
+**Offline/installability**: the Service Worker lives in `sw.js`, a real static file alongside
+`index.html` (registered via `navigator.serviceWorker.register(swScope + 'sw.js', { scope: swScope
+})`), not generated as a minified template-literal string and registered from an inline `Blob` URL
+the way it used to be — extracting it into its own file was a deliberate later change purely to
+make it independently readable/diffable, not a change in the behavior described below. It caches
+the app shell for offline use; `manifest.json` + the `apple-mobile-web-app-*` meta tags cover
+Android/Chrome and iOS install prompts respectively. Two things caused offline home-screen launches
+to fail outright with the *browser's own* "can't open the page" error (not anything this app could
+catch) — meaning the request never reached the SW's fetch handler at all, or reached it but missed
+the cache lookup:
+1. `.register()` had no explicit `scope` — for a `blob:` URL script the default scope was
+   ambiguous, and if it didn't end up covering the actual launch URL, the SW never intercepted
+   that navigation. Fixed by passing `{ scope: swScope }` explicitly — still true now that `sw.js`
+   is a real same-origin file (whose default scope is unambiguous, its own directory), kept
+   explicit anyway so this keeps working correctly if `sw.js` is ever moved to a different path.
 2. The install handler only cached one URL variant (the directory, `swScope`) — but a
    home-screen relaunch can request the explicit `index.html` URL instead depending on
    platform/iOS version, missing the cache-first lookup on an exact-URL mismatch. Also, neither
@@ -308,15 +320,20 @@ particular fix.
    isn't cached yet either. A non-navigation sub-resource request still just fails outright on the
    same rejection.
 
-   `OFFLINE_HTML`'s own inline `<script>` (for reload-on-reconnect) has its closing tag written
-   with an escaped slash, not the literal closing-tag text — the outer HTML parser (for this very
-   file) scans for that literal substring with no idea about JS string syntax, and an unescaped one
-   anywhere in this file's own `<script>` block (including inside a comment) would prematurely
-   terminate the real page script partway through, silently discarding everything after it as
-   inert text. This is a confirmed, real, ship-breaking bug (hit for real in the sibling games
-   launcher, from a comment that spelled out the literal text while explaining the escape) — don't
-   paste the literal 9-character closing-script-tag text anywhere in this file, escaped or not,
-   including in comments describing this paragraph.
+   `OFFLINE_HTML` now lives in `sw.js` (a plain `.js` file, since the Service Worker was later
+   extracted out of `index.html`'s own inline `<script>` block into its own file — see the top of
+   this section), so its inline `<script>...</script>` snippet no longer needs the escaped-slash
+   closing-tag trick this paragraph used to describe: nothing scans `sw.js` with an HTML parser.
+   That trick is still required for anything embedding HTML-with-a-`<script>`-tag as a string
+   literal directly inside `index.html` itself — the outer HTML parser (for that file) scans for
+   the literal closing-script-tag substring with no idea about JS string syntax, and an unescaped
+   one anywhere in `index.html`'s own `<script>` block (including inside a comment) would
+   prematurely terminate the real page script partway through, silently discarding everything
+   after it as inert text. This is a confirmed, real, ship-breaking bug (hit for real in the
+   sibling games launcher, from a comment that spelled out the literal text while explaining the
+   escape, and again in *this* file's own comment while extracting `sw.js` — caught and reworded
+   before shipping) — don't paste the literal 9-character closing-script-tag text anywhere in
+   `index.html`, escaped or not, including in comments describing this paragraph.
 
 **SW registration happens while online, OR while offline if there's no SW controlling this page at
 all** (`navigator.onLine || !navigator.serviceWorker.controller`, not a blanket `navigator.onLine`
@@ -353,8 +370,9 @@ gating on "no controller" instead of "online" still skips registration in that e
 same zero-network-attempt safety the original fix wanted. It's only in the genuine eviction case
 (no controller at all) that this now risks a single failed-install attempt while offline — a
 reasonable trade for having any chance at all of recovering without waiting for connectivity.
-Registering a `blob:`-sourced SW needs no network by itself; only an actual `install` (a genuinely
-new/changed worker) fetches the shell over the network. Don't reintroduce a version-derived cache
+Registering a same-origin script URL needs no network by itself; only an actual `install` (a
+genuinely new/changed worker — i.e. after `sw.js`'s own bytes change) fetches the shell over the
+network. Don't reintroduce a version-derived cache
 name — that's exactly the silent-auto-update behavior the static name was changed to avoid.
 `navigator.wakeLock` keeps the screen on during a match. There were two real, confirmed root
 causes of it failing on iOS standalone home-screen installs (found via WebKit's own bug tracker,
