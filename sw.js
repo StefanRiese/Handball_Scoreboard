@@ -65,17 +65,46 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(r => r || fetch(event.request).catch(async () => {
-      if (event.request.mode !== 'navigate') throw new Error('offline');
-      const shellFallback = (await caches.match(SHELL[1])) || (await caches.match(SHELL[0]));
-      if (shellFallback) return shellFallback;
-      return new Response(OFFLINE_HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
-    }))
-  );
+  event.respondWith((async () => {
+    const isNavigate = event.request.mode === 'navigate';
+    // Navigations get an explicit Cache-Control: no-store on the response itself (not just the
+    // outgoing request), applied uniformly whether the response came from Cache Storage or a live
+    // fetch — a no-store *request* alone still let iOS Safari's back-forward cache (bfcache)
+    // restore a fully-rendered snapshot of a page from a previous visit without ever hitting this
+    // fetch handler again on the next visit, which would silently hide a since-refreshed cache
+    // entry (e.g. after checkForUpdates() writes a newer page into Cache Storage) behind a stale
+    // bfcache snapshot. A no-store response header opts the page out of bfcache eligibility so
+    // every visit re-runs this handler and sees the current cache state.
+    const stampNoStore = res => {
+      if (!isNavigate) return res;
+      const headers = new Headers(res.headers);
+      headers.set('Cache-Control', 'no-store');
+      return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+    };
+    const cached = await caches.match(event.request);
+    if (cached) return stampNoStore(cached);
+    try {
+      // cache:'no-store' bypasses the *browser's* own HTTP cache, which otherwise still silently
+      // re-serves stale bytes regardless of any SW-level caching.
+      const res = await fetch(event.request, { cache: 'no-store' });
+      return stampNoStore(res);
+    } catch (err) {
+      if (isNavigate) {
+        const shellFallback = (await caches.match(SHELL[1])) || (await caches.match(SHELL[0]));
+        if (shellFallback) return stampNoStore(shellFallback);
+        return new Response(OFFLINE_HTML, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' },
+        });
+      }
+      throw err;
+    }
+  })());
 });

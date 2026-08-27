@@ -335,6 +335,35 @@ particular fix.
    before shipping) — don't paste the literal 9-character closing-script-tag text anywhere in
    `index.html`, escaped or not, including in comments describing this paragraph.
 
+6. Three further fixes were back-ported 2026-08-27 from the sibling PWA-games launcher's `sw.js`,
+   which had independently picked up the same issues first:
+   - **bfcache serving a stale cache-refresh behind the SW's back**: a `Cache-Control: no-store`
+     *request* option alone still let iOS Safari's back-forward cache restore a fully-rendered
+     snapshot of a previous visit without ever re-entering this fetch handler on the next visit —
+     silently hiding a since-refreshed Cache Storage entry (e.g. right after `checkForUpdates()`
+     writes a newer page into the cache) behind a stale bfcache snapshot instead. Fixed by
+     `stampNoStore()`, which sets `Cache-Control: no-store` on the *response* itself for every
+     navigation — whether that response came from Cache Storage or a live fetch — so the page
+     opts out of bfcache eligibility and every visit re-runs this handler and sees current cache
+     state.
+   - **Browser HTTP cache still able to serve stale bytes on the network-fallback path**: the
+     fetch handler's live-network fallback (for a request not in Cache Storage) didn't set
+     `cache: 'no-store'` on the `fetch()` call, so the *browser's* own HTTP cache (not Cache
+     Storage, not the SW) could still silently re-serve stale bytes for it. Fixed by adding
+     `{ cache: 'no-store' }` to that fetch, mirroring what `checkForUpdates()` already does for
+     its own version-check fetch (see below) for the same reason.
+   - **New SW version not controlling already-open tabs after activate**: `activate` cleared old
+     caches but never called `self.clients.claim()`, so a freshly-installed SW only took control
+     of *new* navigations, not tabs that were already open when it activated — those kept being
+     served by the previous (or no) controller until their next full reload. Fixed by chaining
+     `self.clients.claim()` after the cache cleanup in `activate`.
+
+   Deliberately *not* back-ported: the games launcher's `deriveGameAssetUrls()`/`SHARED_ASSETS`
+   mechanism, which regex-extracts every game's URL out of its own `index.html` GAMES array to
+   cache each game page best-effort alongside the shell. That only makes sense for a launcher with
+   multiple sub-pages to discover — this app is a single page, so `SHELL` alone is already
+   everything there is to cache.
+
 **SW registration happens while online, OR while offline if there's no SW controlling this page at
 all** (`navigator.onLine || !navigator.serviceWorker.controller`, not a blanket `navigator.onLine`
 guard — see below for why the blanket version was wrong). The SW's `CACHE` name is a static string
