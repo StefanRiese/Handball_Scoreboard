@@ -107,8 +107,7 @@ inverse — also answers the reverse ("which slot currently shows this identity"
 game-view DOM node. `swapTeams()` only ever flips this one flag; it does not move any team data.
 `saveGame()` always reads `state.a`/`state.b` directly for the same reason — history naturally
 lists Team 1 first with no extra logic needed. Don't reintroduce data-swapping in
-`swapTeams()`/`swapTeamsData()` — that was the prior design and was deliberately replaced with
-this flag-only approach.
+`swapTeams()`/`swapTeamsData()` instead of the flag-only approach.
 
 The settings screen's team sections (`set-section-a`/`set-section-b` and everything inside them)
 are physical slots too, same as the game view — `set-section-a` is always the left column. This
@@ -131,9 +130,8 @@ settings view needs to reflect the flip immediately, not just on next tab switch
 where each `teamN` is `{ name, score, color, halftimeScore, scorers }`. `halftimeScore` and
 `scorers` live per-team (not in a separate top-level object) so every consumer — `renderHistory()`,
 `gameShareText()`, JSON export (`exportHistory()`, which just serializes `state.history` as-is) —
-reads from one place. There is deliberately no migration path for the pre-existing older shape
-(a separate top-level `ht: {a,b}`, and no `scorers` at all) since the app has no real users yet;
-don't add back a migration in `load()` without checking whether that's still true. `exportHistory()`
+reads from one place. There is no migration path for older/legacy history shapes; the app has no
+real users yet, so don't add one without checking whether that's still true. `exportHistory()`
 defers its `URL.revokeObjectURL()` by 1s after `a.click()` rather than calling it synchronously —
 older iOS Safari can still be asynchronously reading the blob to hand off to the download/share
 sheet at that point, and revoking immediately risked an empty or truncated exported file.
@@ -242,326 +240,154 @@ confirm) restores. Deliberately excludes `half`/`halves`/`history`/`clockRemaini
 already have their own separate "Reset game"/"Clear history" actions; don't fold them into this
 one. Keep `DEFAULT_SETTINGS` in sync by hand whenever `state`'s own initial literal changes — there
 is no single source of truth between them since `state` mutates at runtime and can't be read back
-from later. The General section also absorbed what used to be a separate "Information" section
-(version, developer, QR code, share-app, add-to-home-screen) — don't re-split it without being
-asked, that merge was intentional.
+from later. The General section also absorbed the old separate "Information" section (version,
+developer, QR code, share-app, add-to-home-screen) — don't re-split it without being asked.
 
 **Offline/installability**: the Service Worker lives in `sw.js`, a real static file alongside
-`index.html` (registered via `navigator.serviceWorker.register(swScope + 'sw.js', { scope: swScope
-})`), not generated as a minified template-literal string and registered from an inline `Blob` URL
-the way it used to be — extracting it into its own file was a deliberate later change purely to
-make it independently readable/diffable, not a change in the behavior described below. It caches
-the app shell for offline use; `manifest.json` + the `apple-mobile-web-app-*` meta tags cover
-Android/Chrome and iOS install prompts respectively. Two things caused offline home-screen launches
-to fail outright with the *browser's own* "can't open the page" error (not anything this app could
-catch) — meaning the request never reached the SW's fetch handler at all, or reached it but missed
-the cache lookup:
-1. `.register()` had no explicit `scope` — for a `blob:` URL script the default scope was
-   ambiguous, and if it didn't end up covering the actual launch URL, the SW never intercepted
-   that navigation. Fixed by passing `{ scope: swScope }` explicitly — still true now that `sw.js`
-   is a real same-origin file (whose default scope is unambiguous, its own directory), kept
-   explicit anyway so this keeps working correctly if `sw.js` is ever moved to a different path.
-2. The install handler only cached one URL variant (the directory, `swScope`) — but a
-   home-screen relaunch can request the explicit `index.html` URL instead depending on
-   platform/iOS version, missing the cache-first lookup on an exact-URL mismatch. Also, neither
-   `manifest.json` nor the icon were cached at all — iOS can refetch those for the installed
-   app's own metadata independent of any page JS, and that same uncached-miss failure while
-   offline is what actually surfaces as the OS's own "no internet, switch to Wi-Fi?" prompt
-   (confirmed on-device), not just the browser's "can't open the page" error. Fixed by caching
-   `swScope`, `swScope + 'index.html'`, `manifest.json`, and the icon, and by having
-   `applyUpdate()` write the fetched HTML response under the shell URL variants too (not just
-   `location.href`) so a manual update doesn't leave the URL a cold launch actually looks up
-   stale even though the update "succeeded".
-This self-heals on the next connected app open — no manual site-data reset needed for this
-particular fix.
+`index.html`, registered via `navigator.serviceWorker.register(swScope + 'sw.js', { scope: swScope
+})`. `swScope` is `sw.js`'s own directory — this file sits alongside `index.html` at the app root,
+so no explicit scope needs to be passed in beyond what's already there. It caches the app shell for
+offline use; `manifest.json` + the `apple-mobile-web-app-*` meta tags cover Android/Chrome and iOS
+install prompts respectively.
 
-3. The install handler originally cached all four shell URLs via a single `cache.addAll(...)`
-   call, which is all-or-nothing — if even one of the four fetches failed (a momentary network
-   blip, a slow host, anything transient), the *entire* install failed and left nothing cached at
-   all, not even the URLs that did succeed. Since install (via `register()`) retries on every
-   online app open, this was intermittent rather than a hard failure — but it meant an offline
-   open could hit zero cached shell despite install having "run" one or more times before. Fixed
-   by caching each shell URL independently (`Promise.allSettled(SHELL.map(u =>
-   fetch(u).then(r => c.put(u, r))))`) so one flaky request can't wipe out the others. Don't go
-   back to `cache.addAll()` for this reason.
+`CACHE` (`'handball-shell'`) is a static string, not version-derived — content updates never touch
+the SW script itself, they go through `checkForUpdates()`/`applyUpdate()` writing straight into the
+existing cache (see below). The SW script only changes, and therefore only reinstalls, when this
+install/activate/fetch logic itself is edited or `SHELL` changes. Don't make `CACHE` derive from
+`APP_VERSION` — that causes the SW to silently reinstall on every content-only version bump,
+independent of the update flow.
 
-   `Promise.allSettled` alone introduced a new failure mode, though: it never rejects, so if
-   *every* fetch failed (e.g. a completely dead connection right after the `navigator.onLine`
-   check passed), the install would be reported to the browser as successful with an empty cache
-   — and since nothing about the byte-identical SW script would ever differ on a later attempt,
-   the browser would never retry install again, permanently leaving that install with zero offline
-   coverage. Fixed by checking the settled results for `SHELL[0]`/`SHELL[1]` (the two page-shell
-   URL variants) and throwing if fetching *both* failed, so the browser retries the whole install
-   on the next online `register()` call; a manifest/icon-only failure is left non-fatal since the
-   app still works offline without those two. Verified with a standalone simulation of the
-   install logic (mocked `fetch`/cache) covering total failure, partial failure, and no failure —
-   see git history around this note if that harness is needed again.
+`SHELL` is `[SCOPE, SCOPE + 'index.html', SCOPE + 'manifest.json', SCOPE + 'handball_icon.png']` —
+both the directory and the explicit `index.html` URL are cached (a home-screen relaunch can request
+either depending on platform), plus the manifest and icon (iOS can refetch those independently of
+any page JS for the installed app's own metadata).
 
-4. Each shell fetch's `.then(r=>c.put(u,r))` originally cached whatever `fetch()` resolved to
-   without checking `r.ok` — `fetch()` only rejects on a network failure, not an HTTP error
-   status, so a transient 404/500 for a shell URL (e.g. during a GitHub Pages deploy race) would
-   resolve successfully and get cached as if it were the real file, with `Promise.allSettled`
-   reporting it as fulfilled — bypassing the `SHELL[0]`/`SHELL[1]` rejection check above entirely
-   and leaving the app permanently offline-serving a cached error page with no retry. Fixed by
-   throwing inside that `.then()` when `!r.ok`, turning it into a proper rejection the existing
-   check already handles.
+- **`install`**: caches each `SHELL` URL independently via `Promise.allSettled` (not
+  `cache.addAll()`, which is all-or-nothing) so one flaky fetch can't wipe out the others. Each
+  fetch throws on `!r.ok` so a transient HTTP error doesn't get cached as if it were the real file.
+  Install only fails (rejecting so the browser retries on the next online `register()`) if fetching
+  **both** `SHELL[0]` and `SHELL[1]` — the two page-shell URL variants — failed; a manifest/icon-only
+  failure is left non-fatal since the app still works offline without those two.
+- **`activate`**: deletes every cache except the current `CACHE`, then calls `self.clients.claim()`
+  so a freshly-activated SW takes control of already-open tabs immediately instead of waiting for
+  their next reload.
+- **`fetch`**: cache-first (`caches.match(event.request)`). A cache miss falls through to a live
+  network fetch with `{ cache: 'no-store' }` (bypasses the *browser's* own HTTP cache, not just
+  Cache Storage). Every navigation response — cached or freshly fetched — gets `Cache-Control:
+  no-store` stamped onto it via `stampNoStore()` before being returned, which opts the page out of
+  bfcache eligibility; without this, iOS Safari's back-forward cache can restore a stale
+  full-page snapshot without ever re-entering this fetch handler, hiding a since-refreshed Cache
+  Storage entry (e.g. right after `checkForUpdates()` writes a newer page into the cache). If the
+  network fetch throws (genuinely offline, nothing cached) and the request is a navigation, it
+  falls back to the cached shell itself (`SHELL[1]` then `SHELL[0]`, always populated since those
+  are the two entries `install()` fails hard on) — fully functional, lets the user get back into
+  the app — and only as a last resort to `OFFLINE_HTML`, a small self-contained bilingual (DE/EN)
+  branded page embedded directly in the SW script, for the rare case where even the shell isn't
+  cached yet either. A non-navigation sub-resource request just fails outright on the same
+  rejection — a fallback page only makes sense for something the user is actually looking at.
 
-5. The fetch handler's `r || fetch(e.request)` fallback had no offline handling at all — a
-   navigation with nothing in Cache Storage and no network just surfaced the browser's own generic
-   connection-error page. Following the
-   [web.dev "offline fallback page" pattern](https://web.dev/articles/offline-fallback-page) (same
-   fix applied to the sibling PWA-games launcher first), the fetch is now wrapped in
-   `.catch(async () => {...})`: for a navigation, it falls back to the cached shell itself first
-   (`caches.match(SHELL[1])`/`SHELL[0]`, always available since those are the two entries
-   `install()` fails hard on) — fully functional, lets the user get back into the app — and only
-   falls back further to `OFFLINE_HTML`, a small self-contained bilingual DE/EN branded page
-   embedded directly in the SW script (no Cache Storage entry or network fetch needed for it,
-   since it's just a string already present in the worker), for the rare case where even the shell
-   isn't cached yet either. A non-navigation sub-resource request still just fails outright on the
-   same rejection.
+  `OFFLINE_HTML` is bilingual DE/EN together rather than picking one language, since the Service
+  Worker has no access to the page's own localStorage-stored language preference.
 
-   `OFFLINE_HTML` now lives in `sw.js` (a plain `.js` file, since the Service Worker was later
-   extracted out of `index.html`'s own inline `<script>` block into its own file — see the top of
-   this section), so its inline `<script>...</script>` snippet no longer needs the escaped-slash
-   closing-tag trick this paragraph used to describe: nothing scans `sw.js` with an HTML parser.
-   That trick is still required for anything embedding HTML-with-a-`<script>`-tag as a string
-   literal directly inside `index.html` itself — the outer HTML parser (for that file) scans for
-   the literal closing-script-tag substring with no idea about JS string syntax, and an unescaped
-   one anywhere in `index.html`'s own `<script>` block (including inside a comment) would
-   prematurely terminate the real page script partway through, silently discarding everything
-   after it as inert text. This is a confirmed, real, ship-breaking bug (hit for real in the
-   sibling games launcher, from a comment that spelled out the literal text while explaining the
-   escape, and again in *this* file's own comment while extracting `sw.js` — caught and reworded
-   before shipping) — don't paste the literal 9-character closing-script-tag text anywhere in
-   `index.html`, escaped or not, including in comments describing this paragraph.
+**SW registration** happens whenever `navigator.onLine || !navigator.serviceWorker.controller` —
+i.e. skip only when offline AND an existing SW is already controlling the page (nothing to gain,
+and registering a same-origin script URL while offline can trigger a failed install attempt).
+Gating on "no controller" rather than a blanket online-only check matters because iOS can evict an
+installed PWA's SW registration entirely after a full force-quit; if the very next relaunch happens
+to be offline, this still gives the app a chance to re-register and recover instead of being stuck
+uncontrolled until connectivity returns.
 
-6. Three further fixes were back-ported 2026-08-27 from the sibling PWA-games launcher's `sw.js`,
-   which had independently picked up the same issues first:
-   - **bfcache serving a stale cache-refresh behind the SW's back**: a `Cache-Control: no-store`
-     *request* option alone still let iOS Safari's back-forward cache restore a fully-rendered
-     snapshot of a previous visit without ever re-entering this fetch handler on the next visit —
-     silently hiding a since-refreshed Cache Storage entry (e.g. right after `checkForUpdates()`
-     writes a newer page into the cache) behind a stale bfcache snapshot instead. Fixed by
-     `stampNoStore()`, which sets `Cache-Control: no-store` on the *response* itself for every
-     navigation — whether that response came from Cache Storage or a live fetch — so the page
-     opts out of bfcache eligibility and every visit re-runs this handler and sees current cache
-     state.
-   - **Browser HTTP cache still able to serve stale bytes on the network-fallback path**: the
-     fetch handler's live-network fallback (for a request not in Cache Storage) didn't set
-     `cache: 'no-store'` on the `fetch()` call, so the *browser's* own HTTP cache (not Cache
-     Storage, not the SW) could still silently re-serve stale bytes for it. Fixed by adding
-     `{ cache: 'no-store' }` to that fetch, mirroring what `checkForUpdates()` already does for
-     its own version-check fetch (see below) for the same reason.
-   - **New SW version not controlling already-open tabs after activate**: `activate` cleared old
-     caches but never called `self.clients.claim()`, so a freshly-installed SW only took control
-     of *new* navigations, not tabs that were already open when it activated — those kept being
-     served by the previous (or no) controller until their next full reload. Fixed by chaining
-     `self.clients.claim()` after the cache cleanup in `activate`.
-
-   Deliberately *not* back-ported: the games launcher's `deriveGameAssetUrls()`/`SHARED_ASSETS`
-   mechanism, which regex-extracts every game's URL out of its own `index.html` GAMES array to
-   cache each game page best-effort alongside the shell. That only makes sense for a launcher with
-   multiple sub-pages to discover — this app is a single page, so `SHELL` alone is already
-   everything there is to cache.
-
-**SW registration happens while online, OR while offline if there's no SW controlling this page at
-all** (`navigator.onLine || !navigator.serviceWorker.controller`, not a blanket `navigator.onLine`
-guard — see below for why the blanket version was wrong). The SW's `CACHE` name is a static string
-(`'handball-shell'`) rather than `handball-v${APP_VERSION}` — it used to be version-derived, but
-that made the SW script itself byte-differ on every content-only version bump, which made the
-browser silently install (and, on the app's next open, activate — deleting the old cache) the new
-SW version in the background regardless of the manual "🔄 Check for updates" button, i.e. an
-unwanted auto-update the user never asked for. With a static name, a plain `APP_VERSION` bump for
-a content/feature change no longer touches the SW script at all, so `.register()` finds it
-byte-identical and does nothing — content updates only ever happen through `applyUpdate()`
-explicitly writing into the existing cache. The SW script (and therefore a real reinstall) only
-changes when this install/activate/fetch logic itself is edited, or `shellUrls` changes — in that
-case the browser does still try to install the new version on every open, which requires fetching
-the shell/manifest/icon fresh over the network: if that first post-deploy open happens to be
-offline, the install fails, and if register() ran on every open regardless of connectivity, could
-retry on every subsequent offline open too, each attempt able to trigger the OS's own "no internet,
-switch to Wi-Fi/turn off airplane mode?" prompt (confirmed on-device — this is a different symptom
-from the "can't open the page" error above, but the same underlying cause: a network attempt that
-shouldn't have happened).
-
-The original fix for that was a blanket `navigator.onLine` guard around registration entirely —
-but that was too broad, and caused a *different*, worse bug (reported 2026-08-26): iOS evicts an
-installed PWA's SW *registration* entirely after a full force-quit (see the update-flow note
-below), and if the very next relaunch happens to be offline, a blanket online-only gate means the
-app never even attempts to re-register — `navigator.serviceWorker.controller` is null (no worker
-at all, not an old one still running), so *every* subsequent offline reopen keeps hitting the
-network directly (uncontrolled) and surfacing the browser's own connection-error page instead of
-ever getting a chance to serve the cached shell, a self-perpetuating failure that only cleared once
-the device came back online. The fix: gate on "is there already a controller", not "are we online".
-A post-deploy scenario always still has an *old* SW installed and controlling (a new deploy doesn't
-remove the previous worker, it just makes a new version available to install alongside it) — so
-gating on "no controller" instead of "online" still skips registration in that exact case, with the
-same zero-network-attempt safety the original fix wanted. It's only in the genuine eviction case
-(no controller at all) that this now risks a single failed-install attempt while offline — a
-reasonable trade for having any chance at all of recovering without waiting for connectivity.
-Registering a same-origin script URL needs no network by itself; only an actual `install` (a
-genuinely new/changed worker — i.e. after `sw.js`'s own bytes change) fetches the shell over the
-network. Don't reintroduce a version-derived cache
-name — that's exactly the silent-auto-update behavior the static name was changed to avoid.
-`navigator.wakeLock` keeps the screen on during a match. There were two real, confirmed root
-causes of it failing on iOS standalone home-screen installs (found via WebKit's own bug tracker,
-not guessed):
-
-1. [webkit.org/b/254545](https://bugs.webkit.org/show_bug.cgi?id=254545) — the Wake Lock API
-   flat-out didn't work in Home Screen Web Apps at all (only in full Safari tabs) until Apple
-   fixed it in **iOS/iPadOS 18.4** (shipped March 2025). No app-side code can work around this on
-   older iOS — the only fix is updating iOS.
-2. Even on 18.4+, WebKit requires **transient user activation** (a direct tap) to grant
-   `navigator.wakeLock.request()` — a `visibilitychange` handler or a `setInterval` callback does
-   NOT count as one, so a reacquisition attempt from either can silently fail with
-   `NotAllowedError` (swallowed by our `catch {}`). This is why a periodic-retry-only approach is
-   observed to help ("increases the time the display is awake") without being fully reliable.
-
-Given #2, the retry strategy is layered, cheapest/least-reliable first: `visibilitychange` (async,
-likely rejected per #2 but harmless to try), a 20s `setInterval` safety net (same caveat), and a
-`touchstart` listener that reacquires whenever `!wl` — since this app has near-constant real taps
-(scoring a goal, any button), and a genuine tap *does* carry transient activation, that listener
-is the one actually likely to succeed. This is always on, unconditionally, with no settings
-toggle — a keep-awake feature that can be silently switched off defeats its own purpose, so don't
-reintroduce a `wakeLockEnabled`-style toggle for it without being asked. `requestWakeLock()` guards
-against re-entry (`wakeLockRequesting`) since all three triggers can fire while an earlier
-`navigator.wakeLock.request()` is still pending (`wl` stays `null` until it resolves) — without the
-guard, two concurrent in-flight requests can each resolve to a distinct lock sentinel, and
-whichever one assigns `wl` last orphans the other's own `release` listener, which can later null
-`wl` even though the real lock is still held. A muted-video-loop
-fallback was tried and removed (commit reverting "Add keep-awake video fallback") after on-device
-testing showed it did not prevent the OS auto-lock; NoSleep.js's own source only uses that trick
-for pre-Wake-Lock-API browsers and relies on native Wake Lock
-alone wherever it's available, which is why it was abandoned here too — don't re-add a
-video/canvas/audio keep-awake hack without new evidence it actually helps.
-
-**Update flow — automatic, silent, on every online app open**: `init()` calls `checkForUpdates()`
-whenever `navigator.onLine`, with no button and no confirmation banner — this is the *second*
-design for this flow. The first design (manual-only, a "🔄 Check for updates" button in Settings)
-was deliberately built after an even earlier automatic-check design was reverted at the user's
-request; that manual design was itself later reverted back to automatic-on-open at the user's
-explicit request (2026-08-14), after discovering that iOS evicts an installed PWA's Service Worker
-registration when it's fully force-quit (a behavior also reported in
-[GoogleChrome/workbox#1494](https://github.com/GoogleChrome/workbox/issues/1494)) — the next
-relaunch's first navigation goes uncontrolled straight to the network and picks
-up whatever's live on the host regardless of any in-app "check for updates" button, so the manual
-gate was already being silently bypassed on iOS at exactly the moment (a fresh relaunch) it mattered
-most. Given updates were arriving unrequested anyway on that platform, the manual button added
-UI/i18n surface without actually preventing anything. **If asked to make this manual-only again,
-that's a deliberate reversal of an explicit, dated decision — confirm with the user first**, the
-same way the previous manual design asked to be confirmed before undoing.
-
-`init()` also calls `navigator.storage.persist()` (feature-detected, result ignored either way) as
-a mitigation attempt for the same SW-eviction root cause — requesting the origin be exempted from
-storage eviction under pressure. This is **not a real fix**: Safari's support for the Storage API's
-persistence request is inconsistent, and the actual eviction behavior found for standalone-PWA
-Service Workers is a separate platform quirk this call doesn't address. It's harmless to request
-regardless, which is the only reason it's there — don't remove it expecting it solved anything, and
-don't expand it into a bigger "storage management" feature on the assumption it's load-bearing.
-
-`checkForUpdates()` fetches the live file with a cache-busting query string
-(`?_check=${Date.now()}`) AND `{cache: 'no-store'}`. Both are required, for two different layers:
-`{cache: 'no-store'}` only bypasses the browser's own HTTP cache (needed since a `Cache-Control`
-header from the host, e.g. GitHub Pages' `max-age=600`, would otherwise let the browser silently
-reuse a stale response) — it does nothing about our Service Worker, whose fetch handler is
-cache-first for every request regardless of the caller's `cache` option. Without the query-string
-cache-bust, the SW would just re-serve whatever's already in Cache Storage (i.e. the
-currently-running version) and the check would compare the running version against itself,
-silently never detecting a real update. The query string exists purely to miss the SW's
-`caches.match(e.request)` lookup so its own `r || fetch(e.request)` fallback actually reaches the
-network — don't "simplify" this back to a plain `fetch(location.href, {cache:'no-store'})`, it
-looks equivalent but reintroduces exactly this bug. Checks `res.ok` before parsing — `fetch()` only
-rejects on a network failure, not on an HTTP error status, so without this check a transient
-404/500 from the host would fall through with a non-matching body and `remoteVersion` would end up
-`null`, silently doing nothing either way; the check just makes "nothing to do" explicit instead of
-accidental. It regex-extracts the response's embedded `APP_VERSION`, and only proceeds if that
-differs from the running version — then writes the already-fetched response directly into every
+**Update flow**: `init()` calls `checkForUpdates()` unconditionally on every online app open — no
+manual button, no confirmation banner. It fetches the live `index.html` with a cache-busting query
+string (`?_check=${Date.now()}`) **and** `{ cache: 'no-store' }` — both are required: `no-store`
+only bypasses the browser's HTTP cache, while the query string is what makes the request miss the
+SW's own `caches.match()` lookup so it actually reaches the network instead of comparing the
+running version against itself. Checks `res.ok` before parsing (a transient HTTP error must not be
+treated as "no update"), regex-extracts the response's embedded `APP_VERSION`, and only proceeds if
+it differs from the running version — then writes the already-fetched response directly into every
 existing Cache Storage entry across every shell URL variant (`location.href`, `swScope`,
-`swScope + 'index.html'`) and reloads immediately, with no user-facing confirmation step. Any
-network/offline failure is swallowed silently (`catch` does nothing) — the app just keeps running
-the current cached version and tries again on the next online open. Bump `APP_VERSION` (semver:
-`MAJOR.MINOR.PATCH`) on every deploy you want this to detect — it's what the regex compares and
-what changes the embedded SW script's bytes (so a subsequent normal page load still eventually
-installs the new SW's `install`/`activate` lifecycle, e.g. to prune old-versioned caches).
+`swScope + 'index.html'`) and reloads immediately. Any network/offline failure is swallowed
+silently — the app keeps running the current cached version and retries on the next online open.
+Bump `APP_VERSION` (semver `MAJOR.MINOR.PATCH`) on every deploy you want this to detect.
 
-Earlier iteration note: a simpler version of the manual button (before it was removed entirely)
-just called `location.reload()` unconditionally on failure, which surfaced the browser's own "page
-not available" error when offline (no cached fallback could satisfy the reload) — this design
-avoids that by only ever reloading after a successful fetch+cache-write, and doing nothing at all
-on failure.
+`init()` also calls `navigator.storage.persist()` (feature-detected, result ignored) as a
+best-effort mitigation against the SW-eviction behavior above — Safari's support for this is
+inconsistent and it does not reliably prevent eviction, but it's harmless to request regardless.
 
-**iOS home-screen quirk (historical, from the manual-button era)**: a standalone ("Add to Home
-Screen") PWA on iOS did not reliably run the same update-check code on a cold app-switcher
-relaunch as it did in a regular Safari tab. This is now moot for the update flow itself, since
-`checkForUpdates()` runs unconditionally from `init()` on every open rather than from a button a
-user could fail to reach — but the underlying platform behavior (a fresh standalone relaunch not
-reliably running the same JS path as a backgrounded/foregrounded instance) may still be relevant
-to other init-time logic on iOS.
+**Wake Lock**: `navigator.wakeLock` keeps the screen on during a match. On iOS this requires
+**18.4+** ([webkit.org/b/254545](https://bugs.webkit.org/show_bug.cgi?id=254545) — the API didn't
+work in Home Screen Web Apps at all before that). Even on 18.4+, WebKit requires **transient user
+activation** (a direct tap) to grant `navigator.wakeLock.request()` — a `visibilitychange` handler
+or `setInterval` callback does not count and can silently fail with `NotAllowedError` (swallowed by
+`catch {}`). The retry strategy is layered, cheapest/least-reliable first: `visibilitychange`
+(likely rejected per the activation requirement, harmless to try anyway), a 20s `setInterval`
+safety net (same caveat), and a `touchstart` listener that reacquires whenever `!wl` — the one most
+likely to succeed, since this app has near-constant real taps during a match and a genuine tap does
+carry transient activation. This is always on, unconditionally, with no settings toggle — don't
+add one. `requestWakeLock()` guards against re-entry (`wakeLockRequesting`) since all three
+triggers can fire while an earlier `request()` is still pending — without the guard, two concurrent
+in-flight requests can each resolve to a distinct lock sentinel, and whichever assigns `wl` last
+orphans the other's `release` listener. Don't add a muted-video/canvas/audio keep-awake fallback —
+tried before, confirmed on-device not to prevent the OS auto-lock.
 
-**Design tokens**: corner radii and spacing are CSS custom properties on `:root` —
-`--radius-sm/md/lg` (12/16/22px) and `--space-1..6` (4/8/12/16/24/32px — `--space-6` added
-alongside a 2026-08 color/spacing pass that also folded several stray `10px`/`6px` literals into
-the scale). New `border-radius`/`gap`/`padding`/`margin` values should reuse one of these rather
-than introducing another one-off px value; a few values that don't cleanly fit the scale (e.g.
-14px/18px/20px, mostly button padding tuned against a `min-height`) are still deliberately left as
-literals rather than forced onto the scale and changing visual sizing.
+## Design tokens
 
-**Font-size tokens**: `--font-md` (14px) is the one harmonized size for general UI text — buttons,
-settings rows, history text, modal titles/labels, badges, etc. (a 2026-08 pass folded what used to
-be a scattered 11–16px range into this one value). Deliberately **not** applied to: the score
-(`.team-score`, `.history-score` — the goal-counter family, kept large by design), the match clock
-(`.clock-start`/`.clock-stop`/`.clock-display`/`.clock-half` — kept intentionally larger than body
-text, these are the primary in-match controls), the player-number keypad
-(`.keypad-btn`/`#player-number-display` — large for fast entry, same reasoning as the clock), icon-
+**Spacing/radius**: `--radius-sm/md/lg` (12/16/22px) and `--space-1..6` (4/8/12/16/24/32px) are CSS
+custom properties on `:root`. New `border-radius`/`gap`/`padding`/`margin` values should reuse one
+of these rather than introducing another one-off px value; a few values that don't cleanly fit the
+scale (e.g. 14px/18px/20px, mostly button padding tuned against a `min-height`) are deliberately
+left as literals rather than forced onto the scale.
+
+**Font size**: `--font-md` (14px) is the one harmonized size for general UI text — buttons,
+settings rows, history text, modal titles/labels, badges, etc. Deliberately **not** applied to: the
+score (`.team-score`, `.history-score` — kept large by design), the match clock
+(`.clock-start`/`.clock-stop`/`.clock-display`/`.clock-half` — intentionally larger than body text),
+the player-number keypad (`.keypad-btn`/`#player-number-display` — large for fast entry), icon-
 glyph-only buttons sized against a fixed square/circle (`.minus-btn`, `.del-btn`, `.hz-badge`), and
-text `<input>`s (`.name-input`/`.number-input` and the history-edit-row variants) — inputs need to
-stay at **16px or larger**, or focusing them triggers iOS Safari's automatic zoom-in; don't
-harmonize an input down to `--font-md` even though 14px looks close enough, and don't shrink
-`.name-input`/`.number-input` below 16px for the same reason. If a new UI text element is added,
-default to `var(--font-md)` unless it clearly belongs to one of these exempted families.
+text `<input>`s (`.name-input`/`.number-input` and history-edit-row variants) — inputs must stay at
+**16px or larger**, or focusing them triggers iOS Safari's automatic zoom-in. If a new UI text
+element is added, default to `var(--font-md)` unless it clearly belongs to one of these exempted
+families.
 
-**Color tokens**: `--bg`/`--card`/`--btn` form a 3-step light ramp (dark theme: darkest → lightest)
-used for background/card/pressable-surface elevation; `--border`/`--btn-border` are low-opacity
-overlays rather than solid colors so they read correctly against either `--bg` or `--card`.
-`--accent` (blue, primary actions), `--success` (green, e.g. the running-clock color and the
-finish-and-save confirmation flash), and `--danger` (red, destructive actions/buttons and the
-finish-of-time clock color) are semantic tokens shared by both themes — introduced so `.btn-primary`/`.btn-danger`/`.clock-display.running`/`.clock-display.done` reference one place instead
-of repeating hex literals. These are deliberately **separate** from `PRESETS`/`ALL_COLORS` (the
+**Color**: `--bg`/`--card`/`--btn` form a 3-step light ramp (dark theme: darkest → lightest) used
+for background/card/pressable-surface elevation; `--border`/`--btn-border` are low-opacity overlays
+rather than solid colors so they read correctly against either `--bg` or `--card`. `--accent`
+(blue, primary actions), `--success` (green — running-clock color, finish-and-save confirmation
+flash), and `--danger` (red — destructive actions, finish-of-time clock color) are semantic tokens
+shared by both themes. These are deliberately **separate** from `PRESETS`/`ALL_COLORS` (the
 user-facing team-color palette) and from `state.a.color`/`state.b.color`'s hardcoded defaults —
-don't wire those to the semantic tokens, since a user's chosen/default team color and the app's own
-UI chrome color are unrelated concepts that happen to sometimes share a similar hue. Two
-call sites intentionally use a literal green instead of `var(--success)`: the player-number
-keypad's ✓ button (`#2e7d32`) and the save-flash's dark background (`#123821`) — `--success`
-(`#22c55e`) is tuned to read well *as text/an indicator color*, and white text directly on top of
-it fails contrast; those two sites need a darker green fill instead, so keep them as literals
-rather than "simplifying" to `var(--success)`.
+don't wire those to the semantic tokens, since a user's chosen team color and the app's own UI
+chrome color are unrelated concepts that happen to sometimes share a hue. Two call sites
+intentionally use a literal green instead of `var(--success)`: the player-number keypad's ✓ button
+(`#2e7d32`) and the save-flash's dark background (`#123821`) — `--success` (`#22c55e`) is tuned to
+read well as text/an indicator color, and white text directly on top of it fails contrast; keep
+these two as literals rather than "simplifying" to `var(--success)`.
+
 `state.cardAccentEnabled` (Settings → Darstellung/Appearance, default on) gates the radial-gradient
 team-color accent that `render()` applies to `card-a`/`card-b`'s `background` — when off it falls
-back to plain `var(--card)`. `.team-score.pulse` (a `scorePulse` keyframe) is toggled in `render()`
+back to plain `var(--card)`. `.team-score.pulse` (`scorePulse` keyframe) is toggled in `render()`
 based on `lastRenderedScore[identity]` — each **identity's own** last-rendered score, tracked
-separately from the physical slot — not on whether the slot's displayed text changed. That
-distinction matters because `swapTeams()` makes the same slot show a different identity's score
-without any goal happening; comparing the slot's own prior text would've pulsed on every swap.
-`lastRenderedScore` is reset to `{a:null, b:null}` in `resetGame()`/`saveGame()` so the score
-dropping back to 0 isn't itself treated as a "changed" score and pulsed.
+separately from the physical slot, since `swapTeams()` makes the same slot show a different
+identity's score without any goal happening. `lastRenderedScore` is reset to `{a:null, b:null}` in
+`resetGame()`/`saveGame()` so the score dropping back to 0 isn't itself treated as a "changed" score
+and pulsed.
+
 `:focus-visible` styling is one global rule (`button, input, [tabindex]`) — don't add
-element-specific `:focus-visible` rules again (there used to be a `.color-dot`-only one).
+element-specific `:focus-visible` rules.
+
+## Touch/mobile behavior
 
 **Touch-only target**: this app is used one-handed on a phone touchscreen during a live match —
-optimize for tap targets, haptic feedback (`navigator.vibrate`), and portrait/landscape layout,
-not keyboard or mouse interaction.
+optimize for tap targets, haptic feedback (`navigator.vibrate`), and portrait/landscape layout, not
+keyboard or mouse interaction.
 
-**Pinch-zoom prevention**: blocked via `gesturestart`/`gesturechange` `preventDefault()` calls
-(Safari-specific events) plus a `document`-level `touchmove` listener that calls `preventDefault()`
-when `e.touches.length > 1` (the cross-browser fallback, since not every mobile browser fires the
-gesture events). `document.body` also has its own `touchmove` listener that calls
-`stopPropagation()` on single-touch moves, to keep them from bubbling up to `document`/`window`
-and triggering iOS's rubber-band overscroll on the outer `fixed`-positioned `html`/`body` — but
-since `body` sits between the touch target and `document` in the bubble phase, it fires *first*,
-so unconditionally calling `stopPropagation()` there also silently swallowed the document-level
-listener's multi-touch check on any platform without gesture-event support (e.g. Android Chrome),
-leaving pinch-zoom unblocked. Fixed by handling the multi-touch case directly in `body`'s own
-listener (`preventDefault()` and `return` before ever reaching `stopPropagation()`) rather than
-relying on it bubbling to `document`. If touching either listener again, keep in mind they're not
-independent — verify pinch-zoom is still blocked on a platform without `gesturestart` support, not
-just on Safari.
+**Pinch-zoom prevention**: blocked via `gesturestart`/`gesturechange` `preventDefault()` (Safari-
+specific events) plus a `document`-level `touchmove` listener that calls `preventDefault()` when
+`e.touches.length > 1` (cross-browser fallback for platforms without gesture events, e.g. Android
+Chrome). `document.body` has its own `touchmove` listener that calls `stopPropagation()` on
+single-touch moves, to keep them from bubbling up and triggering iOS's rubber-band overscroll on
+the outer `fixed`-positioned `html`/`body` — it handles the multi-touch case directly first
+(`preventDefault()` + `return` before reaching `stopPropagation()`), since `body`'s listener fires
+before `document`'s in the bubble phase and would otherwise swallow the multi-touch check on any
+platform without gesture-event support. If touching either listener again, verify pinch-zoom is
+still blocked on a platform without `gesturestart` support, not just on Safari.
