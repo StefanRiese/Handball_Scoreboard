@@ -294,6 +294,30 @@ particular fix.
    throwing inside that `.then()` when `!r.ok`, turning it into a proper rejection the existing
    check already handles.
 
+5. The fetch handler's `r || fetch(e.request)` fallback had no offline handling at all — a
+   navigation with nothing in Cache Storage and no network just surfaced the browser's own generic
+   connection-error page. Following the
+   [web.dev "offline fallback page" pattern](https://web.dev/articles/offline-fallback-page) (same
+   fix applied to the sibling PWA-games launcher first), the fetch is now wrapped in
+   `.catch(async () => {...})`: for a navigation, it falls back to the cached shell itself first
+   (`caches.match(SHELL[1])`/`SHELL[0]`, always available since those are the two entries
+   `install()` fails hard on) — fully functional, lets the user get back into the app — and only
+   falls back further to `OFFLINE_HTML`, a small self-contained bilingual DE/EN branded page
+   embedded directly in the SW script (no Cache Storage entry or network fetch needed for it,
+   since it's just a string already present in the worker), for the rare case where even the shell
+   isn't cached yet either. A non-navigation sub-resource request still just fails outright on the
+   same rejection.
+
+   `OFFLINE_HTML`'s own inline `<script>` (for reload-on-reconnect) has its closing tag written
+   with an escaped slash, not the literal closing-tag text — the outer HTML parser (for this very
+   file) scans for that literal substring with no idea about JS string syntax, and an unescaped one
+   anywhere in this file's own `<script>` block (including inside a comment) would prematurely
+   terminate the real page script partway through, silently discarding everything after it as
+   inert text. This is a confirmed, real, ship-breaking bug (hit for real in the sibling games
+   launcher, from a comment that spelled out the literal text while explaining the escape) — don't
+   paste the literal 9-character closing-script-tag text anywhere in this file, escaped or not,
+   including in comments describing this paragraph.
+
 **SW registration happens while online, OR while offline if there's no SW controlling this page at
 all** (`navigator.onLine || !navigator.serviceWorker.controller`, not a blanket `navigator.onLine`
 guard — see below for why the blanket version was wrong). The SW's `CACHE` name is a static string

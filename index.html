@@ -345,7 +345,7 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.28.5';
+const APP_VERSION = '1.28.6';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -2045,12 +2045,34 @@ if ('serviceWorker' in navigator && (navigator.onLine || !navigator.serviceWorke
   // install on the next online register() call; a manifest/icon-only failure is not fatal since
   // the app still works offline without those.
   const shellUrls = JSON.stringify([swScope, swScope + 'index.html', swScope + 'manifest.json', swScope + 'handball_icon.png']);
+  // Shown for a navigation that's neither in Cache Storage nor reachable over the network —
+  // replaces the browser's own generic connection-error page with something on-brand that at
+  // least offers a retry, following the "offline fallback page" pattern from
+  // https://web.dev/articles/offline-fallback-page (same fix just applied to the sibling
+  // PWA-games launcher). This is only the last-resort fallback — the fetch handler below tries
+  // the cached shell itself first, since that's always cached (SHELL[0]/SHELL[1], the two entries
+  // install() fails hard on) and is fully functional, unlike this static page. No Cache Storage
+  // entry or network fetch is needed for this one either — it's a plain string already embedded
+  // in the SW's own script. IMPORTANT: this string contains an inline script tag for the "retry
+  // on reconnect" behavior — its closing tag is deliberately written with an escaped slash
+  // (backslash before the forward slash), NOT the literal closing-script-tag text, because the
+  // *outer* HTML parser (for this very file) scans for that literal substring to find where a
+  // script tag ends, with no idea about JS string syntax — not even inside a comment, which is
+  // why this note itself avoids spelling it out literally. An unescaped closing tag here would
+  // prematurely terminate the actual page's own script block partway through, silently discarding
+  // everything after it as inert text (confirmed as a real, ship-breaking bug in the sibling games
+  // launcher — don't unescape this, and don't paste the literal 9-character closing-script-tag
+  // text into any comment in this file either).
+  const offlineFallbackHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Offline</title><style>body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0b0c0f;color:#eef0f3;font-family:-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;padding:24px;box-sizing:border-box;}.icon{font-size:48px;}h1{font-size:18px;margin:0;font-weight:600;}p{margin:0;color:#8d94a1;font-size:14px;}button{margin-top:8px;padding:12px 28px;border-radius:10px;background:#2563eb;color:#fff;border:0;font-size:15px;font-weight:600;}button:active{filter:brightness(0.85);}</style></head><body><div class="icon">🤾</div><h1>Keine Internetverbindung<br/>No internet connection</h1><p>Diese Seite ist offline noch nicht verfügbar.<br/>This page isn’t available offline yet.</p><button onclick="location.reload()">Erneut versuchen / Try again</button><script>window.addEventListener(\'online\', () => location.reload());<\/script></body></html>';
   // fetch(u) only rejects on a network failure, not an HTTP error status — without checking r.ok
   // before c.put(), a transient 404/500 for a shell URL (e.g. during a deploy race) would resolve
   // successfully and get cached as if it were the real file, with no retry, since the surrounding
   // Promise.allSettled/rs[0]/rs[1] check below only looks at *rejection*. Throwing on a non-ok
   // response turns that case into a proper rejection so it's caught by that same existing check.
-  const sw = `const CACHE='handball-shell';const SHELL=${shellUrls};self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>fetch(u).then(r=>{if(!r.ok)throw new Error('bad status');return c.put(u,r);})))).then(rs=>{if(rs[0].status==='rejected'&&rs[1].status==='rejected')throw new Error('shell cache install failed');})));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  // The fetch handler's offline fallback (for a navigation with nothing cached and no network)
+  // mirrors the games launcher: try the cached shell first, then this static page as the very
+  // last resort.
+  const sw = `const CACHE='handball-shell';const SHELL=${shellUrls};const OFFLINE_HTML=${JSON.stringify(offlineFallbackHtml)};self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>fetch(u).then(r=>{if(!r.ok)throw new Error('bad status');return c.put(u,r);})))).then(rs=>{if(rs[0].status==='rejected'&&rs[1].status==='rejected')throw new Error('shell cache install failed');})));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(async()=>{if(e.request.mode!=='navigate')throw new Error('offline');const shellFallback=(await caches.match(SHELL[1]))||(await caches.match(SHELL[0]));if(shellFallback)return shellFallback;return new Response(OFFLINE_HTML,{status:200,headers:{'Content-Type':'text/html'}});}))));`;
   const blob = new Blob([sw], { type: 'application/javascript' });
   // Explicit scope — for a blob: URL script the default scope is ambiguous, and if it doesn't
   // end up covering the actual launch URL, the SW never intercepts that navigation at all.
