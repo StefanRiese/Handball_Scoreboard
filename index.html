@@ -1595,6 +1595,10 @@ function resetGame() {
   lastRenderedScore = { a: null, b: null };
   closeRevertWindow('a');
   closeRevertWindow('b');
+  // setHalf() swaps sides on every half change when autoSwapAtHalftime is on, so an in-progress
+  // swap (from having reached half 1) must be undone here too — otherwise resetting back to half
+  // 0 leaves the teams on the swapped-at-halftime sides instead of their original ones.
+  if (state.half !== 0 && state.autoSwapAtHalftime) swapTeamsData();
   state.half = 0;
   stopClock();
   state.clockRemaining = state.halfLength * 60;
