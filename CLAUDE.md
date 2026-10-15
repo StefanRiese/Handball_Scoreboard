@@ -84,18 +84,20 @@ current theme's card background before using a color as *text* — swatches/dots
 picked color. Any new UI that renders a team color as text should go through `readableColor()`,
 not `state[t2].color` directly.
 
-**Confirm-before-destructive-action pattern**: reset game, delete one history entry, clear all
-history, and reset all settings to default (`confirmResetSettings()`, Settings → the merged
+**Confirm-before-destructive-action pattern**: reset game, reset clock (↻), delete one history
+entry, clear all history, and reset all settings to default (`confirmResetSettings()`, Settings → the merged
 "Allgemein"/"General" section) each use the same link → Yes/No toggle pattern. Reset game and
 reset settings use direct `style.display` toggles on sibling `<div>`s (no `pending*` variable);
 delete/clear-all history use a `pending*` module-level variable instead since multiple history
 entries share one confirm area and need to know *which* entry/whether "all". Follow whichever
 sub-pattern fits (single fixed action → direct toggle; one-of-many entries → `pending*` id) rather
-than `confirm()` dialogs or immediate deletion. The reset-game confirmation (`reset-confirm-area`)
-and the finish-game confirmation (`finish-confirm-area`) live in the same game view and are
-mutually exclusive — `askResetGame()`/`askFinish()` each close the other's confirmation first — and
-`showView()` closes both when navigating away from the Game tab, the same way Settings/History
-already clear their own pending confirmations on tab switch.
+than `confirm()` dialogs or immediate deletion. The game view has three confirmations — reset game
+(`reset-confirm-area`), finish game (`finish-confirm-area`) and reset clock
+(`clock-reset-confirm-area`, below the clock row; `askClockReset()` skips it when the clock is
+already at the untouched full length) — and they are mutually exclusive: each `ask*()` calls
+`closeGameConfirms()` first, and `showView()` calls it when navigating away from the Game tab, the
+same way Settings/History clear their own pending confirmations on tab switch.
+`saveGame()`/`resetGame()` and hiding the clock also close the clock-reset one.
 
 **Per-entry toggle-view pattern (history cards)**: delete (`pendingDeleteId`), edit
 (`pendingEditId`), the share menu (`pendingShareId`), and the scorers panel
@@ -104,7 +106,7 @@ already clear their own pending confirmations on tab switch.
 clears all four on tab switch. Delete/edit/share replace the entry's action row (📤/✏️/✕) with
 their own panel; the scorers panel is the exception — it's non-destructive and shown *alongside*
 the action row (`entryActions`'s condition excludes only `isPending`/`isEditing`/`isSharing`, not
-`isViewingScorers`) so the 👕 button stays visible to toggle it back off. Follow this exclusion
+`isViewingScorers`) so the 🥅 button stays visible to toggle it back off. Follow this exclusion
 list when adding a fifth per-entry view rather than inventing a separate mechanism.
 
 **Team identity vs. physical display slot**: `state.a`/`state.b` are fixed identities forever —
@@ -146,6 +148,8 @@ both `render()` and `renderSettings()` since the swap button lives on the Settin
 settings view needs to reflect the flip immediately, not just on next tab switch.
 
 **History entry shape**: `state.history` entries are `{ id, date, time, teams: [teamA, teamB] }`,
+kept newest-first (`saveGame()` unshifts; `saveEditGame()` re-sorts by `id` descending when an edit
+changes the date/time, since `id` doubles as the game's timestamp),
 where each `teamN` is `{ name, score, color, halftimeScore, scorers }`. `halftimeScore` and
 `scorers` live per-team (not in a separate top-level object) so every consumer — `renderHistory()`,
 `gameShareText()`, JSON export (`exportHistory()`, which just serializes `state.history` as-is) —
@@ -336,7 +340,10 @@ treated as "no update"), regex-extracts the response's embedded `APP_VERSION`, a
 it is *newer* than the running version (`compareVersions()`, numeric semver — a stale CDN edge
 serving an older copy must not downgrade the app) — then writes the already-fetched response directly into every
 existing Cache Storage entry across every shell URL variant (`location.href`, `swScope`,
-`swScope + 'index.html'`) and reloads immediately. Any network/offline failure is swallowed
+`swScope + 'index.html'`) and reloads immediately. It also refetches `manifest.json` and
+`handball_icon.png` (best-effort) and writes them into the cache in the same pass — the SW serves
+those cache-first and would otherwise only refresh them when `sw.js` itself changes, so a changed
+icon/manifest reaches installed copies with a normal version bump. Any network/offline failure is swallowed
 silently — the app keeps running the current cached version and retries on the next online open.
 Bump `APP_VERSION` (semver `MAJOR.MINOR.PATCH`) on every deploy you want this to detect.
 
@@ -400,10 +407,16 @@ based on `lastRenderedScore[identity]` — each **identity's own** last-rendered
 separately from the physical slot, since `swapTeams()` makes the same slot show a different
 identity's score without any goal happening. `lastRenderedScore` is reset to `{a:null, b:null}` in
 `resetGame()`/`saveGame()` so the score dropping back to 0 isn't itself treated as a "changed" score
-and pulsed.
+and pulsed. One-shot animation classes (`pulse` on `disp-a`/`disp-b`, `ended` on `clock-display`)
+are removed on `animationend`/`animationcancel` — a class left in place restarts its animation
+whenever the element becomes visible again (every return to the Game tab, since `view-game`
+toggles `display:none`).
 
 The `<meta name="theme-color">` is updated in `applyTheme()` to match `--bg` (`#0b0c0f` dark /
 `#f4f5f9` light); `manifest.json`'s `theme_color`/`background_color` use the dark value.
+`applyTheme()` likewise sets `apple-mobile-web-app-status-bar-style` to `black` (dark) /
+`default` (light) — iOS may only read it at launch, so it can lag a theme switch until the next
+app start.
 
 `:focus-visible` styling is one global rule (`button, input, [tabindex]`) — don't add
 element-specific `:focus-visible` rules.
