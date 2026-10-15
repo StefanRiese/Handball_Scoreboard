@@ -11,6 +11,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - Spielstand groß in der jeweiligen Teamfarbe, Halbzeitstand („HZ") oben auf der Karte
 - Karten immer gleich breit und hoch
 - Kurzes haptisches Feedback (Vibration) bei jedem Tor (Android; iOS unterstützt keine Vibration aus Web-Apps)
+- „🔁 Spiel zurücksetzen" (mit Ja/Nein-Bestätigung) setzt Spielstand, Halbzeit und Uhr auf Anfang, ohne das Spiel zu speichern
 
 ### Tore korrigieren
 - „−"-Button pro Team für versehentliche Eingaben – nur sichtbar, wenn es in der aktuellen Halbzeit ein Tor zum Abziehen gibt
@@ -53,7 +54,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - Optionaler „Punktefaktor" (Einstellung, standardmäßig an): Anzahl verschiedener Torschützen × Tore des Teams
 
 ### Historie
-- Spiele speichern mit Datum, Uhrzeit, Halbzeit- und Endstand sowie Gewinner
+- Spiele über „🏁 Beenden & speichern" (mit Ja/Nein-Bestätigung) speichern – mit Datum, Uhrzeit, Halbzeit- und Endstand sowie Gewinner
 - Eigener Tab zur Übersicht aller gespeicherten Spiele
 - Einträge nachträglich bearbeitbar (Teamnamen, Spielstand, Datum & Uhrzeit) – die Liste bleibt dabei nach Datum sortiert
 - Einzelne Einträge löschbar
@@ -66,8 +67,9 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 - App selbst per WhatsApp teilen oder als QR-Code zum Scannen mit einem anderen Handy anzeigen
 - WhatsApp-Teilen ist immer verfügbar, ganz ohne Einstellung
 
-### Design
+### Design & Sprache
 - Umschaltbares dunkles / helles Theme (Einstellung wird gespeichert)
+- Sprache umschaltbar: Deutsch oder Englisch (Einstellung wird gespeichert)
 - Dezenter Farbverlauf in der Teamfarbe auf den Spiel-Karten, per Einstellung abschaltbar
 - Weiche Schatten statt harter Kanten auf Karten, einheitliche Eckenradien und Abstände
 - Kurzer Puls-Effekt auf dem Spielstand bei jedem Tor
@@ -76,6 +78,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 
 ### Einstellungen
 - Alle Team-, Zeit-, Tore- und Darstellungs-Optionen im Tab „Einstellungen" gesammelt
+- Unter „Allgemein": Version, Entwickler und Lizenz der App
 - „Auf Standardeinstellungen zurücksetzen" (mit Bestätigung) setzt Teamnamen, Teamfarben, Seitenreihenfolge, Design, Sprache und alle Schalter auf die Werkseinstellung zurück – das laufende Spiel und die gespeicherte Historie bleiben davon unberührt
 
 ## Mobile-Optimierung
@@ -120,6 +123,15 @@ Am einfachsten über **„📲 Zum Home-Bildschirm hinzufügen"** in den Einstel
 - Offline-Support über einen Service Worker
 - Bildschirm-Wachhaltung über die Wake Lock API
 - Web App Manifest (`manifest.json`) für die Installation auf Android/Chrome
+
+## Entwicklung
+Für die App selbst wird nichts installiert oder gebaut. Tests und Linting sind reine Entwicklungswerkzeuge (Node.js ab Version 22):
+- `npm ci` – Entwicklungsabhängigkeiten installieren
+- `npm test` – automatische Tests: die echte `index.html` wird in jsdom geladen und durchgespielt (Tore, Torschützen, Seitenwechsel, Uhr, Historie, Speichern/Laden), dazu Tests für den Service Worker
+- `npm run lint` – ESLint für das Skript in `index.html`, `sw.js` und die Tests
+- Lokale Vorschau: `python3 -m http.server 8000`, dann `http://localhost:8000/index.html` öffnen
+
+Lint und Tests laufen per GitHub Actions automatisch bei jedem Push auf `main` und bei jedem Pull Request.
 
 ## Lizenz
 MIT-Lizenz – frei zur Nutzung, Anpassung und Weitergabe, solange der Copyright-Hinweis erhalten bleibt. Details siehe [LICENSE](LICENSE).
