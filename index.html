@@ -57,6 +57,10 @@
     .clock-display { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 38px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 1px; padding: 18px 0; border-radius: var(--radius-md); background: var(--card); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; }
     .clock-display.running { color: var(--success); }
     .clock-display.done { color: var(--danger); }
+    /* Blinks the display when a half's time runs out — the visible counterpart to onClockEnd()'s
+       vibration, which iOS Safari doesn't support at all. */
+    @keyframes clockEndBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+    .clock-display.ended { animation: clockEndBlink 0.5s ease-in-out 6; }
     .clock-start, .clock-stop { font-family: Arial, Helvetica, sans-serif; }
     .clock-half { flex: 0 0 22%; font-size: var(--font-md); line-height: 1.2; white-space: normal; text-align: center; }
     .action-row { display: flex; gap: var(--space-3); margin-top: var(--space-1); }
@@ -267,7 +271,7 @@
   <div class="settings-section">
     <div class="settings-title" id="time-title">Spielzeit</div>
     <div class="settings-row"><span class="settings-row-label" id="showclock-label">Uhr anzeigen</span><button class="toggle-btn" onclick="toggleClockVisible()" id="showclock-btn">An</button></div>
-    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this)" onblur="if(this.value.trim()===''){this.value='1';setHalfLength(this);}" /></div>
+    <div class="settings-row"><span class="settings-row-label" id="halflen-label">Halbzeitlänge (Minuten)</span><input class="number-input number-input-small" id="set-halflen" type="number" min="1" max="99" inputmode="numeric" oninput="setHalfLength(this)" onblur="if(this.value.trim()==='')this.value=state.halfLength;" /></div>
     <div class="settings-row"><span class="settings-row-label" id="autoswap-label">Seiten bei Halbzeit wechseln</span><button class="toggle-btn" onclick="toggleAutoSwap()" id="autoswap-btn">An</button></div>
   </div>
 
@@ -275,7 +279,7 @@
     <div class="settings-title" id="goals-title">Tore</div>
     <div class="settings-row"><span class="settings-row-label" id="trackplayers-label">Spielernummern erfassen</span><button class="toggle-btn" onclick="toggleTrackPlayerNumbers()" id="trackplayers-btn">An</button></div>
     <div class="settings-row"><span class="settings-row-label" id="singlerevert-label">Einzel-Rückgängig-Modus</span><button class="toggle-btn" onclick="toggleSingleRevertMode()" id="singlerevert-btn">Aus</button></div>
-    <div class="settings-row"><span class="settings-row-label" id="revertseconds-label">Zeitfenster (Sekunden)</span><input class="number-input number-input-small" id="set-revertseconds" type="number" min="1" max="300" inputmode="numeric" oninput="setRevertSeconds(this)" onblur="if(this.value.trim()===''){this.value='1';setRevertSeconds(this);}" /></div>
+    <div class="settings-row"><span class="settings-row-label" id="revertseconds-label">Zeitfenster (Sekunden)</span><input class="number-input number-input-small" id="set-revertseconds" type="number" min="1" max="300" inputmode="numeric" oninput="setRevertSeconds(this)" onblur="if(this.value.trim()==='')this.value=state.singleRevertSeconds;" /></div>
     <div class="settings-row"><span class="settings-row-label" id="scorefactor-label">Punktefaktor anzeigen</span><button class="toggle-btn" onclick="toggleShowScoreFactor()" id="scorefactor-btn">An</button></div>
   </div>
 
@@ -346,10 +350,9 @@ const I18N = {
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 
 const STORAGE_KEY = 'handball_v3';
-// Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
-// users to update — it's what makes the Service Worker byte-differ from the previous one and
-// trigger the update flow.
-const APP_VERSION = '1.30.0';
+// Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that installed/offline users should pick
+// up — checkForUpdates() compares it against the deployed index.html's own APP_VERSION.
+const APP_VERSION = '1.30.1';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -765,6 +768,8 @@ function save() {
 
 function applyTheme() {
   document.body.classList.toggle('light', !state.darkMode);
+  // Browser chrome/status-bar tint follows the theme (matches --bg).
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', state.darkMode ? '#0b0c0f' : '#f4f5f9');
   document.getElementById('theme-btn').textContent = state.darkMode ? t('dark') : t('lightMode');
 }
 
@@ -976,6 +981,14 @@ function onClockEnd() {
   state.clockRunning = false;
   state.clockEndsAt = null;
   clearInterval(clockTimer);
+  // End-of-half signal: vibration (Android; iOS has no navigator.vibrate) plus a ~3s blink of
+  // the clock display. Only fires from a live tick — a half that ended while the app was closed is
+  // replayed silently in load().
+  if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);
+  const disp = document.getElementById('clock-display');
+  disp.classList.remove('ended');
+  void disp.offsetWidth; // restart the animation if it's still running
+  disp.classList.add('ended');
   if (state.half === 0) {
     changeHalf(1);
     state.clockRemaining = state.halfLength * 60;
@@ -2054,38 +2067,15 @@ async function checkForUpdates() {
 }
 
 const swScope = location.pathname.replace(/\/[^/]*$/, '/') || '/';
-// (Re-)register while online, OR while offline if there's no SW controlling this page at all —
-// not a blanket navigator.onLine gate. The plain online-only gate this replaced was there to avoid
-// a confirmed on-device issue: a plain content/version bump doesn't touch the SW script (see the
-// static-CACHE-name note below), so most opens are a no-op registration, but when this
-// install/activate/fetch logic itself changes, the browser does try to install the new version on
-// the next open, which requires fetching the shell/manifest/icon over the network — if that first
-// post-deploy open happens to be offline, the install fails and, if register() ran on every open
-// regardless of connectivity, would retry on every subsequent offline open too, each attempt able
-// to trigger the OS's own "no internet, switch to Wi-Fi?" prompt (confirmed on-device). But that
-// scenario always has an old SW still installed and controlling (`navigator.serviceWorker
-// .controller` is non-null) — a deploy doesn't remove the previous worker, it just makes a new one
-// available to install alongside it — so gating on "no controller" instead of "online" still skips
-// registration in exactly that case, with the exact same zero-network-attempt safety.
-// What a blanket online-only gate got wrong: iOS evicts an installed PWA's SW *registration*
-// entirely after a full force-quit (see the update-flow note on this below) — if the very next
-// relaunch happens to be offline, `navigator.serviceWorker.controller` is null (no worker at all,
-// not an old one), and skipping registration in that state means it never even attempts to
-// recover, so *every* subsequent offline reopen keeps hitting the network directly (uncontrolled)
-// and surfacing the browser's own connection-error page instead of ever getting a chance to serve
-// the cached shell — a self-perpetuating failure that used to only clear once the device came back
-// online. Registering a `blob:`-sourced SW needs no network by itself; only an actual `install`
-// (a genuinely new/changed worker) fetches the shell over the network, which is exactly the one
-// case (no existing controller) worth risking a single failed-install attempt for, to have any
-// chance at all of recovering while still offline.
+// Register while online, or while offline if no SW controls this page at all. Skipped only when
+// offline AND already controlled: nothing to gain, and an offline attempt to install a changed
+// sw.js fails and can trigger the OS's "no internet, switch to Wi-Fi?" prompt (seen on-device).
+// The no-controller case still registers because iOS can evict an installed PWA's SW registration
+// after a force-quit — registering is the only way back. Offline, that only succeeds if the
+// browser's HTTP cache still holds sw.js (the SW's own fetch handler never serves its own script).
 if ('serviceWorker' in navigator && (navigator.onLine || !navigator.serviceWorker.controller)) {
-  // The Service Worker itself lives in sw.js (this app's own folder, alongside index.html) rather
-  // than being generated as a minified template-literal string and registered from a Blob URL
-  // here — see sw.js's own header comment for the full design rationale (cache-first fetch,
-  // static cache name to avoid a version-bump-triggered reinstall, shell-fallback chain, and why
-  // the closing-script-tag escaping this used to need no longer applies now that the fallback
-  // page's markup lives in a plain .js file instead of inside this HTML file's own script block).
-  // Explicit scope — the default scope for a same-origin script URL is its own directory, which
+  // See sw.js's header and CLAUDE.md for the SW design (cache-first fetch, static cache name,
+  // shell-fallback chain). Explicit scope — the default scope for a same-origin script URL is its own directory, which
   // already matches swScope here, but staying explicit means this keeps working correctly even if
   // sw.js is ever moved to a different path.
   navigator.serviceWorker.register(swScope + 'sw.js', { scope: swScope });

@@ -69,7 +69,13 @@ so the display reads 30:00 until a full second has passed and the half ends exac
 ~0.5s early. `stopClock()` also stashes the exact remaining ms in module-level `clockPausedMs`,
 which `startClock()` resumes from (only while `ceil(clockPausedMs/1000)` still equals
 `clockRemaining` — any other path that changed `clockRemaining` implicitly invalidates it), so
-repeated pause/resume doesn't drift.
+repeated pause/resume doesn't drift. `onClockEnd()` (live tick only — `load()`'s replay of a
+half that ended while closed is silent) signals the end of a half with `navigator.vibrate` (Android;
+iOS has no Vibration API) plus a ~3s blink of the clock display (`.clock-display.ended`).
+
+The half-length and revert-window number inputs apply valid values on every keystroke
+(`clampNumberInput()`, which leaves an empty field alone mid-edit); on blur an empty field is
+refilled with the current `state` value rather than a hardcoded minimum.
 
 **Color contrast**: team colors are user-chosen (from `PRESETS`/`ALL_COLORS`, including
 near-white/near-black entries) and used directly as text color for team name/score/history
@@ -251,10 +257,10 @@ one.
 mutable `state` object) mirrors the *initial* values of `state`'s Settings-tab fields — team
 names/colors, `darkMode`, `lang`, `showClock`, `team1OnLeft`,
 `autoSwapAtHalftime`, `halfLength`, `trackPlayerNumbers`, `cardAccentEnabled`,
-`singleRevertMode`, `singleRevertSeconds` — and is what
+`singleRevertMode`, `singleRevertSeconds`, `showScoreFactor` — and is what
 `confirmResetSettings()` (Settings → "Allgemein"/"General", via `askResetSettings()`'s Yes/No
 confirm) restores. Deliberately excludes `half`/`halves`/`history`/`clockRemaining`/
-`clockRunning`/`clockEndsAt`/`scorers` — those are live match/history state, not settings, and
+`clockRunning`/`clockEndsAt`/`scorers`/`halftimeSwapped` — those are live match/history state, not settings, and
 already have their own separate "Reset game"/"Clear history" actions; don't fold them into this
 one. Keep `DEFAULT_SETTINGS` in sync by hand whenever `state`'s own initial literal changes — there
 is no single source of truth between them since `state` mutates at runtime and can't be read back
@@ -269,7 +275,7 @@ offline use; `manifest.json` + the `apple-mobile-web-app-*` meta tags cover Andr
 install prompts respectively.
 
 `CACHE` (`'handball-shell'`) is a static string, not version-derived — content updates never touch
-the SW script itself, they go through `checkForUpdates()`/`applyUpdate()` writing straight into the
+the SW script itself, they go through `checkForUpdates()` writing straight into the
 existing cache (see below). The SW script only changes, and therefore only reinstalls, when this
 install/activate/fetch logic itself is edited or `SHELL` changes. Don't make `CACHE` derive from
 `APP_VERSION` — that causes the SW to silently reinstall on every content-only version bump,
@@ -280,7 +286,10 @@ both the directory and the explicit `index.html` URL are cached (a home-screen r
 either depending on platform), plus the manifest and icon (iOS can refetch those independently of
 any page JS for the installed app's own metadata).
 
-- **`install`**: caches each `SHELL` URL independently via `Promise.allSettled` (not
+- **`install`**: calls `self.skipWaiting()` first, so a changed `sw.js` activates as soon as it's
+  installed instead of waiting until every window of the app is closed (iOS keeps a home-screen PWA
+  alive for long stretches, and a reload doesn't count) — safe since every version shares the one
+  `CACHE`. Caches each `SHELL` URL independently via `Promise.allSettled` (not
   `cache.addAll()`, which is all-or-nothing) so one flaky fetch can't wipe out the others. Each
   fetch throws on `!r.ok` so a transient HTTP error doesn't get cached as if it were the real file.
   Install only fails (rejecting so the browser retries on the next online `register()`) if fetching
@@ -313,7 +322,8 @@ and registering a same-origin script URL while offline can trigger a failed inst
 Gating on "no controller" rather than a blanket online-only check matters because iOS can evict an
 installed PWA's SW registration entirely after a full force-quit; if the very next relaunch happens
 to be offline, this still gives the app a chance to re-register and recover instead of being stuck
-uncontrolled until connectivity returns.
+uncontrolled until connectivity returns. That offline recovery only works if the browser's HTTP
+cache still holds `sw.js` — the SW's own fetch handler never serves its own script.
 
 **Update flow**: `init()` calls `checkForUpdates()` unconditionally on every online app open — no
 manual button, no confirmation banner. It fetches the live `index.html` with a cache-busting query
@@ -390,6 +400,9 @@ identity's score without any goal happening. `lastRenderedScore` is reset to `{a
 `resetGame()`/`saveGame()` so the score dropping back to 0 isn't itself treated as a "changed" score
 and pulsed.
 
+The `<meta name="theme-color">` is updated in `applyTheme()` to match `--bg` (`#0b0c0f` dark /
+`#f4f5f9` light); `manifest.json`'s `theme_color`/`background_color` use the dark value.
+
 `:focus-visible` styling is one global rule (`button, input, [tabindex]`) — don't add
 element-specific `:focus-visible` rules.
 
@@ -409,3 +422,7 @@ the outer `fixed`-positioned `html`/`body` — it handles the multi-touch case d
 before `document`'s in the bubble phase and would otherwise swallow the multi-touch check on any
 platform without gesture-event support. If touching either listener again, verify pinch-zoom is
 still blocked on a platform without `gesturestart` support, not just on Safari.
+
+**Double-tap zoom**: `* { touch-action: manipulation; }` disables double-tap-to-zoom (iOS ignores
+`user-scalable=no`), so two quick taps on a team card register as two goals. It still permits
+pinch, which the listeners above block.

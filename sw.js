@@ -1,13 +1,6 @@
-// Service Worker for the Handball Scoreboard app — see CLAUDE.md's Service-Worker section for
-// the full design rationale (cache-first fetch, static cache name, shell-fallback chain). This
-// used to be generated as a minified template-literal string and registered from a Blob URL
-// directly inside index.html's own <script> block; it now lives here as a real static file
-// instead — registered via `navigator.serviceWorker.register('sw.js', ...)` — purely to make it
-// independently readable/diffable, not a change in behavior. One side effect worth knowing:
-// OFFLINE_HTML's embedded `<script>...</script>` no longer needs the escaped-slash trick that was
-// required while this lived inside an HTML file's own <script> block (see CLAUDE.md's
-// `</script>`-footgun paragraph) — this file is parsed as plain JS, not scanned by an HTML parser,
-// so a literal closing-script-tag substring inside a JS string here is inert.
+// Service Worker for the Handball Scoreboard app, registered from index.html — see CLAUDE.md's
+// Offline/installability section for the design rationale (cache-first fetch, static cache name,
+// shell-fallback chain).
 
 const CACHE = 'handball-shell';
 
@@ -49,7 +42,12 @@ const OFFLINE_HTML = `<!DOCTYPE html>
 // of those specifically failed, the install is rejected so the browser retries the whole install
 // on the next online register() call; a manifest/icon-only failure is not fatal since the app
 // still works offline without those.
+// skipWaiting(): a changed sw.js activates as soon as it's installed instead of waiting until every
+// window of the app is closed — iOS keeps a home-screen PWA alive in the background for long
+// stretches, and a reload doesn't count as closing, so SW fixes could otherwise take days to land.
+// Safe here since every version shares the one CACHE and its fetch handler only reads from it.
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE)
       .then(c => Promise.allSettled(SHELL.map(u =>
