@@ -275,7 +275,7 @@ already have their own separate "Reset game"/"Clear history" actions; don't fold
 one. Keep `DEFAULT_SETTINGS` in sync by hand whenever `state`'s own initial literal changes — there
 is no single source of truth between them since `state` mutates at runtime and can't be read back
 from later. The General section also absorbed the old separate "Information" section (version,
-developer, QR code, share-app, add-to-home-screen) — don't re-split it without being asked.
+developer, license link, QR code, share-app, add-to-home-screen) — don't re-split it without being asked.
 
 **Offline/installability**: the Service Worker lives in `sw.js`, a real static file alongside
 `index.html`, registered via `navigator.serviceWorker.register(swScope + 'sw.js', { scope: swScope

@@ -1,3 +1,6 @@
+// Handball Scoreboard — Copyright (c) 2026 Stefan Riese — MIT License
+// https://github.com/StefanRiese/Handball_Scoreboard
+//
 // Service Worker for the Handball Scoreboard app, registered from index.html — see CLAUDE.md's
 // Offline/installability section for the design rationale (cache-first fetch, static cache name,
 // shell-fallback chain).
