@@ -64,7 +64,12 @@ localized elements need a line there too.
 decremented on a tick — `tickClock()` (a 250ms `setInterval`) just recomputes
 `clockRemaining = clockEndsAt - Date.now()`. This is what allows the clock to keep correct time
 across tab backgrounding/`load()` on reopen (see the resume logic in `load()`, which checks
-whether `clockEndsAt` is still in the future).
+whether `clockEndsAt` is still in the future). Remaining seconds are `Math.ceil`'d (not rounded),
+so the display reads 30:00 until a full second has passed and the half ends exactly at 0, not
+~0.5s early. `stopClock()` also stashes the exact remaining ms in module-level `clockPausedMs`,
+which `startClock()` resumes from (only while `ceil(clockPausedMs/1000)` still equals
+`clockRemaining` — any other path that changed `clockRemaining` implicitly invalidates it), so
+repeated pause/resume doesn't drift.
 
 **Color contrast**: team colors are user-chosen (from `PRESETS`/`ALL_COLORS`, including
 near-white/near-black entries) and used directly as text color for team name/score/history
@@ -105,6 +110,14 @@ identity currently renders in a given physical slot, and — since it's a plain 
 inverse — also answers the reverse ("which slot currently shows this identity"), which
 `setName()` needs since it's called with the identity but must update the correctly-positioned
 game-view DOM node. `swapTeams()` only ever flips this one flag; it does not move any team data.
+
+Every change of `state.half` goes through `changeHalf(h)` (`setHalf()`, `onClockEnd()`, `load()`'s
+missed-halftime replay, `resetGame()`, `saveGame()`). Entering half 1 swaps sides if
+`autoSwapAtHalftime` is on and records that in `state.halftimeSwapped` (persisted live-match
+state, not a setting); returning to half 0 undoes the swap only if that flag is set. This keeps
+reset/finish from leaving the next game on swapped sides, and from flipping the wrong way if the
+setting was toggled mid-match. `confirmResetSettings()` clears the flag since it forces
+`team1OnLeft` back to the default.
 `saveGame()` always reads `state.a`/`state.b` directly for the same reason — history naturally
 lists Team 1 first with no extra logic needed. Don't reintroduce data-swapping in
 `swapTeams()`/`swapTeamsData()` instead of the flag-only approach.
@@ -152,10 +165,10 @@ revert it to the hardcoded initial default on the next app open.
 `state.scorers = { a: [], b: [] }` (flat arrays of `{ half, number, pos, globalPos }` in scoring
 order per identity) are the live-game equivalents of `teams[i].scorers` persisted at `saveGame()` /
 cleared at `saveGame()`/`resetGame()`. `number` is kept as the **raw typed string** (e.g. `"03"`,
-`"00"`), not `parseInt`'d — a jersey number is an identifier, not an arithmetic value, and
-`parseInt` would silently drop a leading zero the user deliberately entered; it's `null` when
-skipped. `scorerTally()`'s `numbers` array (used by every scorer-display consumer) sorts these by
-`Number(a) - Number(b)` without reformatting them, so display always matches what was typed.
+`"00"`); it's `null` when skipped. `scorerTally()` (used by every scorer-display consumer)
+normalizes leading zeros when counting (`String(Number(n))`, so `"03"` and `"3"` are the same
+player, `"00"` is `"0"`) — done there rather than at entry so already-saved history entries
+holding the raw string tally correctly too.
 `scorerTableRows(tally)` turns a tally into the `<tr>` rows shared by both scorer-table renderers —
 the live goals view (`renderGoalsView()`'s `teamBlock()`) and the saved-history scorers panel
 (`renderHistory()`'s `scorerRows()`/`scorerBlock()`) — so a future change to the row markup (e.g. a
@@ -181,11 +194,16 @@ only if the setting is on, opens `openPlayerNumberModal(identity, half, pos, glo
 
 The modal's keypad (`pressDigit`/`pressBackspace`) writes into module-level `playerNumberInput`;
 confirming or skipping both funnel through `recordScorer()`, which is the only place that pushes
-into `state.scorers[identity]` and closes the modal — tapping outside the modal is wired to
-`skipPlayerNumber()` for the same effect. Goals scored back-to-back (e.g. a quick double-tap)
-before the first modal is confirmed/skipped are queued in `playerNumberQueue` (an array of
-`{identity, half, pos, globalPos}`) rather than the second `addGoal()` overwriting the still-open
-modal's state — `recordScorer()` drains the next queued entry after closing. `resetGame()` and
+into `state.scorers[identity]` and closes the modal — tapping the modal's backdrop is wired to
+`skipPlayerNumber()` for the same effect. The modal covers the whole screen the instant it opens,
+so the second tap of a fast double-tap on a team card lands on the modal, not the card: a
+capture-phase click listener on `#player-modal` swallows any tap within
+`PLAYER_MODAL_TAP_GUARD_MS` (350ms) of `playerModalOpenedAt` (so it can't skip or type a stray
+digit) and, if a team card is under it (`elementsFromPoint`), forwards it to `addGoal()` as the
+goal it was meant to be. That's the path that fills `playerNumberQueue` (an array of
+`{identity, half, pos, globalPos}`) — a goal scored while the modal is open is queued rather than
+overwriting the still-open modal's state, and `recordScorer()` drains the next queued entry after
+closing. `resetGame()` and
 `saveGame()` both clear the queue and any still-open modal, since a pending entry from the
 finished/discarded game would otherwise record against the next game's just-reset `state.scorers`.
 

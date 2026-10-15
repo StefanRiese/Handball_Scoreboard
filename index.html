@@ -14,6 +14,10 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Disables double-tap-to-zoom (iOS ignores user-scalable=no) so two quick taps on a team card
+       register as two goals instead of the second one being eaten by the zoom gesture. Pinch is
+       still allowed by this value; it's blocked separately in JS (gesturestart/touchmove). */
+    * { touch-action: manipulation; }
     :root { --bg: #0b0c0f; --card: #17191f; --border: rgba(255,255,255,0.09); --text: #eef0f3; --muted: #8d94a1; --btn: #20232b; --btn-border: rgba(255,255,255,0.12); --accent: #2563eb; --success: #22c55e; --danger: #ef4444; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 22px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font-md: 14px; }
     .light { --bg: #f4f5f9; --card: #ffffff; --border: rgba(15,23,42,0.08); --text: #14161b; --muted: #6b7280; --btn: #edeff3; --btn-border: rgba(15,23,42,0.10); }
     html { height: 100%; overflow: hidden; position: fixed; width: 100%; }
@@ -163,7 +167,7 @@
   </div>
 </div>
 
-<div id="player-modal" onclick="if(event.target===this)skipPlayerNumber()">
+<div id="player-modal">
   <div class="box" id="player-modal-box">
     <div id="player-modal-title" style="font-size:var(--font-md); font-weight:500; color:var(--text); text-align:center;">Spielernummer eingeben</div>
     <div id="player-number-display">—</div>
@@ -345,13 +349,17 @@ const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that should prompt installed/offline
 // users to update — it's what makes the Service Worker byte-differ from the previous one and
 // trigger the update flow.
-const APP_VERSION = '1.29.1';
+const APP_VERSION = '1.30.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
   a: { name: 'TuS Griesheim', color: '#e24b4a' },
   b: { name: 'Gast', color: '#378add' },
   half: 0, halves: { a: [0, 0], b: [0, 0] },
+  // Whether changeHalf() actually swapped sides on entering half 1 — live match state (not a
+  // setting), so going back to half 0 (manually, resetGame(), saveGame()) undoes exactly the swap
+  // that happened, independent of autoSwapAtHalftime's *current* value.
+  halftimeSwapped: false,
   history: [], darkMode: true, lang: 'de', showClock: true,
   team1OnLeft: true,
   autoSwapAtHalftime: true,
@@ -387,6 +395,10 @@ const DEFAULT_SETTINGS = {
 };
 let colorTarget = null;
 let clockTimer = null;
+// Exact ms left when the clock was last paused (stopClock()) — state.clockRemaining is whole
+// seconds for display, so resuming from it alone would drift. Ephemeral like revertWindow: losing
+// it on reload only costs <1s.
+let clockPausedMs = null;
 // Tracks each identity's own last-rendered score (keyed by identity, not physical slot) so
 // render()'s goal-pulse animation fires only on an actual score change for that identity, not
 // whenever a slot's displayed score changes for an unrelated reason (e.g. swapTeams()).
@@ -411,6 +423,11 @@ let playerModalHalf = null;
 let playerModalPos = null;
 let playerModalGlobalPos = null;
 let playerNumberInput = '';
+// When the player-number modal last opened — taps within PLAYER_MODAL_TAP_GUARD_MS of that are
+// the tail of a fast multi-tap on a team card, not a deliberate modal interaction (see the
+// capture-phase click listener on #player-modal).
+let playerModalOpenedAt = 0;
+const PLAYER_MODAL_TAP_GUARD_MS = 350;
 // Goals scored back-to-back (e.g. a quick double-tap) before the player-number modal for the
 // first one is confirmed/skipped must not overwrite each other — queued {identity, half} pairs
 // are opened one at a time as each modal closes, so every goal still gets its own scorer-log
@@ -435,10 +452,10 @@ function scorerTally(team) {
   if (!Array.isArray(team.scorers) || !team.scorers.length) return null;
   const counts = {};
   let unknown = 0;
-  team.scorers.forEach(s => { if (s.number == null) unknown++; else counts[s.number] = (counts[s.number]||0) + 1; });
-  // Keep numbers as the raw entered strings (e.g. "03", "00") rather than Number()-casting them —
-  // that would silently drop a leading zero the user deliberately typed. Object.keys() already
-  // returns strings, so just sort numerically without reformatting them.
+  // Normalize leading zeros ("03" → "3", "00" → "0") so the same jersey typed either way counts
+  // as one player — here rather than at entry, so already-saved history entries holding the raw
+  // typed string tally correctly too.
+  team.scorers.forEach(s => { if (s.number == null) unknown++; else { const n = String(Number(s.number)); counts[n] = (counts[n]||0) + 1; } });
   const numbers = Object.keys(counts).sort((a,b) => Number(a) - Number(b));
   return numbers.length || unknown ? { numbers, counts, unknown } : null;
 }
@@ -674,6 +691,9 @@ function load() {
       if (typeof p.showClock === 'boolean') state.showClock = p.showClock;
       if (typeof p.team1OnLeft === 'boolean') state.team1OnLeft = p.team1OnLeft;
       if (typeof p.autoSwapAtHalftime === 'boolean') state.autoSwapAtHalftime = p.autoSwapAtHalftime;
+      // A record saved before halftimeSwapped existed: infer it the way the old code did (in half 1
+      // with auto-swap on means the swap happened).
+      state.halftimeSwapped = typeof p.halftimeSwapped === 'boolean' ? p.halftimeSwapped : (state.half === 1 && state.autoSwapAtHalftime);
       if (typeof p.trackPlayerNumbers === 'boolean') state.trackPlayerNumbers = p.trackPlayerNumbers;
       if (typeof p.cardAccentEnabled === 'boolean') state.cardAccentEnabled = p.cardAccentEnabled;
       if (typeof p.singleRevertMode === 'boolean') state.singleRevertMode = p.singleRevertMode;
@@ -683,7 +703,7 @@ function load() {
       if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
       if (p.clockRunning && typeof p.clockEndsAt === 'number') {
-        const left = Math.round((p.clockEndsAt - Date.now()) / 1000);
+        const left = Math.ceil((p.clockEndsAt - Date.now()) / 1000);
         if (left > 0) {
           state.clockRunning = true;
           state.clockEndsAt = p.clockEndsAt;
@@ -697,8 +717,7 @@ function load() {
           // buzzer missed while backgrounded still advances state.half / auto-swaps sides,
           // same as if the app had stayed open through it.
           if (state.half === 0) {
-            if (state.autoSwapAtHalftime) swapTeamsData();
-            state.half = 1;
+            changeHalf(1);
             state.clockRemaining = state.halfLength * 60;
             // init() only calls save() itself when there was no prior localStorage record at
             // all (hadData is true here) — without persisting this replayed advance immediately,
@@ -725,7 +744,7 @@ function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       a: { name: state.a.name, color: state.a.color },
       b: { name: state.b.name, color: state.b.color },
-      halves: state.halves, half: state.half,
+      halves: state.halves, half: state.half, halftimeSwapped: state.halftimeSwapped,
       history: state.history, darkMode: state.darkMode, lang: state.lang,
       showClock: state.showClock,
       team1OnLeft: state.team1OnLeft,
@@ -945,7 +964,9 @@ function renderClock() {
 
 function tickClock() {
   if (!state.clockRunning) return;
-  const left = Math.round((state.clockEndsAt - Date.now()) / 1000);
+  // ceil, not round — a countdown shows 30:00 until a full second has elapsed and only hits 00:00
+  // (and fires onClockEnd()) when time is actually up; round() ended every half ~0.5s early.
+  const left = Math.ceil((state.clockEndsAt - Date.now()) / 1000);
   state.clockRemaining = Math.max(0, left);
   renderClock();
   if (state.clockRemaining === 0) onClockEnd();
@@ -956,8 +977,7 @@ function onClockEnd() {
   state.clockEndsAt = null;
   clearInterval(clockTimer);
   if (state.half === 0) {
-    if (state.autoSwapAtHalftime) swapTeamsData();
-    state.half = 1;
+    changeHalf(1);
     state.clockRemaining = state.halfLength * 60;
     render();
   }
@@ -967,8 +987,14 @@ function onClockEnd() {
 
 function startClock() {
   if (state.clockRemaining === 0) state.clockRemaining = state.halfLength * 60;
+  // Resume from the exact sub-second remainder stopClock() captured, so repeated pause/resume
+  // doesn't drift by up to a second each time — but only if clockRemaining still matches it; any
+  // other code path that set clockRemaining since (reset, half length, halftime, …) invalidates it.
+  const ms = clockPausedMs !== null && Math.ceil(clockPausedMs / 1000) === state.clockRemaining
+    ? clockPausedMs : state.clockRemaining * 1000;
+  clockPausedMs = null;
   state.clockRunning = true;
-  state.clockEndsAt = Date.now() + state.clockRemaining * 1000;
+  state.clockEndsAt = Date.now() + ms;
   clearInterval(clockTimer);
   clockTimer = setInterval(tickClock, 250);
   renderClock();
@@ -977,7 +1003,8 @@ function startClock() {
 
 function stopClock() {
   if (state.clockRunning && state.clockEndsAt) {
-    state.clockRemaining = Math.max(0, Math.round((state.clockEndsAt - Date.now()) / 1000));
+    clockPausedMs = Math.max(0, state.clockEndsAt - Date.now());
+    state.clockRemaining = Math.ceil(clockPausedMs / 1000);
   }
   state.clockRunning = false;
   state.clockEndsAt = null;
@@ -1308,6 +1335,8 @@ function setName(t2, v) {
   const slot = identityForSlot(t2);
   document.getElementById('name-'+slot).textContent = displayNameFor(t2);
   document.getElementById('name-'+slot).style.color = readableColor(state[t2].color);
+  // The live goals view (if open) shows team names too.
+  renderGoalsView();
   save();
 }
 
@@ -1426,6 +1455,7 @@ function openPlayerNumberModal(identity, half, pos, globalPos) {
   // visually ties back to whichever team just scored.
   applyTeamColorAccent(document.getElementById('player-modal-box'), state[identity].color);
   document.getElementById('player-modal').style.display = 'flex';
+  playerModalOpenedAt = Date.now();
 }
 
 function updatePlayerNumberDisplay() {
@@ -1444,9 +1474,7 @@ function pressBackspace() {
 }
 
 function confirmPlayerNumber() {
-  // Keep the raw typed string (e.g. "03", "00") rather than parseInt-ing it — a jersey number is
-  // an identifier, not an arithmetic value, and parseInt would silently drop a leading zero the
-  // user deliberately entered.
+  // Stored as the raw typed string; scorerTally() normalizes leading zeros ("03" ≡ "3") when counting.
   recordScorer(playerNumberInput || null);
 }
 
@@ -1473,10 +1501,20 @@ function recordScorer(number) {
 }
 
 function setHalf(h) {
-  if (h !== state.half && state.autoSwapAtHalftime) swapTeamsData();
-  state.half = h;
+  changeHalf(h);
   render();
   save();
+}
+
+// The single place state.half changes (setHalf(), onClockEnd(), load()'s missed-halftime replay,
+// resetGame(), saveGame()). Entering half 1 swaps sides if autoSwapAtHalftime is on and records
+// that it did; returning to half 0 undoes the swap only if one was actually recorded — so toggling
+// the setting mid-match, or a manual swapTeams() in between, can't make the undo flip the wrong way.
+function changeHalf(h) {
+  if (h === state.half) return;
+  if (h === 1 && state.autoSwapAtHalftime) { swapTeamsData(); state.halftimeSwapped = true; }
+  else if (h === 0 && state.halftimeSwapped) { swapTeamsData(); state.halftimeSwapped = false; }
+  state.half = h;
 }
 
 function swapTeamsData() {
@@ -1543,7 +1581,8 @@ function saveGame() {
   // next game's goals.
   closeRevertWindow('a');
   closeRevertWindow('b');
-  state.half = 0;
+  // Undo the halftime side swap too, same as resetGame() — the next game starts on the original sides.
+  changeHalf(0);
   state.clockRunning = false;
   state.clockEndsAt = null;
   clearInterval(clockTimer);
@@ -1595,11 +1634,9 @@ function resetGame() {
   lastRenderedScore = { a: null, b: null };
   closeRevertWindow('a');
   closeRevertWindow('b');
-  // setHalf() swaps sides on every half change when autoSwapAtHalftime is on, so an in-progress
-  // swap (from having reached half 1) must be undone here too — otherwise resetting back to half
-  // 0 leaves the teams on the swapped-at-halftime sides instead of their original ones.
-  if (state.half !== 0 && state.autoSwapAtHalftime) swapTeamsData();
-  state.half = 0;
+  // changeHalf() undoes a recorded halftime side swap — otherwise resetting back to half 0 leaves
+  // the teams on the swapped-at-halftime sides instead of their original ones.
+  changeHalf(0);
   stopClock();
   state.clockRemaining = state.halfLength * 60;
   playerNumberQueue = [];
@@ -1762,6 +1799,9 @@ function confirmResetSettings() {
   state.lang = DEFAULT_SETTINGS.lang;
   state.showClock = DEFAULT_SETTINGS.showClock;
   state.team1OnLeft = DEFAULT_SETTINGS.team1OnLeft;
+  // Sides were just forced back to the default — a recorded halftime swap no longer applies and
+  // undoing it later (on return to half 0) would flip them away from the default again.
+  state.halftimeSwapped = false;
   state.autoSwapAtHalftime = DEFAULT_SETTINGS.autoSwapAtHalftime;
   state.halfLength = DEFAULT_SETTINGS.halfLength;
   state.trackPlayerNumbers = DEFAULT_SETTINGS.trackPlayerNumbers;
@@ -1945,6 +1985,23 @@ document.body.addEventListener('touchmove', e => {
   if (e.touches.length > 1) { e.preventDefault(); return; }
   e.stopPropagation();
 }, { passive: false });
+
+// The player-number modal covers the whole screen the instant addGoal() opens it, so the second
+// tap of a fast double-tap on a team card lands on the modal instead — on the backdrop (skipping
+// the number) or a keypad key (stray digit/confirm). Within the guard window after opening,
+// swallow the tap before any modal handler sees it, and if a team card is underneath it, count it
+// as the goal it was meant to be (addGoal() queues it in playerNumberQueue behind the open modal).
+// Registered before the backdrop listener below, and stopImmediatePropagation() also stops that
+// one when the backdrop itself is the target.
+const playerModalEl = document.getElementById('player-modal');
+playerModalEl.addEventListener('click', e => {
+  if (Date.now() - playerModalOpenedAt >= PLAYER_MODAL_TAP_GUARD_MS) return;
+  e.stopImmediatePropagation();
+  e.preventDefault();
+  const card = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('team-card'));
+  if (card) addGoal(card.id === 'card-a' ? 'a' : 'b');
+}, true);
+playerModalEl.addEventListener('click', e => { if (e.target === playerModalEl) skipPlayerNumber(); });
 
 if ('wakeLock' in navigator) {
   requestWakeLock();
