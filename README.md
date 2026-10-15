@@ -1,5 +1,7 @@
 # 🤾 Handball Scoreboard
 
+[![CI](https://github.com/StefanRiese/Handball_Scoreboard/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/StefanRiese/Handball_Scoreboard/actions/workflows/ci.yml)
+
 Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – optimiert für die Nutzung auf dem Smartphone (iPhone und Android). Ohne Installation aus dem App Store, läuft direkt im Browser oder als Web-App auf dem Home-Bildschirm.
 
 ## Features
