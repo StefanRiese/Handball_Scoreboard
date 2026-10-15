@@ -292,7 +292,8 @@ any page JS for the installed app's own metadata).
   `CACHE`. Caches each `SHELL` URL independently via `Promise.allSettled` (not
   `cache.addAll()`, which is all-or-nothing) so one flaky fetch can't wipe out the others. Each
   fetch throws on `!r.ok` so a transient HTTP error doesn't get cached as if it were the real file.
-  Install only fails (rejecting so the browser retries on the next online `register()`) if fetching
+  Fetches use `{ cache: 'reload' }` so a fresh install can't pick up a pre-deploy copy from the
+  browser's HTTP cache (GitHub Pages sets `max-age=600`). Install only fails (rejecting so the browser retries on the next online `register()`) if fetching
   **both** `SHELL[0]` and `SHELL[1]` — the two page-shell URL variants — failed; a manifest/icon-only
   failure is left non-fatal since the app still works offline without those two.
 - **`activate`**: deletes every cache except the current `CACHE`, then calls `self.clients.claim()`
@@ -332,7 +333,8 @@ only bypasses the browser's HTTP cache, while the query string is what makes the
 SW's own `caches.match()` lookup so it actually reaches the network instead of comparing the
 running version against itself. Checks `res.ok` before parsing (a transient HTTP error must not be
 treated as "no update"), regex-extracts the response's embedded `APP_VERSION`, and only proceeds if
-it differs from the running version — then writes the already-fetched response directly into every
+it is *newer* than the running version (`compareVersions()`, numeric semver — a stale CDN edge
+serving an older copy must not downgrade the app) — then writes the already-fetched response directly into every
 existing Cache Storage entry across every shell URL variant (`location.href`, `swScope`,
 `swScope + 'index.html'`) and reloads immediately. Any network/offline failure is swallowed
 silently — the app keeps running the current cached version and retries on the next online open.
@@ -407,6 +409,11 @@ The `<meta name="theme-color">` is updated in `applyTheme()` to match `--bg` (`#
 element-specific `:focus-visible` rules.
 
 ## Touch/mobile behavior
+
+**Safe areas**: `body` padding is `max(env(safe-area-inset-*), <token>)` on all four sides — the
+inset where there is one (notch, home indicator, landscape notch on the left/right), the normal
+spacing token otherwise. Plain `env(x, fallback)` isn't enough: its fallback only applies when
+`env()` is unsupported, not when the inset is 0.
 
 **Touch-only target**: this app is used one-handed on a phone touchscreen during a live match —
 optimize for tap targets, haptic feedback (`navigator.vibrate`), and portrait/landscape layout, not

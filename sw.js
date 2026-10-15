@@ -51,7 +51,9 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
       .then(c => Promise.allSettled(SHELL.map(u =>
-        fetch(u).then(r => { if (!r.ok) throw new Error('bad status'); return c.put(u, r); })
+        // cache:'reload' — fetch from the network, not the browser's HTTP cache (GitHub Pages sets
+        // max-age=600), so a fresh install can't cache an index.html that predates the deploy.
+        fetch(u, { cache: 'reload' }).then(r => { if (!r.ok) throw new Error('bad status'); return c.put(u, r); })
       )))
       .then(rs => {
         if (rs[0].status === 'rejected' && rs[1].status === 'rejected') {
