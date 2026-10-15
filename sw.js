@@ -32,9 +32,9 @@ const OFFLINE_HTML = `<!DOCTYPE html>
 </style></head>
 <body>
   <div class="icon">🤾</div>
-  <h1>Keine Internetverbindung<br/>No internet connection</h1>
-  <p>Diese Seite ist offline noch nicht verfügbar.<br/>This page isn't available offline yet.</p>
-  <button onclick="location.reload()">Erneut versuchen / Try again</button>
+  <h1>Keine Internetverbindung<br/>No internet connection<br/>Sin conexión a internet</h1>
+  <p>Diese Seite ist offline noch nicht verfügbar.<br/>This page isn't available offline yet.<br/>Esta página aún no está disponible sin conexión.</p>
+  <button onclick="location.reload()">Erneut versuchen / Try again / Reintentar</button>
   <script>window.addEventListener('online', () => location.reload());</script>
 </body></html>`;
 

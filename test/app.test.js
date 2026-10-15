@@ -22,9 +22,33 @@ test('boots cleanly and persists defaults on first open', async () => {
   assert.equal($('disp-a').textContent, '0');
 });
 
-test('i18n: de and en define the same keys', async () => {
+test('i18n: every language defines the same keys and has a picker entry', async () => {
   const { app } = await boot();
-  assert.deepEqual(Object.keys(app.I18N.en).sort(), Object.keys(app.I18N.de).sort());
+  const keys = Object.keys(app.I18N.de).sort();
+  for (const lang of Object.keys(app.I18N)) {
+    assert.deepEqual(Object.keys(app.I18N[lang]).sort(), keys, `I18N.${lang} keys differ from I18N.de`);
+    for (const k of keys) assert.ok(app.I18N[lang][k], `I18N.${lang}.${k} is empty`);
+  }
+  assert.deepEqual(Object.keys(app.LANG_LABELS).sort(), Object.keys(app.I18N).sort());
+});
+
+test('the language dropdown lists every language and switches the UI', async () => {
+  const { app, state, stored, window } = await boot();
+  const select = $('lang-select');
+  assert.deepEqual([...select.options].map(o => o.value), ['de', 'en', 'es']);
+  assert.equal(select.value, 'de');
+  select.value = 'es';
+  select.dispatchEvent(new window.Event('change'));
+  assert.equal(state.lang, 'es');
+  assert.equal(stored().lang, 'es');
+  assert.equal(ctx.document.documentElement.lang, 'es');
+  assert.equal($('save-btn').textContent, app.I18N.es.save);
+  assert.equal($('name-b').textContent, 'Gast');
+  state.b.name = '';
+  app.render();
+  assert.equal($('name-b').textContent, 'Equipo 2');
+  app.setLang('fr'); // unknown codes are ignored
+  assert.equal(state.lang, 'es');
 });
 
 test('DEFAULT_SETTINGS matches the initial state and every setting is persisted', async () => {
@@ -231,6 +255,15 @@ test('load() restores saved state, keeps an intentionally empty name and sanitiz
   assert.equal(state.lang, 'en');
   assert.equal(state.halfLength, 30, 'out-of-range half length is ignored');
   assert.equal($('name-a').textContent, 'Team 1');
+});
+
+test('load() restores a saved language and ignores unknown ones', async () => {
+  const { state } = await boot({ stored: { lang: 'es' } });
+  assert.equal(state.lang, 'es');
+  assert.equal($('lang-select').value, 'es');
+  ctx.close();
+  const second = await boot({ stored: { lang: 'fr' } });
+  assert.equal(second.state.lang, 'de');
 });
 
 test('load() survives corrupt localStorage', async () => {

@@ -69,7 +69,7 @@ Eine schlanke Web-App zum Verfolgen des Spielstands bei Handballspielen – opti
 
 ### Design & Sprache
 - Umschaltbares dunkles / helles Theme (Einstellung wird gespeichert)
-- Sprache umschaltbar: Deutsch oder Englisch (Einstellung wird gespeichert)
+- Sprache per Auswahlliste: Deutsch, Englisch oder Spanisch (Einstellung wird gespeichert)
 - Dezenter Farbverlauf in der Teamfarbe auf den Spiel-Karten, per Einstellung abschaltbar
 - Weiche Schatten statt harter Kanten auf Karten, einheitliche Eckenradien und Abstände
 - Kurzer Puls-Effekt auf dem Spielstand bei jedem Tor

@@ -73,10 +73,14 @@ Each `render*` function is idempotent and safe to call any time state changes �
 diffing or virtual DOM, just `textContent`/`style` assignment. When you add a new piece of state,
 follow the existing pattern: mutate `state`, call the relevant `render*()`, then `save()`.
 
-**i18n**: `I18N` holds `de`/`en` dictionaries; `t(key)` looks up the current `state.lang`. Every
-piece of static or dynamic UI text should go through `t()` and be added to *both* language blocks.
-`applyLang()` is the single place that re-applies all translated strings to the DOM — new
-localized elements need a line there too.
+**i18n**: `I18N` holds `de`/`en`/`es` dictionaries; `t(key)` looks up the current `state.lang`. Every
+piece of static or dynamic UI text should go through `t()` and be added to *every* language block
+(a test fails if the key sets differ). `applyLang()` is the single place that re-applies all
+translated strings to the DOM — new localized elements need a line there too. The language is
+picked from a `<select id="lang-select">` (Settings → Darstellung/Appearance) whose options
+`applyLang()` builds once from `LANG_LABELS` (each language named in itself) → `setLang()`.
+Adding a language = a new `I18N` block + a `LANG_LABELS` entry; `load()` accepts any `I18N` key.
+The `<select>` is 16px, not `--font-md`, for the same iOS focus-zoom reason as text inputs.
 
 **Match clock**: modeled as an absolute end timestamp (`state.clockEndsAt`), not a countdown
 decremented on a tick — `tickClock()` (a 250ms `setInterval`) just recomputes
@@ -337,12 +341,12 @@ any page JS for the installed app's own metadata).
   network fetch throws (genuinely offline, nothing cached) and the request is a navigation, it
   falls back to the cached shell itself (`SHELL[1]` then `SHELL[0]`, always populated since those
   are the two entries `install()` fails hard on) — fully functional, lets the user get back into
-  the app — and only as a last resort to `OFFLINE_HTML`, a small self-contained bilingual (DE/EN)
+  the app — and only as a last resort to `OFFLINE_HTML`, a small self-contained trilingual (DE/EN/ES)
   branded page embedded directly in the SW script, for the rare case where even the shell isn't
   cached yet either. A non-navigation sub-resource request just fails outright on the same
   rejection — a fallback page only makes sense for something the user is actually looking at.
 
-  `OFFLINE_HTML` is bilingual DE/EN together rather than picking one language, since the Service
+  `OFFLINE_HTML` shows DE/EN/ES together rather than picking one language, since the Service
   Worker has no access to the page's own localStorage-stored language preference.
 
 **SW registration** happens whenever `navigator.onLine || !navigator.serviceWorker.controller` —
@@ -442,7 +446,7 @@ The `<meta name="theme-color">` is updated in `applyTheme()` to match `--bg` (`#
 `default` (light) — iOS may only read it at launch, so it can lag a theme switch until the next
 app start.
 
-`:focus-visible` styling is one global rule (`button, input, [tabindex]`) — don't add
+`:focus-visible` styling is one global rule (`button, input, select, [tabindex]`) — don't add
 element-specific `:focus-visible` rules.
 
 ## Touch/mobile behavior

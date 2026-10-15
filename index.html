@@ -27,7 +27,7 @@
     button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1); }
     button:active { transform: scale(0.93); }
     button:disabled { cursor: not-allowed; transform: none; }
-    button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+    button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
     .tabbar { display: flex; gap: var(--space-1); background: var(--card); border-radius: var(--radius-md); padding: var(--space-1); margin-top: var(--space-2); }
     .tabbar button { flex: 1; padding: var(--space-3) 0; border-radius: var(--radius-sm); font-size: var(--font-md); font-weight: 500; color: var(--muted); min-height: 48px; }
     .tabbar button.active { background: var(--btn); color: var(--text); }
@@ -105,6 +105,8 @@
     .swap-row-btn { padding: 14px; border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: var(--font-md); font-weight: 500; color: var(--text); min-height: 50px; }
     .settings-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
     .settings-row-label { font-size: var(--font-md); color: var(--text); }
+    /* Same look as .toggle-btn, but 16px: like text inputs, a smaller <select> makes iOS zoom in on focus. */
+    .lang-select { padding: 10px var(--space-4); border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: 16px; font-family: inherit; color: var(--text); min-height: 44px; }
     .toggle-btn { padding: 10px var(--space-4); border-radius: var(--radius-sm); background: var(--btn); border: 0.5px solid var(--btn-border); font-size: var(--font-md); color: var(--text); min-height: 44px; display: flex; align-items: center; gap: var(--space-2); }
     .history { display: flex; flex-direction: column; gap: var(--space-3); }
     .history-empty { text-align: center; color: var(--muted); font-size: var(--font-md); margin-top: 40px; }
@@ -294,7 +296,7 @@
   <div class="settings-section">
     <div class="settings-title" id="appearance-title">Darstellung</div>
     <div class="settings-row"><span class="settings-row-label" id="design-label">Design</span><button class="toggle-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dunkel</button></div>
-    <div class="settings-row"><span class="settings-row-label" id="language-label">Sprache</span><button class="toggle-btn" onclick="toggleLang()" id="lang-btn">🇩🇪 Deutsch</button></div>
+    <div class="settings-row"><span class="settings-row-label" id="language-label">Sprache</span><select class="lang-select" id="lang-select" aria-labelledby="language-label" onchange="setLang(this.value)"></select></div>
     <div class="settings-row"><span class="settings-row-label" id="cardaccent-label">Farbverlauf auf Team-Karten</span><button class="toggle-btn" onclick="toggleCardAccent()" id="cardaccent-btn">An</button></div>
   </div>
 
@@ -355,13 +357,16 @@ const ALL_COLORS = [
 const I18N = {
   de: { tabGame:'🤾 Spiel', tabSettings:'⚙️ Einstellungen', tabHistory:'📋 Historie', save:'🏁 Beenden & speichern', saved:'✓ Gespeichert!', finishConfirm:'Spiel beenden und speichern?', half1:'1. Halbzeit', half2:'2. Halbzeit', hz:'HZ', resetGame:'🔁 Spiel zurücksetzen', reallyReset:'Spiel wirklich zurücksetzen?', yes:'Ja', no:'Nein', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Farbe', swapSides:'⇄ Seiten tauschen', appearance:'Darstellung', design:'Design', dark:'🌙 Dunkel', lightMode:'☀️ Hell', language:'Sprache', chooseColor:'Farbe wählen', cancel:'Abbrechen', noGames:'Noch keine Spiele gespeichert.', halftime:'Halbzeit', draw:'🤝 Unentschieden', timeTitle:'Spielzeit', halfLenLabel:'Halbzeitlänge (Minuten)', showClock:'Uhr anzeigen', on:'An', off:'Aus', locale:'de-DE', deleteConfirm:'Löschen?', delete:'Löschen', ariaMinus:'Tor abziehen', ariaClockStart:'Uhr starten', ariaClockPause:'Uhr pausieren', ariaClockReset:'Uhr zurücksetzen', ariaDeleteEntry:'Eintrag löschen', ariaMoreColors:'Weitere Farben', clearHistory:'🗑️ Historie löschen', reallyClearHistory:'Wirklich alle Spiele löschen?', shareWhatsapp:'📤 Per WhatsApp teilen', sharingTitle:'Teilen', gameFinished:'✅ Spiel beendet', shareApp:'📤 App per WhatsApp teilen', shareAppText:'🤾 Handball Scoreboard – kostenlose Spielstand-App fürs Handy:', developerLabel:'Entwickler', licenseLabel:'Lizenz', addHome:'📲 Zum Home-Bildschirm hinzufügen', addHomeIOS:'Tippe unten auf das Teilen-Symbol ⬆️ und wähle „Zum Home-Bildschirm".', addHomeGeneric:'Über das Browsermenü (⋮) kannst du diese App installieren oder zum Home-Bildschirm hinzufügen.', gotIt:'OK', qrHint:'Mit einem anderen Handy scannen, um die App zu öffnen.', autoSwapLabel:'Seiten bei Halbzeit wechseln', ariaEditEntry:'Eintrag bearbeiten', saveEdit:'Speichern', sidesSwapped:'✓ Getauscht!', copyToClipboard:'In Zwischenablage kopieren', exportHistory:'📥 Historie exportieren', goalsTitle:'Tore', trackPlayerNumbersLabel:'Spielernummern erfassen', enterPlayerNumber:'Spielernummer eingeben', skip:'Überspringen', scorersTitle:'Torschützen anzeigen', unknownScorer:'Unbekannt', cardAccentLabel:'Farbverlauf auf Team-Karten', noGamesHint:'Speichere dein erstes Spiel über „🏁 Beenden & speichern"', showGoals:'🥅 Tore anzeigen', hideGoals:'🥅 Tore ausblenden', noGoalsYet:'Noch keine Tore', playerNumberCol:'Spielernummer', goalsCol:'Tore', versionLabel:'Version', resetSettings:'⚠️ Auf Standardeinstellungen zurücksetzen', reallyResetSettings:'Wirklich alle Einstellungen zurücksetzen?', resetSettingsTitle:'Allgemein', ariaBackspace:'Löschen', ariaConfirmNumber:'Bestätigen', singleRevertModeLabel:'Einzel-Rückgängig-Modus', revertSecondsLabel:'Zeitfenster (Sekunden)', ariaRevertGoal:'Letztes Tor rückgängig machen', distinctScorersLabel:'Verschiedene Torschützen', scoreFactorLabel:'Punktefaktor', showScoreFactorLabel:'Punktefaktor anzeigen', reallyResetClock:'Uhr wirklich zurücksetzen?' },
   en: { tabGame:'🤾 Game', tabSettings:'⚙️ Settings', tabHistory:'📋 History', save:'🏁 Finish & save', saved:'✓ Saved!', finishConfirm:'Finish and save the game?', half1:'First half', half2:'Second half', hz:'HT', resetGame:'🔁 Reset game', reallyReset:'Really reset the game?', yes:'Yes', no:'No', team1:'Team 1', team2:'Team 2', nameLabel:'Name', colorLabel:'Color', swapSides:'⇄ Swap sides', appearance:'Appearance', design:'Theme', dark:'🌙 Dark', lightMode:'☀️ Light', language:'Language', chooseColor:'Choose color', cancel:'Cancel', noGames:'No games saved yet.', halftime:'Halftime', draw:'🤝 Draw', timeTitle:'Match time', halfLenLabel:'Half length (minutes)', showClock:'Show clock', on:'On', off:'Off', locale:'en-US', deleteConfirm:'Delete?', delete:'Delete', ariaMinus:'Remove goal', ariaClockStart:'Start clock', ariaClockPause:'Pause clock', ariaClockReset:'Reset clock', ariaDeleteEntry:'Delete entry', ariaMoreColors:'More colors', clearHistory:'🗑️ Clear history', reallyClearHistory:'Really delete all games?', shareWhatsapp:'📤 Share via WhatsApp', sharingTitle:'Sharing', gameFinished:'✅ Game finished', shareApp:'📤 Share app via WhatsApp', shareAppText:'🤾 Handball Scoreboard – free scoreboard app for your phone:', developerLabel:'Developer', licenseLabel:'License', addHome:'📲 Add to Home Screen', addHomeIOS:'Tap the Share icon ⬆️ below, then choose "Add to Home Screen".', addHomeGeneric:'Use your browser menu (⋮) to install this app or add it to your home screen.', gotIt:'Got it', qrHint:'Scan with another phone to open the app.', autoSwapLabel:'Swap sides at halftime', ariaEditEntry:'Edit entry', saveEdit:'Save', sidesSwapped:'✓ Swapped!', copyToClipboard:'Copy to clipboard', exportHistory:'📥 Export history', goalsTitle:'Goals', trackPlayerNumbersLabel:'Track player numbers', enterPlayerNumber:'Enter player number', skip:'Skip', scorersTitle:'Show scorers', unknownScorer:'Unknown', cardAccentLabel:'Team card color accent', noGamesHint:'Save your first game via "🏁 Finish & save"', showGoals:'🥅 Show goals', hideGoals:'🥅 Hide goals', noGoalsYet:'No goals yet', playerNumberCol:'Player #', goalsCol:'Goals', versionLabel:'Version', resetSettings:'⚠️ Reset to default settings', reallyResetSettings:'Really reset all settings?', resetSettingsTitle:'General', ariaBackspace:'Backspace', ariaConfirmNumber:'Confirm', singleRevertModeLabel:'Single revert mode', revertSecondsLabel:'Time window (seconds)', ariaRevertGoal:'Undo last goal', distinctScorersLabel:'Distinct scorers', scoreFactorLabel:'Score factor', showScoreFactorLabel:'Show score factor', reallyResetClock:'Really reset the clock?' },
+  es: { tabGame:'🤾 Partido', tabSettings:'⚙️ Ajustes', tabHistory:'📋 Historial', save:'🏁 Terminar y guardar', saved:'✓ ¡Guardado!', finishConfirm:'¿Terminar y guardar el partido?', half1:'1ª parte', half2:'2ª parte', hz:'Desc.', resetGame:'🔁 Reiniciar partido', reallyReset:'¿Reiniciar el partido?', yes:'Sí', no:'No', team1:'Equipo 1', team2:'Equipo 2', nameLabel:'Nombre', colorLabel:'Color', swapSides:'⇄ Cambiar lados', appearance:'Apariencia', design:'Tema', dark:'🌙 Oscuro', lightMode:'☀️ Claro', language:'Idioma', chooseColor:'Elegir color', cancel:'Cancelar', noGames:'Aún no hay partidos guardados.', halftime:'Descanso', draw:'🤝 Empate', timeTitle:'Tiempo de juego', halfLenLabel:'Duración de cada parte (minutos)', showClock:'Mostrar reloj', on:'Sí', off:'No', locale:'es-ES', deleteConfirm:'¿Eliminar?', delete:'Eliminar', ariaMinus:'Restar gol', ariaClockStart:'Iniciar reloj', ariaClockPause:'Pausar reloj', ariaClockReset:'Reiniciar reloj', ariaDeleteEntry:'Eliminar entrada', ariaMoreColors:'Más colores', clearHistory:'🗑️ Borrar historial', reallyClearHistory:'¿Eliminar todos los partidos?', shareWhatsapp:'📤 Compartir por WhatsApp', sharingTitle:'Compartir', gameFinished:'✅ Partido terminado', shareApp:'📤 Compartir app por WhatsApp', shareAppText:'🤾 Handball Scoreboard – marcador gratuito de balonmano para el móvil:', developerLabel:'Desarrollador', licenseLabel:'Licencia', addHome:'📲 Añadir a pantalla de inicio', addHomeIOS:'Toca el icono de compartir ⬆️ abajo y elige «Añadir a pantalla de inicio».', addHomeGeneric:'Usa el menú del navegador (⋮) para instalar esta app o añadirla a la pantalla de inicio.', gotIt:'Entendido', qrHint:'Escanéalo con otro móvil para abrir la app.', autoSwapLabel:'Cambiar lados en el descanso', ariaEditEntry:'Editar entrada', saveEdit:'Guardar', sidesSwapped:'✓ ¡Cambiado!', copyToClipboard:'Copiar al portapapeles', exportHistory:'📥 Exportar historial', goalsTitle:'Goles', trackPlayerNumbersLabel:'Registrar dorsales', enterPlayerNumber:'Introduce el dorsal', skip:'Omitir', scorersTitle:'Mostrar goleadores', unknownScorer:'Desconocido', cardAccentLabel:'Degradado de color en tarjetas', noGamesHint:'Guarda tu primer partido con «🏁 Terminar y guardar»', showGoals:'🥅 Mostrar goles', hideGoals:'🥅 Ocultar goles', noGoalsYet:'Aún no hay goles', playerNumberCol:'Dorsal', goalsCol:'Goles', versionLabel:'Versión', resetSettings:'⚠️ Restablecer ajustes predeterminados', reallyResetSettings:'¿Restablecer todos los ajustes?', resetSettingsTitle:'General', ariaBackspace:'Borrar', ariaConfirmNumber:'Confirmar', singleRevertModeLabel:'Modo de deshacer único', revertSecondsLabel:'Margen de tiempo (segundos)', ariaRevertGoal:'Deshacer último gol', distinctScorersLabel:'Goleadores distintos', scoreFactorLabel:'Factor de puntuación', showScoreFactorLabel:'Mostrar factor de puntuación', reallyResetClock:'¿Reiniciar el reloj?' },
 };
 function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
+// Language picker options (each in its own language), in display order — one entry per I18N key.
+const LANG_LABELS = { de: '🇩🇪 Deutsch', en: '🇺🇸 English', es: '🇪🇸 Español' };
 
 const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that installed/offline users should pick
 // up — checkForUpdates() compares it against the deployed index.html's own APP_VERSION.
-const APP_VERSION = '1.30.5';
+const APP_VERSION = '1.31.0';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -718,7 +723,7 @@ function load() {
       if (typeof p.singleRevertSeconds === 'number' && p.singleRevertSeconds >= 1 && p.singleRevertSeconds <= 300) state.singleRevertSeconds = p.singleRevertSeconds;
       if (typeof p.showScoreFactor === 'boolean') state.showScoreFactor = p.showScoreFactor;
       if (p.scorers && Array.isArray(p.scorers.a) && Array.isArray(p.scorers.b)) state.scorers = p.scorers;
-      if (p.lang === 'de' || p.lang === 'en') state.lang = p.lang;
+      if (Object.hasOwn(I18N, p.lang)) state.lang = p.lang;
       if (typeof p.halfLength === 'number' && p.halfLength >= 1 && p.halfLength <= 99) state.halfLength = p.halfLength;
       if (p.clockRunning && typeof p.clockEndsAt === 'number') {
         const left = Math.ceil((p.clockEndsAt - Date.now()) / 1000);
@@ -894,7 +899,11 @@ async function requestWakeLock() {
   finally { wakeLockRequesting = false; }
 }
 
-function toggleLang() { state.lang = state.lang === 'de' ? 'en' : 'de'; applyLang(); render(); renderSettings(); save(); }
+function setLang(lang) {
+  if (!Object.hasOwn(I18N, lang)) return;
+  state.lang = lang;
+  applyLang(); render(); renderSettings(); save();
+}
 
 function applyLang() {
   try {
@@ -940,7 +949,11 @@ function applyLang() {
     document.getElementById('appearance-title').textContent = t('appearance');
     document.getElementById('design-label').textContent = t('design');
     document.getElementById('language-label').textContent = t('language');
-    document.getElementById('lang-btn').textContent = state.lang === 'de' ? '🇩🇪 Deutsch' : '🇺🇸 English';
+    const langSelect = document.getElementById('lang-select');
+    if (!langSelect.options.length) {
+      for (const [code, label] of Object.entries(LANG_LABELS)) langSelect.add(new Option(label, code));
+    }
+    langSelect.value = state.lang;
     document.getElementById('cardaccent-label').textContent = t('cardAccentLabel');
     document.getElementById('cardaccent-btn').textContent = state.cardAccentEnabled ? t('on') : t('off');
     document.getElementById('color-modal-title').textContent = t('chooseColor');
