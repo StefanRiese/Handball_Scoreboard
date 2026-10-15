@@ -1,0 +1,20 @@
+{
+  "name": "handball-scoreboard",
+  "private": true,
+  "description": "Dev-only test tooling — the app itself has no build step and no runtime dependencies.",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-html": "^8.2.1",
+    "globals": "^17.13.0",
+    "jsdom": "^30.1.2"
+  }
+}

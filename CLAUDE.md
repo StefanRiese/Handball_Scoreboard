@@ -18,6 +18,7 @@ README.md for the full user-facing feature list and deployment instructions (Git
 - `manifest.json` — Web App Manifest for Android/Chrome install prompts.
 - `handball_icon.png` — home-screen / manifest icon (512×512, matching `manifest.json`).
 - `README.md` — user-facing feature docs (German).
+- `package.json`, `eslint.config.mjs`, `test/`, `.github/workflows/ci.yml` — dev-only lint/test tooling and CI (see Commands).
 
 There is intentionally no `src/`, no framework, and no bundler. Keep new code inside
 `index.html` unless there's a strong reason to split it out — the project's whole premise is
@@ -25,12 +26,29 @@ There is intentionally no `src/`, no framework, and no bundler. Keep new code in
 
 ## Commands
 
-There is no build, lint, or test tooling in this repo (no `package.json`). To develop:
+There is no build tooling. `package.json` exists only for dev-time lint/tests (its devDependencies
+never ship — the app itself still has zero runtime dependencies). To develop:
 
+- **Lint**: `npm run lint` — ESLint (`eslint.config.mjs`, `js.configs.recommended`) over
+  `index.html`'s inline script (via `eslint-plugin-html`), `sw.js` and `test/`. `no-unused-vars`
+  only checks locals in `index.html`, since top-level functions are called from inline `onclick`
+  attributes ESLint can't see; empty `catch {}` blocks are allowed (deliberate best-effort calls).
+
+- **Test**: `npm ci` once, then `npm test` (Node ≥ 22, built-in `node:test` runner). CI
+  (`.github/workflows/ci.yml`) runs `npm run lint` and `npm test` on every push to `main` and every PR.
+  - `test/helpers.js` `bootApp({ stored })` loads the real `index.html` in jsdom (optionally
+    pre-seeding localStorage), with network/canvas/`matchMedia` stubbed; `ctx.app.<name>` reads
+    any top-level binding (incl. `let`/`const` like `state`, `revertWindow`) via `window.eval`.
+    Uncaught page errors are collected in `ctx.errors` and fail the test. Objects from the page
+    are another realm — pass them through `plain()` (JSON round-trip) before `deepEqual`.
+  - `test/app.test.js` — behavior (goals, scorers, halftime swap, history, clock, load/save).
+  - `test/sw.test.js` — runs `sw.js` in a `vm` with an in-memory Cache Storage and fake `fetch`.
+  - `test/static.test.js` — syntax of both scripts, `APP_VERSION` format, manifest/icon, SW shell files.
+  - New behavior in `index.html` should come with a test in `test/app.test.js`.
 - **Preview locally**: serve the directory over HTTP (not `file://`, since the Service Worker and
   Wake Lock API require a proper origin) — e.g. `python3 -m http.server 8000` — then open
   `http://localhost:8000/index.html`.
-- **Sanity-check JS syntax** (no linter configured): `sw.js` is a plain `.js` file, so
+- **Sanity-check JS syntax** (without installing anything; `npm run lint` covers this too): `sw.js` is a plain `.js` file, so
   `node -e "new Function(require('fs').readFileSync('sw.js','utf8'))"` parses it directly — no
   extraction needed, unlike `index.html`, which embeds its JS inside an HTML `<script>` block:
   extract and parse that instead, e.g.
