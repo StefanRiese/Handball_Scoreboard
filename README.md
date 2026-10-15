@@ -120,4 +120,4 @@ Am einfachsten über **„📲 Zum Home-Bildschirm hinzufügen"** in den Einstel
 - Web App Manifest (`manifest.json`) für die Installation auf Android/Chrome
 
 ## Lizenz
-Privates Projekt – frei zur eigenen Nutzung und Anpassung.
+MIT-Lizenz – frei zur Nutzung, Anpassung und Weitergabe, solange der Copyright-Hinweis erhalten bleibt. Details siehe [LICENSE](LICENSE).
