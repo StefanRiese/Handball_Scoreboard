@@ -210,7 +210,13 @@ so the second tap of a fast double-tap on a team card lands on the modal, not th
 capture-phase click listener on `#player-modal` swallows any tap within
 `PLAYER_MODAL_TAP_GUARD_MS` (350ms) of `playerModalOpenedAt` (so it can't skip or type a stray
 digit) and, if a team card is under it (`elementsFromPoint`), forwards it to `addGoal()` as the
-goal it was meant to be. That's the path that fills `playerNumberQueue` (an array of
+goal it was meant to be — but only when the modal was opened straight from a card tap
+(`playerModalOpenedByCardTap`); a modal opened from the queue right after ✓ swallows the tap
+without forwarding, since the preceding tap was on the modal, not a card. The mirror-image guard
+runs after the modal closes: a document-level capture click listener swallows any tap within the
+same window after `playerModalClosedAt`, so a double-tap on ✓/Skip can't reach whatever lies
+underneath (a team card → phantom goal, the half button → half switch and side swap). The
+card-tap forwarding is the path that fills `playerNumberQueue` (an array of
 `{identity, half, pos, globalPos}`) — a goal scored while the modal is open is queued rather than
 overwriting the still-open modal's state, and `recordScorer()` drains the next queued entry after
 closing. `resetGame()` and

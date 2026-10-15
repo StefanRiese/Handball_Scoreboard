@@ -358,7 +358,7 @@ function t(key) { return (I18N[state.lang] || I18N.de)[key]; }
 const STORAGE_KEY = 'handball_v3';
 // Bump this (semver: MAJOR.MINOR.PATCH) on every deploy that installed/offline users should pick
 // up — checkForUpdates() compares it against the deployed index.html's own APP_VERSION.
-const APP_VERSION = '1.30.3';
+const APP_VERSION = '1.30.4';
 const APP_URL = 'https://stefanriese.github.io/Handball_Scoreboard/';
 
 let state = {
@@ -432,10 +432,16 @@ let playerModalHalf = null;
 let playerModalPos = null;
 let playerModalGlobalPos = null;
 let playerNumberInput = '';
-// When the player-number modal last opened — taps within PLAYER_MODAL_TAP_GUARD_MS of that are
-// the tail of a fast multi-tap on a team card, not a deliberate modal interaction (see the
-// capture-phase click listener on #player-modal).
+// Ghost-tap guards around the player-number modal (see the capture-phase click listeners near the
+// end of the script). Within PLAYER_MODAL_TAP_GUARD_MS of the modal opening, a tap is the tail of
+// the fast multi-tap that opened it, not a deliberate modal interaction; within the same window
+// after it closes, a tap is the tail of a double-tap on ✓/Skip and must not reach whatever control
+// lies underneath (a team card, the half button). playerModalOpenedByCardTap: only a modal opened
+// straight from a card tap forwards such a tap as a goal — one opened from playerNumberQueue right
+// after ✓ was preceded by a tap on the modal itself, so a card under that tap means nothing.
 let playerModalOpenedAt = 0;
+let playerModalOpenedByCardTap = false;
+let playerModalClosedAt = 0;
 const PLAYER_MODAL_TAP_GUARD_MS = 350;
 // Goals scored back-to-back (e.g. a quick double-tap) before the player-number modal for the
 // first one is confirmed/skipped must not overwrite each other — queued {identity, half} pairs
@@ -1457,7 +1463,7 @@ function addGoal(slot) {
   save();
   if (state.trackPlayerNumbers) {
     if (playerModalIdentity) playerNumberQueue.push({ identity, half, pos, globalPos });
-    else openPlayerNumberModal(identity, half, pos, globalPos);
+    else { openPlayerNumberModal(identity, half, pos, globalPos); playerModalOpenedByCardTap = true; }
   }
 }
 
@@ -1511,6 +1517,7 @@ function openPlayerNumberModal(identity, half, pos, globalPos) {
   applyTeamColorAccent(document.getElementById('player-modal-box'), state[identity].color);
   document.getElementById('player-modal').style.display = 'flex';
   playerModalOpenedAt = Date.now();
+  playerModalOpenedByCardTap = false;
 }
 
 function updatePlayerNumberDisplay() {
@@ -1544,6 +1551,7 @@ function recordScorer(number) {
     renderGoalsView();
   }
   document.getElementById('player-modal').style.display = 'none';
+  playerModalClosedAt = Date.now();
   playerModalIdentity = null;
   playerModalHalf = null;
   playerModalPos = null;
@@ -2065,8 +2073,19 @@ playerModalEl.addEventListener('click', e => {
   if (Date.now() - playerModalOpenedAt >= PLAYER_MODAL_TAP_GUARD_MS) return;
   e.stopImmediatePropagation();
   e.preventDefault();
+  if (!playerModalOpenedByCardTap) return;
   const card = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('team-card'));
   if (card) addGoal(card.id === 'card-a' ? 'a' : 'b');
+}, true);
+// The other half of the ghost-tap guard: right after ✓/Skip closes the modal (with nothing queued
+// behind it), swallow the next tap anywhere so a double-tap can't score a phantom goal or flip the
+// half via whatever happens to sit under the button. Document-level capture runs before any
+// target's own handler.
+document.addEventListener('click', e => {
+  if (playerModalEl.style.display === 'flex') return;
+  if (Date.now() - playerModalClosedAt >= PLAYER_MODAL_TAP_GUARD_MS) return;
+  e.stopPropagation();
+  e.preventDefault();
 }, true);
 playerModalEl.addEventListener('click', e => { if (e.target === playerModalEl) skipPlayerNumber(); });
 
